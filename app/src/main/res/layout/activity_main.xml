@@ -1,0 +1,798 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/touchArea"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/pattern"
+
+    tools:context="xyz.sufystudios.didgsynth.MainActivity">
+
+    <it.beppi.knoblibrary.Knob
+        android:id="@+id/attack"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:kKnobDrawable="@drawable/knob3"
+
+        app:kNumberOfStates="50"
+        app:layout_constraintBottom_toTopOf="@id/attacktxt"
+        app:layout_constraintEnd_toStartOf="@+id/decay"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <it.beppi.knoblibrary.Knob
+        android:id="@+id/decay"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:kKnobDrawable="@drawable/knob3"
+        app:kNumberOfStates="50"
+        app:layout_constraintBottom_toTopOf="@id/decaytxt"
+        app:layout_constraintEnd_toStartOf="@+id/sustain"
+        app:layout_constraintStart_toEndOf="@+id/attack"
+        app:layout_constraintTop_toTopOf="@+id/attack" />
+
+    <it.beppi.knoblibrary.Knob
+        android:id="@+id/sustain"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:kKnobDrawable="@drawable/knob3"
+        app:kNumberOfStates="50"
+        app:layout_constraintBottom_toTopOf="@id/sustaintxt"
+        app:layout_constraintEnd_toStartOf="@+id/release"
+        app:layout_constraintStart_toEndOf="@+id/decay"
+        app:layout_constraintTop_toTopOf="@+id/attack" />
+
+    <it.beppi.knoblibrary.Knob
+        android:id="@+id/release"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:kKnobDrawable="@drawable/knob3"
+        app:kNumberOfStates="50"
+        app:layout_constraintBottom_toTopOf="@id/releasetxt"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/sustain"
+        app:layout_constraintTop_toTopOf="@+id/attack" />
+
+    <TextView
+        android:id="@+id/attacktxt"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:text="AttackTime"
+        android:textColor="@color/colorPrimary"
+        app:layout_constraintBottom_toTopOf="@id/guideline3"
+        app:layout_constraintEnd_toEndOf="@+id/attack"
+        app:layout_constraintHorizontal_bias="0.029"
+        app:layout_constraintStart_toStartOf="@+id/attack"
+        app:layout_constraintTop_toBottomOf="@+id/attack" />
+
+    <TextView
+        android:id="@+id/decaytxt"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="8dp"
+        android:text="DecayTime"
+        android:textColor="@color/colorPrimary"
+        app:layout_constraintBottom_toTopOf="@id/guideline3"
+        app:layout_constraintEnd_toEndOf="@+id/decay"
+        app:layout_constraintStart_toStartOf="@id/decay"
+        app:layout_constraintTop_toBottomOf="@+id/decay" />
+
+    <TextView
+        android:id="@+id/sustaintxt"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="8dp"
+        android:text="SustainLevel"
+        android:textColor="@color/colorPrimary"
+        app:layout_constraintBottom_toTopOf="@id/guideline3"
+        app:layout_constraintEnd_toEndOf="@id/sustain"
+        app:layout_constraintStart_toStartOf="@id/sustain"
+        app:layout_constraintTop_toBottomOf="@id/sustain" />
+
+    <TextView
+        android:id="@+id/releasetxt"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="8dp"
+        android:text="ReleaseTime"
+        android:textColor="@color/colorPrimary"
+        app:layout_constraintBottom_toTopOf="@id/guideline3"
+        app:layout_constraintEnd_toEndOf="@id/release"
+        app:layout_constraintStart_toStartOf="@id/release"
+        app:layout_constraintTop_toBottomOf="@id/release" />
+    <!-- delay -->
+    <it.beppi.knoblibrary.Knob
+        android:id="@+id/delaytime"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:kKnobDrawable="@drawable/knob3"
+        app:kNumberOfStates="50"
+        app:layout_constraintBottom_toTopOf="@id/dtimetxt"
+        app:layout_constraintEnd_toEndOf="@id/release"
+        app:layout_constraintStart_toStartOf="@id/release"
+        app:layout_constraintTop_toBottomOf="@id/guideline3" />
+
+    <it.beppi.knoblibrary.Knob
+        android:id="@+id/feedback"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:kKnobDrawable="@drawable/knob3"
+        app:kNumberOfStates="50"
+        app:layout_constraintBottom_toTopOf="@id/feedbacktxt"
+        app:layout_constraintEnd_toEndOf="@id/attack"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="@id/attack"
+        app:layout_constraintTop_toBottomOf="@id/guideline3"
+
+        />
+
+    <it.beppi.knoblibrary.Knob
+        android:id="@+id/drywet"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:kKnobDrawable="@drawable/knob3"
+        app:kNumberOfStates="50"
+        app:layout_constraintBottom_toTopOf="@id/dwtxt"
+        app:layout_constraintEnd_toEndOf="@id/decay"
+        app:layout_constraintStart_toStartOf="@id/decay"
+        app:layout_constraintTop_toBottomOf="@id/guideline3" />
+
+    <it.beppi.knoblibrary.Knob
+        android:id="@+id/delayratio"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:kKnobDrawable="@drawable/knob3"
+        app:kNumberOfStates="50"
+        app:layout_constraintBottom_toTopOf="@id/ratiotxt"
+        app:layout_constraintEnd_toEndOf="@id/sustain"
+        app:layout_constraintStart_toStartOf="@id/sustain"
+        app:layout_constraintTop_toBottomOf="@id/guideline3" />
+
+    <TextView
+        android:id="@+id/feedbacktxt"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:text="EchoBounce"
+        android:textColor="@color/colorPrimary"
+        app:layout_constraintBottom_toTopOf="@id/guideline2"
+        app:layout_constraintEnd_toEndOf="@id/attack"
+        app:layout_constraintStart_toStartOf="@id/attack"
+        app:layout_constraintTop_toBottomOf="@id/feedback" />
+
+    <TextView
+        android:id="@+id/dwtxt"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:shadowColor="@color/text_shadow_white"
+
+        android:shadowDx="-2"
+        android:shadowDy="-2"
+        android:shadowRadius="1"
+        android:text="EchoAmount"
+        android:textColor="@color/grey_font"
+        app:layout_constraintBottom_toTopOf="@id/guideline2"
+        app:layout_constraintEnd_toEndOf="@id/decay"
+        app:layout_constraintStart_toStartOf="@id/decay"
+        app:layout_constraintTop_toBottomOf="@id/drywet" />
+
+    <TextView
+        android:id="@+id/ratiotxt"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:shadowColor="@color/text_shadow_white"
+
+        android:shadowDx="-2"
+        android:shadowDy="-2"
+        android:shadowRadius="1"
+        android:text="EchoDirection"
+        android:textColor="@color/grey_font"
+        app:layout_constraintBottom_toTopOf="@id/guideline2"
+        app:layout_constraintEnd_toEndOf="@id/sustain"
+        app:layout_constraintStart_toStartOf="@id/sustain"
+        app:layout_constraintTop_toBottomOf="@id/delayratio" />
+
+    <TextView
+        android:id="@+id/dtimetxt"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:shadowColor="@color/text_shadow_white"
+
+        android:shadowDx="-2"
+        android:shadowDy="-2"
+        android:shadowRadius="1"
+        android:text="EchoDistance"
+        android:textColor="@color/grey_font"
+        app:layout_constraintBottom_toTopOf="@id/guideline2"
+        app:layout_constraintEnd_toEndOf="@id/release"
+        app:layout_constraintStart_toStartOf="@id/release"
+        app:layout_constraintTop_toBottomOf="@id/delaytime" />
+    <!-- lfo -->
+    <it.beppi.knoblibrary.Knob
+        android:id="@+id/LFOFilter"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:kKnobDrawable="@drawable/knob3"
+        app:kNumberOfStates="50"
+        app:layout_constraintBottom_toTopOf="@+id/lfofilttxt"
+        app:layout_constraintEnd_toEndOf="@id/decay"
+        app:layout_constraintStart_toStartOf="@id/decay"
+        app:layout_constraintTop_toBottomOf="@id/guideline2" />
+
+
+    <it.beppi.knoblibrary.Knob
+        android:id="@+id/LFOPitch"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:kKnobDrawable="@drawable/knob3"
+        app:kNumberOfStates="50"
+        app:layout_constraintBottom_toTopOf="@id/lfopitchtxt"
+        app:layout_constraintEnd_toEndOf="@id/attack"
+        app:layout_constraintStart_toStartOf="@id/attack"
+        app:layout_constraintTop_toBottomOf="@id/guideline2"
+
+
+        />
+
+    <TextView
+        android:id="@+id/lfofilttxt"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:shadowColor="@color/text_shadow_white"
+        android:shadowDx="-2"
+
+        android:shadowDy="-2"
+        android:shadowRadius="1"
+        android:src="@drawable/tube"
+        android:text="BreathImpact"
+        android:textColor="@color/grey_font"
+        app:layout_constraintBottom_toTopOf="@+id/LFORate"
+        app:layout_constraintEnd_toEndOf="@id/LFOFilter"
+        app:layout_constraintStart_toStartOf="@id/LFOFilter"
+        app:layout_constraintTop_toBottomOf="@id/LFOFilter" />
+
+    <TextView
+        android:id="@+id/lfopitchtxt"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:shadowColor="@color/text_shadow_white"
+
+        android:shadowDx="-2"
+        android:shadowDy="-2"
+        android:shadowRadius="1"
+        android:text="BreathPitch"
+        android:textColor="@color/grey_font"
+        app:layout_constraintBottom_toTopOf="@+id/LFORate"
+        app:layout_constraintEnd_toEndOf="@id/attack"
+        app:layout_constraintStart_toStartOf="@id/attack"
+        app:layout_constraintTop_toBottomOf="@id/LFOPitch" />
+
+    <SeekBar
+        android:id="@+id/LFORate"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+
+        android:max="1000"
+        android:progress="400"
+        android:progressDrawable="@drawable/volume_seekbar"
+        android:thumbTint="@color/green"
+        app:layout_constraintBottom_toTopOf="@id/lforatetxt"
+        app:layout_constraintEnd_toEndOf="@id/release"
+        app:layout_constraintStart_toStartOf="@id/attack"
+        app:layout_constraintTop_toBottomOf="@id/lfofilttxt" />
+
+    <TextView
+        android:id="@+id/lforatetxt"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:shadowColor="@color/text_shadow_white"
+
+        android:shadowDx="-2"
+        android:shadowDy="-2"
+        android:shadowRadius="1"
+        android:text="Didgeridoo Breath Speed"
+        android:textColor="@color/grey_font"
+        app:layout_constraintBottom_toTopOf="@id/guideline4"
+        app:layout_constraintEnd_toEndOf="@id/LFORate"
+        app:layout_constraintStart_toStartOf="@id/LFORate"
+        app:layout_constraintTop_toBottomOf="@id/LFORate" />
+
+
+    <!-- keyboard -->
+    <Button
+        android:id="@+id/asharp"
+        android:layout_width="29dp"
+        android:layout_height="50dp"
+
+        android:background="@android:color/black"
+        android:text="A#"
+        android:textColor="@color/colorPrimary"
+
+        app:layout_constraintStart_toEndOf="@+id/a"
+app:layout_constraintTop_toTopOf="@id/csharp"
+        app:layout_constraintBottom_toBottomOf="@id/csharp"
+        app:layout_constraintEnd_toStartOf="@id/b"
+    />
+
+    <Button
+        android:id="@+id/csharp"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@android:color/black"
+
+        android:text="C#"
+        android:textColor="@color/colorPrimary"
+        app:layout_constraintBottom_toTopOf="@id/whitetop"
+        app:layout_constraintStart_toEndOf="@+id/c"
+        app:layout_constraintTop_toBottomOf="@id/blacktop"
+        app:layout_constraintEnd_toStartOf="@id/d"/>
+
+    <Button
+        android:id="@+id/dsharp"
+        android:layout_width="30dp"
+        android:layout_height="50dp"
+        android:background="@android:color/black"
+        android:text="D#"
+        android:textColor="@color/colorPrimary"
+        app:layout_constraintBottom_toBottomOf="@+id/csharp"
+        app:layout_constraintEnd_toStartOf="@id/e"
+        app:layout_constraintStart_toEndOf="@+id/d"
+        app:layout_constraintTop_toTopOf="@id/csharp"/>
+    <Button
+        android:id="@+id/fsharp"
+        android:layout_width="29dp"
+        android:layout_height="50dp"
+        android:background="@android:color/black"
+        android:text="F#"
+        android:textColor="@color/colorPrimary"
+        app:layout_constraintBottom_toBottomOf="@id/csharp"
+        app:layout_constraintEnd_toStartOf="@id/g"
+        app:layout_constraintStart_toEndOf="@+id/f"
+        app:layout_constraintTop_toTopOf="@+id/csharp" />
+
+    <Button
+        android:id="@+id/gsharp"
+        android:layout_width="29dp"
+        android:layout_height="50dp"
+        android:background="@android:color/black"
+        android:text="G#"
+
+        android:textColor="@color/colorPrimary"
+        app:layout_constraintBottom_toBottomOf="@id/csharp"
+        app:layout_constraintEnd_toStartOf="@id/a"
+        app:layout_constraintStart_toEndOf="@+id/g"
+        app:layout_constraintTop_toTopOf="@id/csharp" />
+
+
+    <Button
+        android:id="@+id/e"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginRight="32dp"
+        android:background="@android:color/white"
+        android:text="E"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/f"
+        app:layout_constraintStart_toEndOf="@+id/d"
+        app:layout_constraintTop_toBottomOf="@id/whitetop" />
+
+    <Button
+        android:id="@+id/f"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginRight="32dp"
+        android:background="@android:color/white"
+        android:text="F"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/g"
+        app:layout_constraintStart_toEndOf="@+id/e"
+        app:layout_constraintTop_toBottomOf="@id/whitetop" />
+
+    <Button
+        android:id="@+id/d"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginRight="32dp"
+        android:background="@android:color/white"
+        android:text="D"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/e"
+        app:layout_constraintStart_toEndOf="@+id/c"
+        app:layout_constraintTop_toBottomOf="@id/whitetop" />
+
+    <Button
+        android:id="@+id/c"
+        style="@style/Widget.AppCompat.Button.Small"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginRight="32dp"
+        android:background="@android:color/white"
+        android:text="C"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/d"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/whitetop" />
+
+    <Button
+        android:id="@+id/g"
+
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginRight="32dp"
+        android:background="@android:color/white"
+        android:text="G"
+        app:layout_constraintBottom_toBottomOf="@id/c"
+        app:layout_constraintEnd_toStartOf="@+id/a"
+        app:layout_constraintStart_toEndOf="@+id/f"
+        app:layout_constraintTop_toTopOf="@id/c" />
+
+    <Button
+        android:id="@+id/a"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginRight="32dp"
+        android:background="@android:color/white"
+        android:text="A"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/b"
+        app:layout_constraintStart_toEndOf="@id/g"
+        app:layout_constraintTop_toBottomOf="@id/whitetop" />
+
+
+    <Button
+        android:id="@+id/b"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:background="@android:color/white"
+        android:text="B"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/a"
+        app:layout_constraintTop_toBottomOf="@+id/whitetop" />
+
+    <Button
+        android:id="@+id/octdown"
+        style="@style/Widget.AppCompat.Button.Small"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+
+
+        android:backgroundTint="@color/colorPrimary"
+        android:text="-Octave"
+        android:textColor="@color/colorPrimaryDark"
+        app:layout_constraintBottom_toTopOf="@+id/csharp"
+        app:layout_constraintEnd_toStartOf="@id/oct"
+        app:layout_constraintStart_toStartOf="@id/attack"
+        app:layout_constraintTop_toBottomOf="@id/guideline5"
+        tools:visibility="invisible" />
+
+    <Button
+        android:id="@+id/octup"
+        style="@style/Widget.AppCompat.Button.Small"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+
+        android:backgroundTint="@color/colorPrimary"
+        android:text="+Octave"
+        android:textColor="@color/colorPrimaryDark"
+        app:layout_constraintBottom_toBottomOf="@id/octdown"
+        app:layout_constraintStart_toEndOf="@+id/oct"
+        app:layout_constraintTop_toTopOf="@+id/octdown"
+        tools:visibility="visible" />
+
+    <TextView
+        android:id="@+id/oct"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:shadowColor="@color/text_shadow_white"
+
+        android:shadowDx="-2"
+        android:shadowDy="-2"
+        android:shadowRadius="1"
+        android:text="Length"
+        android:textColor="@color/grey_font"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="@id/octdown"
+        app:layout_constraintStart_toEndOf="@id/octdown"
+        app:layout_constraintTop_toTopOf="@id/octdown"
+        tools:visibility="visible" />
+    <!-- filter -->
+
+    <Button
+        android:id="@+id/prev"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+
+
+        android:background="@android:color/holo_red_dark"
+
+        android:gravity="center|top"
+        android:text="previous"
+        android:textColor="@color/colorPrimaryDark"
+        android:textSize="6sp"
+        app:layout_constraintBottom_toTopOf="@id/filter"
+        app:layout_constraintEnd_toEndOf="@id/sustain"
+        app:layout_constraintStart_toStartOf="@id/sustain"
+        app:layout_constraintTop_toBottomOf="@id/guideline" />
+
+    <Button
+        android:id="@+id/next"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+
+        android:background="@android:color/holo_green_dark"
+
+
+        android:gravity="center|top"
+
+        android:text="next"
+        android:textColor="@color/colorPrimaryDark"
+        android:textSize="6sp"
+        app:layout_constraintBottom_toTopOf="@+id/filter"
+        app:layout_constraintEnd_toEndOf="@id/release"
+        app:layout_constraintStart_toStartOf="@id/release"
+        app:layout_constraintTop_toBottomOf="@id/guideline" />
+
+    <SeekBar
+        android:id="@+id/filter"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:max="1000"
+
+        android:progress="400"
+        android:progressDrawable="@drawable/volume_seekbar"
+        android:thumbTint="@color/green"
+        app:layout_constraintBottom_toTopOf="@id/filtertxt"
+        app:layout_constraintEnd_toEndOf="@+id/sustain"
+        app:layout_constraintStart_toStartOf="@id/attack"
+        app:layout_constraintTop_toBottomOf="@id/prev" />
+
+    <TextView
+        android:id="@+id/filtertxt"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_marginBottom="8dp"
+        android:shadowColor="@color/text_shadow_white"
+
+        android:shadowDx="-2"
+        android:shadowDy="-2"
+        android:shadowRadius="1"
+        android:text="Didgeridoo Tone"
+        android:textColor="@color/grey_font"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/guideline5"
+        app:layout_constraintStart_toStartOf="@id/attack"
+        app:layout_constraintTop_toBottomOf="@id/filter" />
+
+    <SeekBar
+        android:id="@+id/Q"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:max="100"
+        android:padding="3dp"
+
+        android:progress="50"
+        android:progressDrawable="@drawable/volume_seekbar"
+        android:thumbTint="@color/green"
+        app:layout_constraintBottom_toTopOf="@id/qtxt"
+        app:layout_constraintEnd_toEndOf="@id/release"
+        app:layout_constraintStart_toStartOf="@id/release"
+        app:layout_constraintTop_toBottomOf="@id/next" />
+
+    <TextView
+        android:id="@+id/qtxt"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:text="Mouth Position"
+        android:textColor="@color/colorPrimary"
+        app:layout_constraintBottom_toTopOf="@id/guideline5"
+        app:layout_constraintEnd_toEndOf="@id/release"
+        app:layout_constraintStart_toStartOf="@id/release"
+        app:layout_constraintTop_toBottomOf="@id/Q" />
+
+
+    <ToggleButton
+        android:id="@+id/drone"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_marginBottom="8dp"
+        android:backgroundTint="@color/colorPrimary"
+        android:text="Drone"
+        android:textColor="@color/colorPrimaryDark"
+        app:layout_constraintBottom_toBottomOf="@id/octdown"
+        app:layout_constraintEnd_toEndOf="@id/release"
+        app:layout_constraintStart_toStartOf="@id/release"
+        app:layout_constraintTop_toTopOf="@+id/octdown" />
+
+    <TextView
+        android:id="@+id/dronetxt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginBottom="8dp"
+        android:text="Circular"
+        android:textColor="@color/colorPrimary"
+        app:layout_constraintBottom_toBottomOf="@+id/drone"
+        app:layout_constraintEnd_toStartOf="@+id/drone"
+        app:layout_constraintTop_toTopOf="@+id/drone" />
+
+
+    <SeekBar
+        android:id="@+id/reverb"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:progressDrawable="@drawable/volume_seekbar"
+        android:thumbTint="@color/green"
+        android:max="100"
+        android:progress="0"
+        app:layout_constraintBottom_toTopOf="@id/reverbtxt"
+        app:layout_constraintEnd_toEndOf="@id/release"
+        app:layout_constraintStart_toStartOf="@id/sustain"
+        app:layout_constraintTop_toBottomOf="@id/guideline2" />
+
+    <TextView
+        android:id="@+id/reverbtxt"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Room Size"
+        android:textColor="@color/colorPrimary"
+        app:layout_constraintBottom_toTopOf="@id/LFORate"
+        app:layout_constraintEnd_toEndOf="@id/reverb"
+        app:layout_constraintStart_toStartOf="@id/reverb"
+        app:layout_constraintTop_toBottomOf="@id/reverb"
+
+
+        />
+
+    <Button
+        android:id="@+id/selectWave"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+
+        android:backgroundTint="@color/colorPrimary"
+        android:text="Saw"
+        android:textColor="@color/colorPrimaryDark"
+        app:layout_constraintEnd_toEndOf="@id/attack"
+        app:layout_constraintStart_toStartOf="@id/attack"
+        app:layout_constraintTop_toBottomOf="@id/guideline4"
+        tools:visibility="visible" />
+
+    <ImageView
+        android:id="@+id/tube"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+
+
+        android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="@+id/selectWave"
+        app:layout_constraintEnd_toStartOf="@+id/prev"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toEndOf="@+id/selectWave"
+        app:layout_constraintTop_toTopOf="@+id/selectWave"
+        app:layout_constraintVertical_bias="0.502"
+        app:srcCompat="@drawable/tube" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.6101231" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.3" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.14500684" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.5" />
+
+    <TextView
+        android:id="@+id/guide"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/textview_border"
+        android:scrollbars="vertical"
+        android:text="TextView"
+        android:textColor="@color/colorPrimary"
+        app:layout_constraintBottom_toTopOf="@id/guideline"
+        app:layout_constraintEnd_toEndOf="@id/release"
+        app:layout_constraintStart_toEndOf="@+id/tube"
+        app:layout_constraintTop_toBottomOf="@id/guideline4" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline5"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.75" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/whitetop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.92" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/blacktop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.8331053" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline8"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.08"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:visibility="visible" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline9"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.95" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/blackend"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.35" />
+
+    <EditText
+        android:id="@+id/hertz"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:ems="10"
+        android:hint="hertz"
+        android:inputType="number"
+        android:outlineAmbientShadowColor="@color/colorAccent"
+        android:text="440"
+        android:textColor="@color/colorPrimary"
+        android:textColorHighlight="@color/grey"
+        android:textColorHint="@color/green"
+        android:visibility="visible"
+        app:layout_constraintBottom_toTopOf="@+id/guideline"
+        app:layout_constraintEnd_toStartOf="@+id/guide"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/selectWave" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

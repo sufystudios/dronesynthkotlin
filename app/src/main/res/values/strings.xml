@@ -1,0 +1,30 @@
+<resources>
+    <string name="app_name">Didgeridoo Synth</string>
+    <string name="instructions">
+    Attack is the time for the note to get to max volume
+    Decay is time from max attack to sustain level
+    Sustain is level when not is held for a long period
+    Release is how long for volume to go down as it is released.
+
+
+</string>
+    <string name="instructions2">
+    LFO rate is the speed of the low frequency wave that can affect the pitch or the filter
+    LFO Filt is how much it affects the filter
+    LFO pitch how much it affects oscillator
+    </string>
+    <string name="instructions3">
+    Delay and reverb sound good with the drone experiment
+    </string>
+    <string name="instructions4">
+    To play Drone press drone button then select your note.
+    To go to a different octave select the button for it.
+    </string>
+    <string name="title_activity_drone_tabbed">DroneTabbed</string>
+    <string name="action_settings">Settings</string>
+    <string name="section_format">Hello World from section: %1$d</string>
+    <string name="title_activity_main2">Main2Activity</string>
+    <string name="tab_text_1">Tab 1</string>
+    <string name="tab_text_2">Tab 2</string>
+    <string name="tab_text_3">Tab 3</string>
+</resources>
