@@ -69,7 +69,7 @@ void AudioEngine::setupPlaybackStreamParameters(oboe::AudioStreamBuilder *builde
     // builder->setAudioApi(mAudioApi);
     //builder->setDeviceId(mPlaybackDeviceId);
     builder->setChannelCount(2);
-    builder->setAudioApi(AudioApi::OpenSLES)
+    builder->setAudioApi(AudioApi::OpenSLES);
     // We request EXCLUSIVE mode since this will give us the lowest possible latency.
     // If EXCLUSIVE mode isn't available the builder will fall back to SHARED mode.
     builder->setSharingMode(oboe::SharingMode::Exclusive);
