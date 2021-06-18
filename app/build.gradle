@@ -6,8 +6,8 @@ android {
         applicationId "xyz.sufystudios.didgsynth"
         minSdkVersion 16
         targetSdkVersion 30
-        versionCode 10310
-        versionName "1.03.10" +
+        versionCode 10502
+        versionName "1.05.02" +
                 ""
         resConfigs "en", "US"
         externalNativeBuild {
@@ -37,7 +37,7 @@ dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
 
     implementation 'com.anjlab.android.iab.v3:library:1.0.44'
-    implementation 'io.github.kobakei:ratethisapp:1.2.0'
+
 
 
     implementation 'com.android.support.constraint:constraint-layout:2.0.4'

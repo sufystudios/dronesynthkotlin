@@ -6,8 +6,26 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/pattern"
-
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    android:keepScreenOn="true"
     tools:context="xyz.sufystudios.didgsynth.MainActivity">
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/qtxt2"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_marginStart="9dp"
+        android:layout_marginLeft="9dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginRight="24dp"
+        android:text="Qright"
+        android:textColor="@color/colorPrimary"
+        app:layout_constraintBottom_toTopOf="@id/guideline5"
+        app:layout_constraintEnd_toEndOf="@+id/q"
+        app:layout_constraintStart_toEndOf="@id/qtxt"
+        app:layout_constraintStart_toStartOf="@+id/q"
+        app:layout_constraintTop_toBottomOf="@id/Q" />
 
     <it.beppi.knoblibrary.Knob
         android:id="@+id/attack"
@@ -54,11 +72,11 @@
         app:layout_constraintStart_toEndOf="@+id/sustain"
         app:layout_constraintTop_toTopOf="@+id/attack" />
 
-    <TextView
+    <com.google.android.material.textview.MaterialTextView
         android:id="@+id/attacktxt"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:text="AttackTime"
+        android:text="Attack"
         android:textColor="@color/colorPrimary"
         app:layout_constraintBottom_toTopOf="@id/guideline3"
         app:layout_constraintEnd_toEndOf="@+id/attack"
@@ -66,36 +84,36 @@
         app:layout_constraintStart_toStartOf="@+id/attack"
         app:layout_constraintTop_toBottomOf="@+id/attack" />
 
-    <TextView
+    <com.google.android.material.textview.MaterialTextView
         android:id="@+id/decaytxt"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginTop="8dp"
-        android:text="DecayTime"
+        android:text="Decay"
         android:textColor="@color/colorPrimary"
         app:layout_constraintBottom_toTopOf="@id/guideline3"
         app:layout_constraintEnd_toEndOf="@+id/decay"
         app:layout_constraintStart_toStartOf="@id/decay"
         app:layout_constraintTop_toBottomOf="@+id/decay" />
 
-    <TextView
+    <com.google.android.material.textview.MaterialTextView
         android:id="@+id/sustaintxt"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginTop="8dp"
-        android:text="SustainLevel"
+        android:text="Sustain"
         android:textColor="@color/colorPrimary"
         app:layout_constraintBottom_toTopOf="@id/guideline3"
         app:layout_constraintEnd_toEndOf="@id/sustain"
         app:layout_constraintStart_toStartOf="@id/sustain"
         app:layout_constraintTop_toBottomOf="@id/sustain" />
 
-    <TextView
+    <com.google.android.material.textview.MaterialTextView
         android:id="@+id/releasetxt"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginTop="8dp"
-        android:text="ReleaseTime"
+        android:text="Release"
         android:textColor="@color/colorPrimary"
         app:layout_constraintBottom_toTopOf="@id/guideline3"
         app:layout_constraintEnd_toEndOf="@id/release"
@@ -106,8 +124,9 @@
         android:id="@+id/delaytime"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:visibility="visible"
         app:kKnobDrawable="@drawable/knob3"
-        app:kNumberOfStates="50"
+        app:kNumberOfStates="100"
         app:layout_constraintBottom_toTopOf="@id/dtimetxt"
         app:layout_constraintEnd_toEndOf="@id/release"
         app:layout_constraintStart_toStartOf="@id/release"
@@ -142,6 +161,7 @@
         android:id="@+id/delayratio"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:visibility="visible"
         app:kKnobDrawable="@drawable/knob3"
         app:kNumberOfStates="50"
         app:layout_constraintBottom_toTopOf="@id/ratiotxt"
@@ -149,60 +169,47 @@
         app:layout_constraintStart_toStartOf="@id/sustain"
         app:layout_constraintTop_toBottomOf="@id/guideline3" />
 
-    <TextView
+    <com.google.android.material.textview.MaterialTextView
         android:id="@+id/feedbacktxt"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:text="EchoBounce"
+        android:text="Feedbck"
         android:textColor="@color/colorPrimary"
         app:layout_constraintBottom_toTopOf="@id/guideline2"
         app:layout_constraintEnd_toEndOf="@id/attack"
         app:layout_constraintStart_toStartOf="@id/attack"
         app:layout_constraintTop_toBottomOf="@id/feedback" />
 
-    <TextView
+    <com.google.android.material.textview.MaterialTextView
         android:id="@+id/dwtxt"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:shadowColor="@color/text_shadow_white"
-
-        android:shadowDx="-2"
-        android:shadowDy="-2"
-        android:shadowRadius="1"
-        android:text="EchoAmount"
-        android:textColor="@color/grey_font"
+        android:text="Dry/wet"
+        android:textColor="@color/colorPrimary"
         app:layout_constraintBottom_toTopOf="@id/guideline2"
         app:layout_constraintEnd_toEndOf="@id/decay"
         app:layout_constraintStart_toStartOf="@id/decay"
         app:layout_constraintTop_toBottomOf="@id/drywet" />
 
-    <TextView
+    <com.google.android.material.textview.MaterialTextView
         android:id="@+id/ratiotxt"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:shadowColor="@color/text_shadow_white"
-
-        android:shadowDx="-2"
-        android:shadowDy="-2"
-        android:shadowRadius="1"
-        android:text="EchoDirection"
-        android:textColor="@color/grey_font"
+        android:text="ratio"
+        android:textColor="@color/colorPrimary"
+        android:visibility="visible"
         app:layout_constraintBottom_toTopOf="@id/guideline2"
         app:layout_constraintEnd_toEndOf="@id/sustain"
         app:layout_constraintStart_toStartOf="@id/sustain"
         app:layout_constraintTop_toBottomOf="@id/delayratio" />
 
-    <TextView
+    <com.google.android.material.textview.MaterialTextView
         android:id="@+id/dtimetxt"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:shadowColor="@color/text_shadow_white"
-
-        android:shadowDx="-2"
-        android:shadowDy="-2"
-        android:shadowRadius="1"
-        android:text="EchoDistance"
-        android:textColor="@color/grey_font"
+        android:text="dtime"
+        android:textColor="@color/colorPrimary"
+        android:visibility="visible"
         app:layout_constraintBottom_toTopOf="@id/guideline2"
         app:layout_constraintEnd_toEndOf="@id/release"
         app:layout_constraintStart_toStartOf="@id/release"
@@ -225,7 +232,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:kKnobDrawable="@drawable/knob3"
-        app:kNumberOfStates="50"
+        app:kNumberOfStates="30"
         app:layout_constraintBottom_toTopOf="@id/lfopitchtxt"
         app:layout_constraintEnd_toEndOf="@id/attack"
         app:layout_constraintStart_toStartOf="@id/attack"
@@ -234,344 +241,342 @@
 
         />
 
-    <TextView
+    <com.google.android.material.textview.MaterialTextView
         android:id="@+id/lfofilttxt"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:shadowColor="@color/text_shadow_white"
-        android:shadowDx="-2"
 
-        android:shadowDy="-2"
-        android:shadowRadius="1"
-        android:src="@drawable/tube"
-        android:text="BreathImpact"
-        android:textColor="@color/grey_font"
+        android:text="LFOFilt"
+        android:textColor="@color/colorPrimary"
         app:layout_constraintBottom_toTopOf="@+id/LFORate"
         app:layout_constraintEnd_toEndOf="@id/LFOFilter"
         app:layout_constraintStart_toStartOf="@id/LFOFilter"
         app:layout_constraintTop_toBottomOf="@id/LFOFilter" />
 
-    <TextView
+    <com.google.android.material.textview.MaterialTextView
         android:id="@+id/lfopitchtxt"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:shadowColor="@color/text_shadow_white"
-
-        android:shadowDx="-2"
-        android:shadowDy="-2"
-        android:shadowRadius="1"
-        android:text="BreathPitch"
-        android:textColor="@color/grey_font"
+        android:text="LFOPitch"
+        android:textColor="@color/colorPrimary"
         app:layout_constraintBottom_toTopOf="@+id/LFORate"
         app:layout_constraintEnd_toEndOf="@id/attack"
         app:layout_constraintStart_toStartOf="@id/attack"
         app:layout_constraintTop_toBottomOf="@id/LFOPitch" />
 
-    <SeekBar
+    <androidx.appcompat.widget.AppCompatSeekBar
         android:id="@+id/LFORate"
         android:layout_width="0dp"
         android:layout_height="0dp"
 
-        android:max="1000"
-        android:progress="400"
+        android:max="333"
+        android:progress="0"
         android:progressDrawable="@drawable/volume_seekbar"
         android:thumbTint="@color/green"
         app:layout_constraintBottom_toTopOf="@id/lforatetxt"
         app:layout_constraintEnd_toEndOf="@id/release"
-        app:layout_constraintStart_toStartOf="@id/attack"
+        app:layout_constraintStart_toEndOf="@+id/tube"
         app:layout_constraintTop_toBottomOf="@id/lfofilttxt" />
-
-    <TextView
-        android:id="@+id/lforatetxt"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:shadowColor="@color/text_shadow_white"
-
-        android:shadowDx="-2"
-        android:shadowDy="-2"
-        android:shadowRadius="1"
-        android:text="Didgeridoo Breath Speed"
-        android:textColor="@color/grey_font"
-        app:layout_constraintBottom_toTopOf="@id/guideline4"
-        app:layout_constraintEnd_toEndOf="@id/LFORate"
-        app:layout_constraintStart_toStartOf="@id/LFORate"
-        app:layout_constraintTop_toBottomOf="@id/LFORate" />
 
 
     <!-- keyboard -->
-    <Button
-        android:id="@+id/asharp"
-        android:layout_width="29dp"
-        android:layout_height="50dp"
 
-        android:background="@android:color/black"
-        android:text="A#"
-        android:textColor="@color/colorPrimary"
-
-        app:layout_constraintStart_toEndOf="@+id/a"
-app:layout_constraintTop_toTopOf="@id/csharp"
-        app:layout_constraintBottom_toBottomOf="@id/csharp"
-        app:layout_constraintEnd_toStartOf="@id/b"
-    />
-
-    <Button
-        android:id="@+id/csharp"
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/lforatetxt"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="@android:color/black"
+        android:text="LFO Frequency"
+        android:textColor="@color/colorPrimary"
+        app:layout_constraintBottom_toTopOf="@id/guideline4"
+        app:layout_constraintEnd_toStartOf="@+id/aibutton"
+        app:layout_constraintStart_toStartOf="@id/LFORate"
+        app:layout_constraintTop_toBottomOf="@id/LFORate" />
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/asharp"
+        android:layout_width="47dp"
+        android:layout_height="50dp"
+
+        android:background="#0E0D0D"
+        android:text="A#"
+        android:textColor="@color/colorPrimary"
+        app:backgroundTint="#000000"
+        app:iconPadding="2dp"
+        app:layout_constraintBottom_toBottomOf="@id/csharp"
+        app:layout_constraintEnd_toStartOf="@id/b"
+        app:layout_constraintStart_toEndOf="@+id/a"
+        app:layout_constraintTop_toTopOf="@id/csharp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/csharp"
+        android:layout_width="47dp"
+        android:layout_height="50dp"
+
+        android:background="#0C0C0C"
         android:text="C#"
         android:textColor="@color/colorPrimary"
+        app:backgroundTint="#000000"
         app:layout_constraintBottom_toTopOf="@id/whitetop"
+        app:layout_constraintEnd_toStartOf="@id/d"
         app:layout_constraintStart_toEndOf="@+id/c"
-        app:layout_constraintTop_toBottomOf="@id/blacktop"
-        app:layout_constraintEnd_toStartOf="@id/d"/>
+        app:layout_constraintTop_toBottomOf="@id/blacktop" />
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/dsharp"
-        android:layout_width="30dp"
+        android:layout_width="47dp"
         android:layout_height="50dp"
-        android:background="@android:color/black"
+        android:background="#0E0D0D"
         android:text="D#"
         android:textColor="@color/colorPrimary"
+        app:backgroundTint="#000000"
         app:layout_constraintBottom_toBottomOf="@+id/csharp"
         app:layout_constraintEnd_toStartOf="@id/e"
         app:layout_constraintStart_toEndOf="@+id/d"
-        app:layout_constraintTop_toTopOf="@id/csharp"/>
-    <Button
+        app:layout_constraintTop_toTopOf="@id/csharp" />
+
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/fsharp"
-        android:layout_width="29dp"
+        android:layout_width="47dp"
         android:layout_height="50dp"
-        android:background="@android:color/black"
+        android:background="#121010"
         android:text="F#"
         android:textColor="@color/colorPrimary"
+        app:backgroundTint="#000000"
         app:layout_constraintBottom_toBottomOf="@id/csharp"
         app:layout_constraintEnd_toStartOf="@id/g"
         app:layout_constraintStart_toEndOf="@+id/f"
         app:layout_constraintTop_toTopOf="@+id/csharp" />
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/gsharp"
-        android:layout_width="29dp"
+        android:layout_width="47dp"
         android:layout_height="50dp"
-        android:background="@android:color/black"
-        android:text="G#"
+        android:background="#121010"
 
+        android:text="G#"
+        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
         android:textColor="@color/colorPrimary"
+        app:backgroundTint="#000000"
         app:layout_constraintBottom_toBottomOf="@id/csharp"
         app:layout_constraintEnd_toStartOf="@id/a"
         app:layout_constraintStart_toEndOf="@+id/g"
         app:layout_constraintTop_toTopOf="@id/csharp" />
 
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/e"
-        android:layout_width="0dp"
+        android:layout_width="40dp"
         android:layout_height="0dp"
-        android:layout_marginEnd="32dp"
-        android:layout_marginRight="32dp"
-        android:background="@android:color/white"
+        android:layout_marginStart="16dp"
+        android:layout_marginLeft="16dp"
         android:text="E"
+        android:textColor="#000000"
+        app:backgroundTint="#FFFFFF"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/f"
         app:layout_constraintStart_toEndOf="@+id/d"
         app:layout_constraintTop_toBottomOf="@id/whitetop" />
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/f"
-        android:layout_width="0dp"
+        android:layout_width="44dp"
         android:layout_height="0dp"
-        android:layout_marginEnd="32dp"
-        android:layout_marginRight="32dp"
-        android:background="@android:color/white"
+        android:layout_marginStart="16dp"
+        android:layout_marginLeft="16dp"
         android:text="F"
+        android:textColor="#000000"
+        app:backgroundTint="#FFFFFF"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/g"
         app:layout_constraintStart_toEndOf="@+id/e"
         app:layout_constraintTop_toBottomOf="@id/whitetop" />
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/d"
-        android:layout_width="0dp"
+        android:layout_width="44dp"
         android:layout_height="0dp"
-        android:layout_marginEnd="32dp"
-        android:layout_marginRight="32dp"
-        android:background="@android:color/white"
+        android:layout_marginStart="16dp"
+        android:layout_marginLeft="16dp"
         android:text="D"
+        android:textColor="#000000"
+        app:backgroundTint="#FFFFFF"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/e"
         app:layout_constraintStart_toEndOf="@+id/c"
         app:layout_constraintTop_toBottomOf="@id/whitetop" />
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/c"
-        style="@style/Widget.AppCompat.Button.Small"
-        android:layout_width="0dp"
+        android:layout_width="44dp"
         android:layout_height="0dp"
-        android:layout_marginLeft="8dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="32dp"
-        android:layout_marginRight="32dp"
-        android:background="@android:color/white"
+        android:layout_marginStart="10dp"
+        android:layout_marginLeft="10dp"
         android:text="C"
+        android:textColor="#000000"
+        app:backgroundTint="#FFFFFF"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/d"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/whitetop" />
+        app:layout_constraintTop_toTopOf="@+id/whitetop" />
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/g"
 
-        android:layout_width="0dp"
+        android:layout_width="44dp"
         android:layout_height="0dp"
-        android:layout_marginEnd="32dp"
-        android:layout_marginRight="32dp"
-        android:background="@android:color/white"
-        android:text="G"
-        app:layout_constraintBottom_toBottomOf="@id/c"
-        app:layout_constraintEnd_toStartOf="@+id/a"
-        app:layout_constraintStart_toEndOf="@+id/f"
-        app:layout_constraintTop_toTopOf="@id/c" />
+        android:layout_marginStart="16dp"
+        android:layout_marginLeft="16dp"
 
-    <Button
-        android:id="@+id/a"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginEnd="32dp"
-        android:layout_marginRight="32dp"
-        android:background="@android:color/white"
-        android:text="A"
+        android:text="G"
+        android:textColor="#000000"
+        app:backgroundTint="#FFFFFF"
+        app:iconPadding="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/b"
+        app:layout_constraintStart_toEndOf="@+id/f"
+        app:layout_constraintTop_toTopOf="@+id/whitetop" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/a"
+        android:layout_width="44dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginLeft="16dp"
+        android:text="A"
+        android:textColor="#000000"
+        app:backgroundTint="#FFFFFF"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toEndOf="@id/g"
         app:layout_constraintTop_toBottomOf="@id/whitetop" />
 
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/b"
-        android:layout_width="0dp"
+        android:layout_width="44dp"
         android:layout_height="0dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginRight="8dp"
-        android:background="@android:color/white"
+        android:layout_marginStart="16dp"
+        android:layout_marginLeft="16dp"
         android:text="B"
+        android:textColor="#000000"
+        app:backgroundTint="#FFFFFF"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/a"
         app:layout_constraintTop_toBottomOf="@+id/whitetop" />
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/octdown"
         style="@style/Widget.AppCompat.Button.Small"
         android:layout_width="wrap_content"
-        android:layout_height="0dp"
+        android:layout_height="50dp"
 
 
         android:backgroundTint="@color/colorPrimary"
         android:text="-Octave"
         android:textColor="@color/colorPrimaryDark"
+        app:backgroundTint="#8BC34A"
         app:layout_constraintBottom_toTopOf="@+id/csharp"
         app:layout_constraintEnd_toStartOf="@id/oct"
         app:layout_constraintStart_toStartOf="@id/attack"
-        app:layout_constraintTop_toBottomOf="@id/guideline5"
-        tools:visibility="invisible" />
+        app:layout_constraintTop_toBottomOf="@id/guideline5" />
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/octup"
         style="@style/Widget.AppCompat.Button.Small"
         android:layout_width="wrap_content"
-        android:layout_height="0dp"
+        android:layout_height="50dp"
 
         android:backgroundTint="@color/colorPrimary"
         android:text="+Octave"
         android:textColor="@color/colorPrimaryDark"
+        app:backgroundTint="#CDDC39"
         app:layout_constraintBottom_toBottomOf="@id/octdown"
         app:layout_constraintStart_toEndOf="@+id/oct"
-        app:layout_constraintTop_toTopOf="@+id/octdown"
-        tools:visibility="visible" />
+        app:layout_constraintTop_toTopOf="@+id/octdown" />
 
-    <TextView
+    <com.google.android.material.textview.MaterialTextView
         android:id="@+id/oct"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:shadowColor="@color/text_shadow_white"
-
-        android:shadowDx="-2"
-        android:shadowDy="-2"
-        android:shadowRadius="1"
-        android:text="Length"
-        android:textColor="@color/grey_font"
-        android:textSize="14sp"
-        android:textStyle="bold"
+        android:text="TextView"
+        android:textColor="@color/colorPrimary"
         app:layout_constraintBottom_toBottomOf="@id/octdown"
         app:layout_constraintStart_toEndOf="@id/octdown"
-        app:layout_constraintTop_toTopOf="@id/octdown"
-        tools:visibility="visible" />
+        app:layout_constraintTop_toTopOf="@id/octdown" />
     <!-- filter -->
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/prev"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-
-
-        android:background="@android:color/holo_red_dark"
-
-        android:gravity="center|top"
-        android:text="previous"
-        android:textColor="@color/colorPrimaryDark"
-        android:textSize="6sp"
-        app:layout_constraintBottom_toTopOf="@id/filter"
-        app:layout_constraintEnd_toEndOf="@id/sustain"
-        app:layout_constraintStart_toStartOf="@id/sustain"
-        app:layout_constraintTop_toBottomOf="@id/guideline" />
-
-    <Button
-        android:id="@+id/next"
         android:layout_width="wrap_content"
         android:layout_height="0dp"
 
-        android:background="@android:color/holo_green_dark"
+
+        android:gravity="center|top"
+        android:text="previous"
+        android:textColor="#DFFFFFFF"
+        android:textSize="8sp"
+        android:textStyle="bold"
+        app:backgroundTint="#9C27B0"
+        app:layout_constraintBottom_toTopOf="@id/filter"
+        app:layout_constraintEnd_toStartOf="@id/next"
+        app:layout_constraintStart_toStartOf="@id/sustain"
+        app:layout_constraintTop_toBottomOf="@id/guideline" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/next"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
 
 
         android:gravity="center|top"
 
         android:text="next"
-        android:textColor="@color/colorPrimaryDark"
-        android:textSize="6sp"
+        android:textColor="#E9EAEC"
+        android:textSize="8sp"
+        android:textStyle="bold"
+        app:backgroundTint="#673AB7"
         app:layout_constraintBottom_toTopOf="@+id/filter"
-        app:layout_constraintEnd_toEndOf="@id/release"
-        app:layout_constraintStart_toStartOf="@id/release"
+        app:layout_constraintEnd_toStartOf="@+id/hidehelp"
+        app:layout_constraintStart_toEndOf="@id/prev"
         app:layout_constraintTop_toBottomOf="@id/guideline" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/hidehelp"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+
+
+        android:gravity="center|top"
+
+        android:text="Hide"
+        android:textColor="#F3F3F3"
+        android:textSize="8sp"
+        android:textStyle="bold"
+
+        app:backgroundTint="#E91E63"
+
+        app:layout_constraintBottom_toTopOf="@+id/filter"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/next"
+        app:layout_constraintTop_toBottomOf="@+id/guide" />
 
     <SeekBar
         android:id="@+id/filter"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:max="1000"
+        android:max="333"
 
-        android:progress="400"
+        android:progress="0"
         android:progressDrawable="@drawable/volume_seekbar"
         android:thumbTint="@color/green"
         app:layout_constraintBottom_toTopOf="@id/filtertxt"
         app:layout_constraintEnd_toEndOf="@+id/sustain"
+        app:layout_constraintEnd_toStartOf="@+id/fsharp"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="@id/attack"
         app:layout_constraintTop_toBottomOf="@id/prev" />
 
-    <TextView
+    <com.google.android.material.textview.MaterialTextView
         android:id="@+id/filtertxt"
         android:layout_width="wrap_content"
         android:layout_height="0dp"
         android:layout_marginBottom="8dp"
-        android:shadowColor="@color/text_shadow_white"
-
-        android:shadowDx="-2"
-        android:shadowDy="-2"
-        android:shadowRadius="1"
-        android:text="Didgeridoo Tone"
-        android:textColor="@color/grey_font"
-        android:textSize="14sp"
-        android:textStyle="bold"
+        android:text="FilterFc"
+        android:textColor="@color/colorPrimary"
         app:layout_constraintBottom_toTopOf="@+id/guideline5"
         app:layout_constraintStart_toStartOf="@id/attack"
         app:layout_constraintTop_toBottomOf="@id/filter" />
@@ -583,40 +588,56 @@ app:layout_constraintTop_toTopOf="@id/csharp"
         android:max="100"
         android:padding="3dp"
 
-        android:progress="50"
+        android:progressDrawable="@drawable/volume_seekbar"
+        android:thumbTint="@color/green"
+        app:layout_constraintBottom_toTopOf="@id/qtxt"
+        app:layout_constraintEnd_toStartOf="@id/q"
+        app:layout_constraintStart_toEndOf="@+id/filter"
+        app:layout_constraintTop_toBottomOf="@id/next" />
+
+    <SeekBar
+        android:id="@+id/q"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:max="100"
+        android:padding="3dp"
+
         android:progressDrawable="@drawable/volume_seekbar"
         android:thumbTint="@color/green"
         app:layout_constraintBottom_toTopOf="@id/qtxt"
         app:layout_constraintEnd_toEndOf="@id/release"
-        app:layout_constraintStart_toStartOf="@id/release"
+        app:layout_constraintStart_toEndOf="@id/Q"
         app:layout_constraintTop_toBottomOf="@id/next" />
 
-    <TextView
+    <com.google.android.material.textview.MaterialTextView
         android:id="@+id/qtxt"
         android:layout_width="wrap_content"
         android:layout_height="0dp"
-        android:text="Mouth Position"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:text="Qleft"
         android:textColor="@color/colorPrimary"
         app:layout_constraintBottom_toTopOf="@id/guideline5"
-        app:layout_constraintEnd_toEndOf="@id/release"
-        app:layout_constraintStart_toStartOf="@id/release"
+        app:layout_constraintEnd_toEndOf="@id/Q"
+        app:layout_constraintStart_toStartOf="@+id/Q"
         app:layout_constraintTop_toBottomOf="@id/Q" />
 
 
-    <ToggleButton
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/drone"
         android:layout_width="wrap_content"
-        android:layout_height="0dp"
+        android:layout_height="50dp"
         android:layout_marginBottom="8dp"
         android:backgroundTint="@color/colorPrimary"
-        android:text="Drone"
+        android:text=" Drone OFF"
         android:textColor="@color/colorPrimaryDark"
+        app:backgroundTint="#FF9800"
         app:layout_constraintBottom_toBottomOf="@id/octdown"
         app:layout_constraintEnd_toEndOf="@id/release"
         app:layout_constraintStart_toStartOf="@id/release"
         app:layout_constraintTop_toTopOf="@+id/octdown" />
 
-    <TextView
+    <com.google.android.material.textview.MaterialTextView
         android:id="@+id/dronetxt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -624,7 +645,7 @@ app:layout_constraintTop_toTopOf="@id/csharp"
         android:layout_marginEnd="8dp"
         android:layout_marginRight="8dp"
         android:layout_marginBottom="8dp"
-        android:text="Circular"
+        android:text="Drone"
         android:textColor="@color/colorPrimary"
         app:layout_constraintBottom_toBottomOf="@+id/drone"
         app:layout_constraintEnd_toStartOf="@+id/drone"
@@ -635,20 +656,20 @@ app:layout_constraintTop_toTopOf="@id/csharp"
         android:id="@+id/reverb"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:progressDrawable="@drawable/volume_seekbar"
-        android:thumbTint="@color/green"
         android:max="100"
         android:progress="0"
+        android:progressDrawable="@drawable/volume_seekbar"
+        android:thumbTint="@color/green"
         app:layout_constraintBottom_toTopOf="@id/reverbtxt"
         app:layout_constraintEnd_toEndOf="@id/release"
         app:layout_constraintStart_toStartOf="@id/sustain"
         app:layout_constraintTop_toBottomOf="@id/guideline2" />
 
-    <TextView
+    <com.google.android.material.textview.MaterialTextView
         android:id="@+id/reverbtxt"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Room Size"
+        android:text="Reverb+Drive!"
         android:textColor="@color/colorPrimary"
         app:layout_constraintBottom_toTopOf="@id/LFORate"
         app:layout_constraintEnd_toEndOf="@id/reverb"
@@ -658,18 +679,19 @@ app:layout_constraintTop_toTopOf="@id/csharp"
 
         />
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/selectWave"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
 
         android:backgroundTint="@color/colorPrimary"
-        android:text="Saw"
+        android:text="Harmony"
         android:textColor="@color/colorPrimaryDark"
-        app:layout_constraintEnd_toEndOf="@id/attack"
-        app:layout_constraintStart_toStartOf="@id/attack"
-        app:layout_constraintTop_toBottomOf="@id/guideline4"
-        tools:visibility="visible" />
+        app:backgroundTint="#F44336"
+        app:iconTint="#F44336"
+        app:layout_constraintEnd_toEndOf="@+id/randomovertones"
+        app:layout_constraintStart_toStartOf="@+id/randomovertones"
+        app:layout_constraintTop_toBottomOf="@id/guideline4" />
 
     <ImageView
         android:id="@+id/tube"
@@ -677,14 +699,13 @@ app:layout_constraintTop_toTopOf="@id/csharp"
         android:layout_height="0dp"
 
 
+        android:src="@drawable/tube"
         android:visibility="visible"
-        app:layout_constraintBottom_toBottomOf="@+id/selectWave"
-        app:layout_constraintEnd_toStartOf="@+id/prev"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toEndOf="@+id/selectWave"
-        app:layout_constraintTop_toTopOf="@+id/selectWave"
-        app:layout_constraintVertical_bias="0.502"
-        app:srcCompat="@drawable/tube" />
+        app:layout_constraintBottom_toTopOf="@+id/selectWave"
+        app:layout_constraintEnd_toStartOf="@+id/reverb"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="@+id/lfofilttxt"
+        app:layout_constraintTop_toBottomOf="@+id/lfofilttxt" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline"
@@ -714,7 +735,7 @@ app:layout_constraintTop_toTopOf="@id/csharp"
         android:orientation="horizontal"
         app:layout_constraintGuide_percent="0.5" />
 
-    <TextView
+    <com.google.android.material.textview.MaterialTextView
         android:id="@+id/guide"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -754,8 +775,7 @@ app:layout_constraintTop_toTopOf="@id/csharp"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         app:layout_constraintGuide_percent="0.08"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:visibility="visible" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline9"
@@ -769,17 +789,15 @@ app:layout_constraintTop_toTopOf="@id/csharp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.35" />
+        app:layout_constraintGuide_begin="206dp" />
 
-    <EditText
+    <com.google.android.material.textfield.TextInputEditText
         android:id="@+id/hertz"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginLeft="8dp"
         android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginRight="8dp"
         android:ems="10"
         android:hint="hertz"
         android:inputType="number"
@@ -790,9 +808,58 @@ app:layout_constraintTop_toTopOf="@id/csharp"
         android:textColorHint="@color/green"
         android:visibility="visible"
         app:layout_constraintBottom_toTopOf="@+id/guideline"
-        app:layout_constraintEnd_toStartOf="@+id/guide"
+        app:layout_constraintEnd_toStartOf="@+id/prev"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/selectWave" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/randlfo"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_marginStart="2dp"
+        android:layout_marginLeft="2dp"
+        android:text="Random LFO Rate"
+        android:textSize="8sp"
+        app:backgroundTint="#9C27B0"
+        app:layout_constraintBottom_toTopOf="@+id/lforatetxt"
+        app:layout_constraintEnd_toStartOf="@+id/tube"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/lfopitchtxt" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/randomovertones"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:text="Overtones"
+        android:textSize="8sp"
+        app:backgroundTint="#4CAF50"
+        app:layout_constraintBottom_toTopOf="@+id/selectWave"
+        app:layout_constraintEnd_toEndOf="@+id/randlfo"
+        app:layout_constraintStart_toStartOf="@+id/randlfo"
+        app:layout_constraintTop_toBottomOf="@+id/randlfo" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/looper"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:text="Looper"
+        android:textSize="8sp"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toTopOf="@+id/hertz"
+        app:layout_constraintEnd_toStartOf="@+id/guide"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toEndOf="@+id/selectWave"
+        app:layout_constraintTop_toBottomOf="@+id/tube" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/aibutton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="AI DRONE"
+        app:backgroundTint="#009688"
+        app:layout_constraintBottom_toTopOf="@+id/guide"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/LFORate" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

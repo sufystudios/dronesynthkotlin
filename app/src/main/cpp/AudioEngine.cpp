@@ -25,12 +25,12 @@ AudioEngine::onAudioReady(AudioStream *oboeStream, void *audioData, int32_t numf
 
     int32_t bufferSize = stream->getBufferSizeInFrames();
 
-    if (mBufferSizeSelection == kBufferSizeAutomatic) {
-        mLatencyTuner->tune();
-    } else if (bufferSize != (mBufferSizeSelection * mFramesPerBurst)) {
-        auto setBufferResult = stream->setBufferSizeInFrames(mBufferSizeSelection * mFramesPerBurst);
-        if (setBufferResult == oboe::Result::OK) bufferSize = setBufferResult.value();
-    }
+//    if (mBufferSizeSelection == kBufferSizeAutomatic) {
+//        mLatencyTuner->tune();
+//    } else if (bufferSize != (mBufferSizeSelection * mFramesPerBurst)) {
+//        auto setBufferResult = stream->setBufferSizeInFrames(mBufferSizeSelection * mFramesPerBurst);
+//        if (setBufferResult == oboe::Result::OK) bufferSize = setBufferResult.value();
+//    }
 
     /**
      * The following output can be seen by running a systrace. Tracing is preferable to logging
@@ -52,9 +52,9 @@ AudioEngine::onAudioReady(AudioStream *oboeStream, void *audioData, int32_t numf
                                   numframes * channels);
     }
 
-    if (mIsLatencyDetectionSupported) {
-        calculateCurrentOutputLatencyMillis( &mCurrentOutputLatencyMillis);
-    }
+//    if (mIsLatencyDetectionSupported) {
+//        calculateCurrentOutputLatencyMillis( &mCurrentOutputLatencyMillis);
+//    }
 
     Trace::endSection();
 
@@ -69,11 +69,13 @@ void AudioEngine::setupPlaybackStreamParameters(oboe::AudioStreamBuilder *builde
     // builder->setAudioApi(mAudioApi);
     //builder->setDeviceId(mPlaybackDeviceId);
     builder->setChannelCount(2);
-    builder->setAudioApi(AudioApi::OpenSLES);
+
     // We request EXCLUSIVE mode since this will give us the lowest possible latency.
     // If EXCLUSIVE mode isn't available the builder will fall back to SHARED mode.
+
+    builder->setSampleRate(44100);
     builder->setSharingMode(oboe::SharingMode::Exclusive);
-    builder->setPerformanceMode(oboe::PerformanceMode::LowLatency);
+    builder->setPerformanceMode(oboe::PerformanceMode::None);
     builder->setCallback(this);
 }
 void AudioEngine::setChannelCount(int channelCount) {
@@ -87,6 +89,7 @@ void AudioEngine::setChannelCount(int channelCount) {
     }
 }
 void AudioEngine::createPlaybackStream() {
+    doStuff();
 
     oboe::AudioStreamBuilder builder;
     setupPlaybackStreamParameters(&builder);
@@ -115,16 +118,22 @@ void AudioEngine::createPlaybackStream() {
                  " for float->int16 conversion", conversionBufferSamples);
             mConversionBuffer = std::make_unique<float[]>(conversionBufferSamples);
         }
-
+        StreamState inputState = StreamState::Pausing;
+        StreamState nextState = StreamState::Uninitialized;
+        int64_t timeoutNanos = 100 * kNanosPerMillisecond;
+//        result = stream->requestPause();
+//        result = stream->waitForStateChange(inputState, &nextState, timeoutNanos);
+//stream->requestFlush();
         mSampleRate=stream->getSampleRate();
-
+        setSampleRates();
+        music.setSampleRate(mSampleRate);
         channels=stream->getChannelCount();
         channelCount=channels;
 
 
         // Create a latency tuner which will automatically tune our buffer size.
         mLatencyTuner = std::make_unique<oboe::LatencyTuner>(*stream);
-        doStuff();
+
         // Start the stream - the dataCallback function will start being called
         result = stream->requestStart();
         if (result != oboe::Result::OK) {
@@ -176,8 +185,15 @@ AudioEngine::calculateCurrentOutputLatencyMillis(
 }
 
 AudioEngine::~AudioEngine() {
+    LOGE("Destroying Wave Tables");
+    oscillator_.destroyWaveTables();
+    oscillator1_.destroyWaveTables();
+    oscillator2_.destroyWaveTables();
+    oscillator3_.destroyWaveTables();
+    oscillator0_.destroyWaveTables();
 
-    closeOutputStream();
+    LOGE("Tables Destroyed");
+
 }
 
 void AudioEngine::closeOutputStream() {
@@ -187,21 +203,22 @@ void AudioEngine::closeOutputStream() {
         if (result != oboe::Result::OK) {
             LOGE("Error stopping output stream. %s", oboe::convertToText(result));
         }
-
+        stream->requestFlush();
         result = stream->close();
         if (result != oboe::Result::OK) {
             LOGE("Error closing output stream. %s", oboe::convertToText(result));
         }
     }
 }
+
 bool AudioEngine::start() {
     oboe::AudioStreamBuilder builder;
     builder.setCallback(this);
-    builder.setPerformanceMode(oboe::PerformanceMode::LowLatency);
-    builder.setSharingMode(SharingMode::Exclusive);
+    builder.setPerformanceMode(oboe::PerformanceMode::None);
+    // builder.setSharingMode(SharingMode::Exclusive);
 
     Result result = builder.openStream(&stream);
-    doStuff();
+
     LOGE("done stuff");
     channels = stream->getChannelCount();
     if (stream->getFormat() == oboe::AudioFormat::I16) {
@@ -248,18 +265,24 @@ void AudioEngine::setDeviceId(int32_t deviceId) {
     if (deviceId != currentDeviceId) restartStream();
 }
 void AudioEngine::restart(){
-
-    static std::mutex restartingLock;
-    if (restartingLock.try_lock()){
-        stop();
-        start();
-        restartingLock.unlock();
-    }
+    stream->requestStart();
 }
 
 void AudioEngine::stop() {
-    if (stream != nullptr)
-        stream->close();
+    static std::mutex pauselock;
+    if(pauselock.try_lock()) {
+
+        Result result;
+        StreamState inputState = StreamState::Pausing;
+        StreamState nextState = StreamState::Uninitialized;
+        int64_t timeoutNanos = 100 * kNanosPerMillisecond;
+        result = stream->requestPause();
+        result = stream->waitForStateChange(inputState, &nextState, timeoutNanos);
+        stream->requestFlush();
+
+        pauselock.unlock();
+    }
+
 
 
 }
@@ -290,44 +313,56 @@ void AudioEngine::doStuff() {
     oscillator3_.m_nCents=-1;
 
     music.setOsc(&oscillator_, &oscillator0_, &oscillator1_, &oscillator2_,&oscillator3_);
-    music.setDelay(&delay);
+    music.setDelay(&delay,&looperdelay);
     music.setEnv(&env);
     music.setDCA(&dca);
     music.setLFO(&lfo);
     music.setModMatrix(&m_GlobalModMatrix);
-    music.setFilter(&filter);
+    music.setFilter(&filter, &filter2);
+    music.setSampleRate(mSampleRate);
 
     // Opens the stream.
+    env.setEGMode(env.analog);
 
+    env.m_bLegatoMode=true;
 
     // Retrieves the sample rate of the stream for our oscillator.
+
+    lfo.startOscillator();
+    lfo.oscfc = 0;
+    lfo.m_dOscFo = 0;
+
+    dca.setAmplitude_dB(100);
+    dca.setEGMod(1);
+    dca.setPanControl(0.1);
+
+    delay.setDelayTime_mSec(0);
+    delay.setFeedback_Pct(0);
+    delay.setDelayRatio(0);
+    delay.setWetMix(0);
+    delay.setMode(2);
+    delay.update();
+    ChangeKnob(15,0);
+    LOGE("EDo Stuff", "dostuff");
+}
+void AudioEngine::setSampleRates() {
     int sampleRate = stream->getSampleRate();
 
     LOGE("sample rate %d", sampleRate);
-    reverb.prepareReverb(sampleRate);
-    music.setReverb(&reverb);
+    music.reverb.prepareReverb(sampleRate);
+    //music.reverb2.prepareReverb(sampleRate);
     oscillator_.setSampleRate(sampleRate);
     oscillator0_.setSampleRate(sampleRate);
     oscillator1_.setSampleRate(sampleRate);
     oscillator2_.setSampleRate(sampleRate);
     oscillator3_.setSampleRate(sampleRate);
     filter.setSampleRate(sampleRate);
+    filter2.setSampleRate(sampleRate);
     lfo.setSampleRate(sampleRate);
-    lfo.startOscillator();
-    lfo.oscfc = 0;
-    lfo.m_dOscFo = 0;
     env.setSampleRate(sampleRate);
-    dca.setAmplitude_dB(100);
-    dca.setEGMod(1);
-    dca.setPanControl(0.1);
     delay.prepareForPlay(sampleRate);
-    delay.setDelayTime_mSec(0);
-    delay.setFeedback_Pct(0);
-    delay.setDelayRatio(0);
-    delay.setWetMix(0);
-    delay.setMode(3);
-    delay.update();
-    ChangeKnob(15,0);
+    //  looperdelay.setSampleRate(sampleRate);
+    // looperdelay.init(2*sampleRate);
 
 }
 void AudioEngine::onErrorAfterClose(oboe::AudioStream *oboeStream, oboe::Result error) {
@@ -374,7 +409,10 @@ void AudioEngine::setAudioApi(oboe::AudioApi audioApi) {
 
 void AudioEngine::setToneOn(bool isToneOn) {
     // env.startEG();
-    if(isToneOn) {
+//static std::mutex noteon;
+//if(noteon.try_lock()) {
+    if(isToneOn ) {
+
         oscillator_.startOscillator();
         oscillator0_.startOscillator();
         oscillator1_.startOscillator();
@@ -386,240 +424,325 @@ void AudioEngine::setToneOn(bool isToneOn) {
     else {
         // oscillator_.stopOscillator();
         // oscillator_.m_bNoteOn=false;
-        __android_log_print(ANDROID_LOG_ERROR, "tagtest","data:%d",drone);
+        //  __android_log_print(ANDROID_LOG_ERROR, "tagtest","data:%d",drone);
 
-        if(drone==0)
+        if(drone==0) {
             env.noteOff();
+
+        }
     }
+
+//noteon.unlock();
+
 }
 
 void AudioEngine::setNote(int note) {
-    //oscillator_.setNote(getHertz(note));
-    oscillator_.m_dOscFo = getHertz(note );
-    oscillator0_.m_dOscFo=getHertz(note );
-    oscillator1_.m_dOscFo=getHertz(note );
-    oscillator2_.m_dOscFo=getHertz(note );
+    static std::mutex notelock;
+    if(notelock.try_lock()) {
+        //oscillator_.setNote(getHertz(note));
+        float hz = getHertz(note);
+        oscillator_.m_dOscFo = hz;
+        oscillator0_.m_dOscFo = hz;
+        oscillator1_.m_dOscFo = hz;
+        oscillator2_.m_dOscFo = hz;
 
-    oscillator3_.m_dOscFo=getHertz(note);
+        oscillator3_.m_dOscFo = hz;
 
 
-    oscillator_.m_uMIDINoteNumber = getHertz(note);
-    oscillator0_.m_uMIDINoteNumber=getHertz(note);
-    oscillator1_.m_uMIDINoteNumber=getHertz(note);
-    oscillator2_.m_uMIDINoteNumber=getHertz(note);
-    oscillator3_.m_uMIDINoteNumber=getHertz(note);
-    __android_log_print(ANDROID_LOG_ERROR, "tagtest","note : %d  : Freq %f",note, oscillator_.m_dOscFo);
-    oscillator_.update();
-    oscillator0_.update();
-    oscillator1_.update();
-    oscillator2_.update();
-    oscillator3_.update();
+//   oscillator_.m_uMIDINoteNumber = note;
+//   oscillator0_.m_uMIDINoteNumber=note;
+//   oscillator1_.m_uMIDINoteNumber=note);
+//   oscillator2_.m_uMIDINoteNumber=getHertz(note);
+//   oscillator3_.m_uMIDINoteNumber=getHertz(note);
+        oscillator_.update();
+        oscillator0_.update();
+        oscillator1_.update();
 
-}
+        oscillator2_.update();
+        oscillator3_.update();
+        notelock.unlock();
+
+        // __android_log_print(ANDROID_LOG_ERROR, "tagtest","note : %d  : Freq %f",note, oscillator_.m_dOscFo);
+
+        //   __android_log_print(ANDROID_LOG_ERROR, "tagtest","note : %d  : Freq %f",note, oscillator_.m_dOscFo);
+
+
+    }}
 float AudioEngine::getHertz(int keyNumber) {
     return pow(2, (keyNumber - 69) / 12.0) * basehertz;
 }
 
 
-void AudioEngine::UpdateEnv() {
-    env.setAttackTime_mSec(500);
-    env.setDecayTime_mSec(200);
-    env.setSustainLevel(1);
-    env.setReleaseTime_mSec(3000);
 
-    env.m_bResetToZero = false;
-    env.m_bLegatoMode = false;
-}
 void AudioEngine::ChangeKnobDouble(int knob , double val) {
     if(knob==16)
         basehertz=val;
 
 }
 void AudioEngine::ChangeKnob(int knob , int val) {
+    static std::mutex knobLock;
+    if (knobLock.try_lock()) {
+        switch (knob) {
+            case 0:
+                env.setAttackTime_mSec((double) val * 100);
+                //  env.update();
+                break;
 
-    if(knob==0) {
-        env.setAttackTime_mSec( (double)val*100);
-        //  env.update();
-    }
-    if(knob==1) {
-        env.setDecayTime_mSec((double)val *100);
-        // env.update();
-    }
-    if(knob==2) {
-        env.setSustainLevel((double)val/50);
-        // env.update();
-    }
-    if(knob==3) {
-        env.setReleaseTime_mSec((double)val*300);
-        // env.update();
-    }
-    if(knob==4) {
-        filter.m_dFcControl = (double) pow(2,(float) val/10/12/1.5) * 440 ;
-        float mult=4;
-        music.filterfc =  filter.m_dFcControl;
-        //   __android_log_print(ANDROID_LOG_ERROR, "tagtestosc","data:%f",(double)music.filterfc);
-//       filter.update();
-        //   __android_log_print(ANDROID_LOG_ERROR, "tagtestfilter", "data:%f", filter.m_dFcControl);
-    }
-    if(knob==5) {
-        filter.m_dQControl = (double) val / 10;
-        //    __android_log_print(ANDROID_LOG_ERROR, "tagtestfilter", "data:%f", (double) val / 10);
-//      filter.update();
-    }
-    if(knob==6) {
-        delay.setWetMix((double)val/50);
-        delay.update();
-    }
-    if(knob==7) {
-        delay.setDelayTime_mSec((double)val*5*8);
-        //    LOGE("delay tune %f",((double)val*5*8));
-        delay.update();
-    }
-    if(knob==8) {
-        if(val<0)
-            delay.setDelayRatio((((double)val/55)*2-0.9)/2-0.5);
-        else
-            delay.setDelayRatio((((double)val/55)*2-0.9)/2+0.5);
-        //LOGE("delay ratio %f",(((double)val/55)*2-0.9)/2);
-        delay.update();
-    }
-    if(knob==9) {
-        delay.setFeedback_Pct((double)val*2);
-        delay.update();
-    }
-    if(knob==10) {
-        lfo.m_dOscFo=exp((double)(val/10)/20)*(20 / (exp(5) ));
-        //   __android_log_print(ANDROID_LOG_ERROR, "tagtestosc","data:%f",exp((double)((double)val/10)/20)*(20 / (exp(5) )));
+            case 1: {
+                env.setDecayTime_mSec((double) val * 100);
+                // env.update();
+                break;
+            }
+            case 2: {
+                env.setSustainLevel((double) val / 50);
+                // env.update();
+                break;
+            }
+            case 3: {
+                env.setReleaseTime_mSec((double) val * 300);
+                // env.update();
+                break;
+            }
+            case 4: {
+                filter.m_dFcControl = pow(2, (float) val * 3 / 10 / 12 / 1.5) * 440 - 440;
 
-    }
-    if(knob==11) {
-        double num = (double) val/15;
+                //music.filterfc =  filter.m_dFcControl;
+                filter2.m_dFcControl = pow(2, (float) (val + 2) * 3 / 10 / 12 / 1.5) * 440 - 440;
+//           if(lfo.filterFc==0) {
+//               filter.update();
+//            filter2.update();
+//           }
+                //    __android_log_print(ANDROID_LOG_ERROR, "tagtestosc","data:%f",(double)music.filterfc);
+                //   filter.update();
+                //    __android_log_print(ANDROID_LOG_ERROR, "tagtestfilter", "data:%f", filter.m_dFcControl);
+                break;
+            }
+            case 5: {
+                filter.m_dQControl = (double) val / 10;
+                break;
+                //   __android_log_print(ANDROID_LOG_ERROR, "tagtestfilter", "data:%f", (double) val / 10);
+                //  filter.update();
+            }
+            case 6: {
+                delay.setWetMix((double) val / 50);
+                // delay.update();
+                music.delayChanged=0;
+                music.delayEnvelope.reset();
+                break;
+            }
+            case 7: {
+                // music.delaychanged=true;
+                //   music.delayLock.lock();
+                delay.setDelayTime_mSec((double) val * 20);
+                delay.update();
+                delay.reset();
+                music.delayChanged=0;
+                music.delayEnvelope.reset();
+                //     music.delayLock.unlock();
+                break;
+            }
+            case 8: {
+                //music.delayLock.lock();
+                //  music.delaychanged=true;
+                if (val < 0)
+                    delay.setDelayRatio((((double) val / 55) * 2 - 0.9) / 2 - 0.5);
+                else {
+                    delay.setDelayRatio((((double) val / 55) * 2 - 0.9) / 2 + 0.5);
+                }
+                music.delayChanged=0;
+                music.delayEnvelope.reset();
+                //  LOGE("delay ratio %f",((double)val/55)*2-0.9);
+                //   delay.update();
+                //  music.delayLock.unlock();
+                break;
+            }
+            case 9: {
+                music.delayChanged=0;
+                music.delayEnvelope.reset();
+                delay.setFeedback_Pct((double) val * 2);
+                //   delay.update();
+                break;
+            }
+            case 10: {
+                if (val != 0)
 
-        lfo.oscfc = (double) num - (double) num / 2;
+                    lfo.m_dOscFo = exp((double) (val - 30) / 50) * (5 / (exp(5)));
+                else
+                    lfo.m_dOscFo = 0;
+                  // __android_log_print(ANDROID_LOG_ERROR, "tagtestosc", "data:%f", lfo.m_dOscFo);
+                break;
+            }
+            case 11: {
+                double num = (double) val / 5;
 
-        //    __android_log_print(ANDROID_LOG_ERROR, "tagtestosc","data:%f",(double)lfo.oscfc);
-    }
-    if(knob==12) {
-        lfo.filterFc = (double) val;
+                lfo.oscfc = num - num / 2;
+                // __android_log_print(ANDROID_LOG_ERROR, "tagtestosc","data:%f",(double)lfo.oscfc);
+                break;
+            }
+            case 12: {
+                lfo.filterFc = (double) val;
+
+                break;
+                //   __android_log_print(ANDROID_LOG_ERROR, "tagtestfiltfc","data:%f",lfo.filterFc);
+            }
+            case 13: {
+                drone = val;
+                break;
+            }
+            case 14: {
+                // music.m_fWet_pct = val;
+                music.reverb.m_fWet_pct = val;
+                music.reverb2.m_fWet_pct=val;
+                break;
+            }
+            case 15: {
+                oscillator3_.m_uWaveform=0;
+                oscillator3_.m_nCents=0;
+                oscillator3_.m_nSemitones=0;
+                oscillator3_.m_nCents=0;
+                oscillator2_.m_uWaveform=0;
+                oscillator2_.m_nCents=0;
+                oscillator2_.m_nSemitones=0;
+                oscillator2_.m_nCents=0;
+                oscillator1_.m_uWaveform=0;
+                oscillator1_.m_nCents=0;
+                oscillator1_.m_nSemitones=0;
+                oscillator1_.m_nCents=0;
+                oscillator0_.m_uWaveform=0;
+                oscillator0_.m_nCents=0;
+                oscillator0_.m_nSemitones=0;
+                oscillator0_.m_nCents=0;
+                oscillator_.m_uWaveform=0;
+                oscillator_.m_nCents=0;
+                oscillator_.m_nSemitones=0;
+                oscillator_.m_nCents=0;
+                if(val==2) {
+                    oscillator0_.m_uWaveform=0;
+
+                    oscillator_.m_uWaveform=0;
+                    oscillator_.m_nOctave=1;
+                    oscillator1_.m_uWaveform=0;
+                    oscillator2_.m_nCents=12;
+                    oscillator2_.m_uWaveform=0;
+                    oscillator3_.m_uWaveform=0;
+                    oscillator3_.m_nSemitones=7;
 
 
-        //    __android_log_print(ANDROID_LOG_ERROR, "tagtestfiltfc","data:%f",lfo.filterFc);
-    }
-    if(knob==13) {
-        drone=val;
-    }
-    if(knob==14) {
-       reverb.m_fWet_pct=val;
-    }
-    if(knob==15) {
-        __android_log_print(ANDROID_LOG_ERROR, "wave","data:%d",val);
-        oscillator3_.m_uWaveform=0;
-        oscillator3_.m_nCents=0;
-        oscillator3_.m_nSemitones=0;
-        oscillator3_.m_nCents=0;
-        oscillator2_.m_uWaveform=0;
-        oscillator2_.m_nCents=0;
-        oscillator2_.m_nSemitones=0;
-        oscillator2_.m_nCents=0;
-        oscillator1_.m_uWaveform=0;
-        oscillator1_.m_nCents=0;
-        oscillator1_.m_nSemitones=0;
-        oscillator1_.m_nCents=0;
-        oscillator0_.m_uWaveform=0;
-        oscillator0_.m_nCents=0;
-        oscillator0_.m_nSemitones=0;
-        oscillator0_.m_nCents=0;
-        oscillator_.m_uWaveform=0;
-        oscillator_.m_nCents=0;
-        oscillator_.m_nSemitones=0;
-        oscillator_.m_nCents=0;
-        if(val==2) {
-            oscillator0_.m_uWaveform=0;
-
-            oscillator_.m_uWaveform=0;
-            oscillator_.m_nOctave=1;
-            oscillator1_.m_uWaveform=0;
-            oscillator2_.m_nCents=12;
-            oscillator2_.m_uWaveform=0;
-            oscillator3_.m_uWaveform=0;
-            oscillator3_.m_nSemitones=7;
 
 
+                    music.fmsynth=true;
+                } else {
+                    oscillator_.setPhaseMod(0);
+                    oscillator1_.setPhaseMod(0);
+                    oscillator0_.setPhaseMod(0);
+                    oscillator2_.setPhaseMod(0);
+                    oscillator3_.setPhaseMod(0);
+                    music.fmsynth=false;
+                    oscillator1_.m_nOctave=0;
+                }
+                if(val==1) {
+                    oscillator0_.m_uWaveform=4;
+                    oscillator1_.m_uWaveform=3;
+                    oscillator_.m_uWaveform=4;
+                    oscillator3_.m_uWaveform=4;
+                    oscillator3_.m_nCents=1;
+                    oscillator1_.m_nSemitones=-12;
+
+                    oscillator2_.m_uWaveform=4;
+                    oscillator_.m_nCents=-7;
+                    oscillator2_.m_nCents=7;
 
 
-            music.fmsynth=true;
-        } else {
-            oscillator_.setPhaseMod(0);
-            oscillator1_.setPhaseMod(0);
-            oscillator0_.setPhaseMod(0);
-            oscillator2_.setPhaseMod(0);
-            oscillator3_.setPhaseMod(0);
-            music.fmsynth=false;
-            oscillator1_.m_nOctave=0;
+                    music.fmsynth=false;
+                }
+                if(val==0) {
+
+                    oscillator1_.m_uWaveform=3;
+                    oscillator3_.m_uWaveform=3;
+                    oscillator3_.m_nCents=-1;
+                    oscillator_.m_uWaveform=3;
+                    oscillator0_.m_uWaveform=0;
+
+                    oscillator2_.m_uWaveform=3;
+
+                    oscillator1_.m_uWaveform=3;
+                    oscillator_.m_nCents=-7;
+                    oscillator0_.m_nOctave=-1;
+                    oscillator2_.m_nCents=7;
+                    music.fmsynth=false;
+                }
+                if(val==3) {
+
+                    oscillator_.m_nCents=9;
+                    oscillator0_.m_uWaveform=5;
+                    oscillator0_.m_nSemitones=5;
+                    oscillator0_.m_nCents=5;
+
+                    oscillator1_.m_uWaveform=5;
+                    oscillator1_.m_nOctave=-1;
+
+                    oscillator2_.m_uWaveform=5;
+                    oscillator2_.m_nCents=-9;
+                    oscillator3_.m_uWaveform=7;
+                    music.fmsynth=false;
+                }
+                if(val==4) {
+                    oscillator0_.m_uWaveform=7;
+                    oscillator1_.m_uWaveform=1;
+                    oscillator1_.m_nSemitones=7;
+
+                    oscillator_.m_uWaveform=7;
+                    oscillator_.m_nOctave=1;
+                    oscillator2_.m_uWaveform=5;
+                    oscillator2_.m_nOctave=-1;
+                    oscillator3_.m_uWaveform=0;
+                    music.fmsynth=false;
+                }
+                break;
+            }
+            case 16: {
+                if (val == 0) {
+                    env.noteOff();
+
+                }
+                break;
+            }
+            case 17: {
+                if (music.randomlfo == false)
+                    music.randomlfo = true;
+                else
+                    music.randomlfo = false;
+
+                break;
+            }
+            case 18: {
+                if (music.randomovertones == false)
+                    music.randomovertones = true;
+                else
+                    music.randomovertones = false;
+
+                break;
+            }
+            case 19: {
+                filter2.m_dQControl = (double) (val) / 10;
+                break;
+            }
+            case 20: {
+                setLoop();
+                break;
+            }
+            case 21: {
+                bool m = false;
+                if(val==1) {
+                    m=true;
+                }
+                music.AI=m;
+            }
+
         }
-        if(val==1) {
-            oscillator0_.m_uWaveform=4;
-            oscillator1_.m_uWaveform=3;
-            oscillator_.m_uWaveform=4;
-
-            oscillator1_.m_nSemitones=-12;
-
-            oscillator2_.m_uWaveform=4;
-            oscillator_.m_nCents=-7;
-            oscillator2_.m_nCents=7;
-
-
-            music.fmsynth=false;
-        }
-        if(val==0) {
-
-            oscillator1_.m_uWaveform=3;
-
-            oscillator_.m_uWaveform=3;
-            oscillator0_.m_uWaveform=0;
-
-            oscillator2_.m_uWaveform=3;
-
-            oscillator1_.m_uWaveform=3;
-            oscillator_.m_nCents=-7;
-            oscillator0_.m_nOctave=-1;
-            oscillator2_.m_nCents=7;
-            music.fmsynth=false;
-        }
-        if(val==3) {
-
-            oscillator_.m_nCents=9;
-            oscillator0_.m_uWaveform=5;
-            oscillator0_.m_nSemitones=5;
-            oscillator0_.m_nCents=5;
-
-            oscillator1_.m_uWaveform=5;
-            oscillator1_.m_nOctave=-1;
-
-            oscillator2_.m_uWaveform=5;
-            oscillator2_.m_nCents=-9;
-            oscillator3_.m_uWaveform=7;
-            music.fmsynth=false;
-        }
-        if(val==4) {
-            oscillator0_.m_uWaveform=7;
-            oscillator1_.m_uWaveform=1;
-            oscillator1_.m_nSemitones=7;
-
-            oscillator_.m_uWaveform=7;
-            oscillator_.m_nOctave=1;
-            oscillator2_.m_uWaveform=5;
-            oscillator2_.m_nOctave=-1;
-            oscillator3_.m_uWaveform=0;
-            music.fmsynth=false;
-        }
-    }if(knob==16) {
-        if(val==0) {
-            oscillator_.stopOscillator();
-
-        }
+        knobLock.unlock();
     }
-
 }
+
 
 

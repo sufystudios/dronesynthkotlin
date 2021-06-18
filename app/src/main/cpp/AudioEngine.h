@@ -36,6 +36,7 @@ public:
     AudioEngine() {
         Trace::initialize();
         createPlaybackStream();
+        doStuff();
     }
     void restartStream();
     void onErrorAfterClose(oboe::AudioStream *oboeStream, oboe::Result error);
@@ -51,7 +52,7 @@ public:
     void setAudioApi(oboe::AudioApi audioApi);
     oboe::Result calculateCurrentOutputLatencyMillis( double *latencyMillis);
     void onErrorBeforeClose(AudioStream *oboeStream, Result error) override;
-
+    CDelayLine looperdelay;
     void setToneOn(bool isToneOn);
     void setNote(int note);
     double basehertz=440.0;
@@ -67,17 +68,13 @@ public:
     void doStuff();
     void tubeon(int tube) {
 
-        if(music.tubeon) {
-            filter.m_uNLP = 0;
-            music.tubeon=false;
-        }
-        else {
-            filter.m_uNLP=1;
-            music.tubeon=true;
-        }
+
+        music.tubeon=tube;
+
     }
+    bool istoneon=false;
 private:
-    Reverb reverb;
+
     CEnvelopeGenerator env;
     oboe::AudioApi mAudioApi = oboe::AudioApi::Unspecified;
     int32_t mPlaybackDeviceId = oboe::kUnspecified;
@@ -88,18 +85,24 @@ private:
     void createPlaybackStream();
     double mCurrentOutputLatencyMillis = 0;
     CModulationMatrix m_GlobalModMatrix;
+    void setLoop() {
+
+        music.looper=!music.looper;
+    }
     CWTOscillator oscillator_;
     CWTOscillator oscillator0_;
     CWTOscillator oscillator1_;
     CWTOscillator oscillator2_;
     CWTOscillator oscillator3_;
+
+
 //    CQBLimitedOscillator oscillator_;
 //    CQBLimitedOscillator oscillator0_;
 //    CQBLimitedOscillator oscillator1_;
     int channels = 2;
     MusicSystem music;
     CDCA dca;
-    CMoogLadderFilter filter;
+    CMoogLadderFilter filter, filter2;
     CLFO lfo;
     CStereoDelayFX delay;
     // need these for mod matrix
@@ -107,6 +110,7 @@ private:
     double m_dDefaultModRange;		// 1.0
     double m_dOscFoModRange;
     double m_dFilterModRange;
+    bool random_lfo=false;
     int drone=0;
     // --- NS MM2 Additions
     double m_dOscFoPitchBendModRange;
@@ -132,16 +136,7 @@ private:
     double m_dEG1OscIntensity;
     UINT m_uLegatoMode;
     enum{mono,legato};
-    UINT m_uResetToZero;
-    enum{OFF,ON};
-    double m_dVolume_dB;
-    UINT m_uFilterKeyTrack;
-    double m_dFilterKeyTrackIntensity;
-    UINT m_uVelocityToAttackScaling;
-    UINT m_uNoteNumberToDecayScaling;
 
-    // void render(float* data, int32_t numframes);
-
-
+    void setSampleRates();
 };
 #endif //WAVEMAKER_AUDIOENGINE_H

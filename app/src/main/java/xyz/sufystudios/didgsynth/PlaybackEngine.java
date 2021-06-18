@@ -32,8 +32,8 @@ public class PlaybackEngine {
     static boolean create(Context context){
 
         if (mEngineHandle == 0){
-            mEngineHandle = native_createEngine();
             setDefaultStreamValues(context);
+            mEngineHandle = native_createEngine();
         }
         return (mEngineHandle != 0);
     }

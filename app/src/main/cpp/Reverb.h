@@ -46,7 +46,7 @@ public:
     // function to cook all member object's variables at once
 
     void prepareReverb(int m_nSampleRate) {
-        m_PreDelay.init((int)(0.1*(m_nSampleRate)));
+        m_PreDelay.init((int)(0.2*(m_nSampleRate)));
 
         // init up to 100 mSec
         m_InputAPF_1.init((int)(0.1*(m_nSampleRate)));
@@ -56,15 +56,15 @@ public:
         m_ParallelCF_1.init((int)(0.1*m_nSampleRate));
         m_ParallelCF_2.init((int)(0.1*m_nSampleRate));
         m_ParallelCF_3.init((int)(0.1*m_nSampleRate));
-        m_ParallelCF_4.init((int)(0.1*m_nSampleRate));
-        m_ParallelCF_5.init((int)(0.1*m_nSampleRate));
-        m_ParallelCF_6.init((int)(0.1*m_nSampleRate));
-        m_ParallelCF_7.init((int)(0.1*m_nSampleRate));
-        m_ParallelCF_8.init((int)(0.1*m_nSampleRate));
+        m_ParallelCF_4.init((int)(0.04*m_nSampleRate));
+        m_ParallelCF_5.init((int)(0.02*m_nSampleRate));
+        m_ParallelCF_6.init((int)(0.05*m_nSampleRate));
+        m_ParallelCF_7.init((int)(0.06*m_nSampleRate));
+        m_ParallelCF_8.init((int)(0.03*m_nSampleRate));
 
         // 100 mSec each max
-        m_OutputAPF_3.init((int)(0.1*m_nSampleRate));
-        m_OutputAPF_4.init((int)(0.1*(m_nSampleRate)));
+        m_OutputAPF_3.init((int)(0.02*m_nSampleRate));
+        m_OutputAPF_4.init((int)(0.02*(m_nSampleRate)));
 
         // init the three LPFs
         m_InputLPF.init();
@@ -109,7 +109,7 @@ public:
     }
     float in1f;
     float in2f;
-     float fPC_1_Out = 0;
+    float fPC_1_Out = 0;
     float fPC_2_Out = 0;
     float fPC_3_Out = 0;
     float fPC_4_Out = 0;
@@ -122,22 +122,22 @@ public:
     void doReverb(double &in1,double &in2, double &out1, double &out2) {
         float fPreDelayOut = 0;
         //  __android_log_print(ANDROID_LOG_ERROR, "tagtest","note : %d  : Freq");
-     //  m_PreDelay.processAudio(&in, &fPreDelayOut);
+        //  m_PreDelay.processAudio(&in, &fPreDelayOut);
         // __android_log_print(ANDROID_LOG_ERROR, "tagtest","note : %d  : Freq");
         // Pre-Delay Out -> fAPF_1_Out
-    //    float fAPF_1_Out = 0;
-       // m_InputAPF_1.processAudio(&fPreDelayOut, &fAPF_1_Out);
+        //    float fAPF_1_Out = 0;
+        // m_InputAPF_1.processAudio(&fPreDelayOut, &fAPF_1_Out);
 
         // fAPF_1_Out -> fAPF_2_Out
         float fAPF_2_Out = 0;
         in1f=(float)in1;
-
+//m_InputAPF_1.processAudio(&in1f,&in1f);
         in2f=(float)in2;
+        m_InputAPF_2.processAudio(&in1f, &in1f);
+        m_InputAPF_2.processAudio(&in2f, &in2f);
 
-        m_InputAPF_1.processAudio(&in1f,&in1f);
-        m_InputAPF_2.processAudio(&in2f,&in2f);
-
-      //  m_InputLPF.processAudio(&fAPF_2_Out, &fInputLPF);
+        float fInputLPF = 0;
+        //  m_InputLPF.processAudio(&fAPF_2_Out, &fInputLPF);
 
         // comb filter bank
         // variables for each output
@@ -168,9 +168,9 @@ public:
 
         // form outputs: note attenuation by 0.25 for each and alternating signs
         fC1_Out = 0.25*fPC_1_Out -  0.25*fPC_2_Out + 0.25*fPC_3_Out - 0.25*fPC_4_Out;
-  fC2_Out = 0.25*fPC_5_Out -  0.25*fPC_6_Out + 0.25*fPC_7_Out - 0.25*fPC_8_Out;
-  fC1_Out=fC1_Out*0.9+fC2_Out*0.1;
-  fC2_Out=fC2_Out*0.9+fC1_Out*0.1;
+        fC2_Out = 0.25*fPC_5_Out -  0.25*fPC_6_Out + 0.25*fPC_7_Out - 0.25*fPC_8_Out;
+        fC1_Out=fC1_Out*0.9+fC2_Out*0.1;
+        fC2_Out=fC2_Out*0.9+fC1_Out*0.1;
 
         // fC1_Out -> fDamping_LPF_1_Out
         float fDamping_LPF_1_Out = 0;
@@ -189,10 +189,10 @@ public:
 //        m_OutputAPF_4.processAudio(&fDamping_LPF_2_Out, &fAPF_4_Out);
 
         // form output = (100-Wet)/100*x(n) + (Wet/100)*fAPF_3_Out
-     out1=(double)((100.0 - m_fWet_pct)/100.0)*in1 +
-                    (m_fWet_pct/100.0)*(fDamping_LPF_1_Out);
-out2=(double)((100.0 - m_fWet_pct)/100.0)*in2 +
-     (m_fWet_pct/100.0)*(fDamping_LPF_2_Out);
+        out1=(double)((100.0 - m_fWet_pct)/100.0)*in1 +
+             (m_fWet_pct/100.0)*(fDamping_LPF_1_Out);
+        out2=(double)((100.0 - m_fWet_pct)/100.0)*in2 +
+             (m_fWet_pct/100.0)*(fDamping_LPF_2_Out);
         // Do RIGHT Channel if there is one
         //return out;
 
@@ -200,17 +200,17 @@ out2=(double)((100.0 - m_fWet_pct)/100.0)*in2 +
     void cookVariables()
     {
         // Pre-Delay
-        m_PreDelay.setDelay_mSec(6);
+        m_PreDelay.setDelay_mSec(5);
         m_PreDelay.setOutputAttenuation_dB(0);
 
         // input diffusion
-        m_InputAPF_1.setDelay_mSec(24);
-        m_InputAPF_1.setAPF_g(0.7);
+        m_InputAPF_1.setDelay_mSec(3);
+        m_InputAPF_1.setAPF_g(0.3);
 
-        m_InputAPF_2.setDelay_mSec(23);
-        m_InputAPF_2.setAPF_g(0.6);
+        m_InputAPF_2.setDelay_mSec(3);
+        m_InputAPF_2.setAPF_g(0.5);
 
-//        // output diffusion_with_RTSixty
+//        // output diffusion
 //        m_OutputAPF_3.setDelay_mSec(64);
 //        m_OutputAPF_3.setAPF_g(0);
 //
@@ -219,28 +219,28 @@ out2=(double)((100.0 - m_fWet_pct)/100.0)*in2 +
 
         // Comb Filters
         // set delays first...
-        m_ParallelCF_1.setDelay_mSec(27);
-        m_ParallelCF_2.setDelay_mSec(53);
-        m_ParallelCF_3.setDelay_mSec(84);
-        m_ParallelCF_4.setDelay_mSec(76);
-        m_ParallelCF_5.setDelay_mSec(37);
-        m_ParallelCF_6.setDelay_mSec(95);
-        m_ParallelCF_7.setDelay_mSec(34);
-        m_ParallelCF_8.setDelay_mSec(85);
+        m_ParallelCF_1.setDelay_mSec(13);
+        m_ParallelCF_2.setDelay_mSec(13);
+        m_ParallelCF_3.setDelay_mSec(12);
+        m_ParallelCF_4.setDelay_mSec(12);
+        m_ParallelCF_5.setDelay_mSec(15);
+        m_ParallelCF_6.setDelay_mSec(12);
+        m_ParallelCF_7.setDelay_mSec(12);
+        m_ParallelCF_8.setDelay_mSec(13);
 
         // ...then calcualte comb g's from RT60:
-        m_ParallelCF_1.setComb_g_with_RTSixty(64);
-        m_ParallelCF_2.setComb_g_with_RTSixty(23);
-        m_ParallelCF_3.setComb_g_with_RTSixty(54);
-        m_ParallelCF_4.setComb_g_with_RTSixty(29);
-        m_ParallelCF_5.setComb_g_with_RTSixty(43);
-        m_ParallelCF_6.setComb_g_with_RTSixty(95);
-        m_ParallelCF_7.setComb_g_with_RTSixty(32);
-        m_ParallelCF_8.setComb_g_with_RTSixty(29);
-        // LPFs_with_RTSixty
-        m_DampingLPF1.setLPF_g(0.5);
-        m_DampingLPF2.setLPF_g(0.5);
-
+        m_ParallelCF_1.setComb_g(0.09   );
+        m_ParallelCF_2.setComb_g(0.05);
+        m_ParallelCF_3.setComb_g(0.005);
+        m_ParallelCF_4.setComb_g(0.08);
+        m_ParallelCF_5.setComb_g(0.007);
+        m_ParallelCF_6.setComb_g(0.04);
+        m_ParallelCF_7.setComb_g(0.001);
+        m_ParallelCF_8.setComb_g(0.03);
+        // LPFs
+        m_DampingLPF1.setLPF_g(0.02);
+        m_DampingLPF2.setLPF_g(0.03);
+        m_InputLPF.setLPF_g(0.054);
     }
 
 
