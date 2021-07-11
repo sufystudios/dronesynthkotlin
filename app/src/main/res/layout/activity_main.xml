@@ -365,7 +365,7 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/e"
-        android:layout_width="40dp"
+        android:layout_width="38dp"
         android:layout_height="0dp"
         android:layout_marginStart="16dp"
         android:layout_marginLeft="16dp"
@@ -378,7 +378,7 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/f"
-        android:layout_width="44dp"
+        android:layout_width="38dp"
         android:layout_height="0dp"
         android:layout_marginStart="16dp"
         android:layout_marginLeft="16dp"
@@ -391,7 +391,7 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/d"
-        android:layout_width="44dp"
+        android:layout_width="38dp"
         android:layout_height="0dp"
         android:layout_marginStart="16dp"
         android:layout_marginLeft="16dp"
@@ -404,7 +404,7 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/c"
-        android:layout_width="44dp"
+        android:layout_width="38dp"
         android:layout_height="0dp"
         android:layout_marginStart="10dp"
         android:layout_marginLeft="10dp"
@@ -418,7 +418,7 @@
     <com.google.android.material.button.MaterialButton
         android:id="@+id/g"
 
-        android:layout_width="44dp"
+        android:layout_width="38dp"
         android:layout_height="0dp"
         android:layout_marginStart="16dp"
         android:layout_marginLeft="16dp"
@@ -433,7 +433,7 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/a"
-        android:layout_width="44dp"
+        android:layout_width="38dp"
         android:layout_height="0dp"
         android:layout_marginStart="16dp"
         android:layout_marginLeft="16dp"
@@ -447,7 +447,7 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/b"
-        android:layout_width="44dp"
+        android:layout_width="38dp"
         android:layout_height="0dp"
         android:layout_marginStart="16dp"
         android:layout_marginLeft="16dp"
