@@ -270,3 +270,10 @@ Java_xyz_sufystudios_didgsynth_PlaybackEngine_native_1isLatencyDetectionSupporte
     return (engine->isLatencyDetectionSupported() ? JNI_TRUE : JNI_FALSE);
 }
 }
+extern "C"
+JNIEXPORT void JNICALL
+Java_xyz_sufystudios_didgsynth_MainActivity_00024Companion_native_1setTube(JNIEnv *env,
+                                                                           jobject thiz,
+                                                                           jint tube) {
+    // TODO: implement native_setTube()
+}
