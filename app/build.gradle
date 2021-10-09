@@ -5,10 +5,10 @@ android {
     compileSdkVersion 30
     defaultConfig {
         applicationId "xyz.sufystudios.didgsynth"
-        minSdkVersion 26
+        minSdkVersion 16
         targetSdkVersion 30
-        versionCode 10503
-        versionName "1.05.03"
+        versionCode 10506
+        versionName "1.05.06"
         resConfigs "en", "US"
         externalNativeBuild {
             cmake {
