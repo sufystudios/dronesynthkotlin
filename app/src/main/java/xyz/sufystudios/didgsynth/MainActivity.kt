@@ -36,7 +36,6 @@ import com.google.android.material.textview.MaterialTextView
 import java.lang.Exception
 
 
-
 //import com.kobakei.ratethisapp.RateThisApp;
 //import xyz.murdoch.edu.au.learnsynth.R;
 class MainActivity : AppCompatActivity(), IBillingHandler {
@@ -54,9 +53,10 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
                 val myAudioMgr = context.getSystemService(AUDIO_SERVICE) as AudioManager
                 val sampleRateStr = myAudioMgr.getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE)
-                val defaultSampleRate = sampleRateStr.toInt()
-                val framesPerBurstStr = myAudioMgr.getProperty(AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER)
-                val defaultFramesPerBurst = framesPerBurstStr.toInt()
+
+                val framesPerBurstStr =
+                    myAudioMgr.getProperty(AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER)
+
             }
         }
 
@@ -107,7 +107,11 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
     private fun createStuff() {
         aiDrone = findViewById<MaterialButton>(id.aibutton)
         //startEngine();
-        bp = BillingProcessor(this, "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAp60Ho4VkC75TR1HXwwbYK/1MIMP2vhE8S6LyHIY6WdAWuThV8czkvzlGv3HaExH1bbVUl3k5jKYvS+JLIyuHCY7bSFLKs/nQTI8ZynbEElvmnVL7sW84LlRLA32/K1u1YNligjY6b8m20hroZZNuSavaHpn6foSfrLaIXMIKBLCQEqmhd+V5Y3xSVCF2/5b0ACPyG95GYcquEuX5N93/42i5xVb3ZotBrclwQf/9tIfMne3BDcWJFS7rQOlpNM0+QrW1Q9dTUP3bLVkEHRbtyhPUSBa5O03c0lmil+I/86TnO24Y5d0+A64EWnvIiP/+AtA2Ud62htGOhKVLWtK6cQIDAQAB", this)
+        bp = BillingProcessor(
+            this,
+            "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAp60Ho4VkC75TR1HXwwbYK/1MIMP2vhE8S6LyHIY6WdAWuThV8czkvzlGv3HaExH1bbVUl3k5jKYvS+JLIyuHCY7bSFLKs/nQTI8ZynbEElvmnVL7sW84LlRLA32/K1u1YNligjY6b8m20hroZZNuSavaHpn6foSfrLaIXMIKBLCQEqmhd+V5Y3xSVCF2/5b0ACPyG95GYcquEuX5N93/42i5xVb3ZotBrclwQf/9tIfMne3BDcWJFS7rQOlpNM0+QrW1Q9dTUP3bLVkEHRbtyhPUSBa5O03c0lmil+I/86TnO24Y5d0+A64EWnvIiP/+AtA2Ud62htGOhKVLWtK6cQIDAQAB",
+            this
+        )
         bp!!.initialize()
         var a = findViewById<MaterialButton>(id.a)
         a.setOnTouchListener(motionListener)
@@ -155,47 +159,21 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
                 oct.text = intd.toString()
             }
         }
-        val attack = findViewById<Knob>(id.attack)
-        attack.state = 50
-        attack.setOnStateChanged { state -> // do something
-            changeKnob(0, state)
-        }
-        val decay = findViewById<Knob>(id.decay)
-        decay.state = 0
-        decay.setOnStateChanged { state -> // do something
-            changeKnob(1, state)
-        }
-        val sustain = findViewById<Knob>(id.sustain)
-        sustain.state = 0
-        sustain.setOnStateChanged { state -> // do something
-            changeKnob(2, state)
-        }
-        val release = findViewById<Knob>(id.release)
-        release.state = 0
-        release.setOnStateChanged { state ->
-            changeKnob(3, state)
-            // do something
-        }
+        envelopeCreation()
         val filter = findViewById<SeekBar>(id.filter)
-       
+
         changeKnob(4, 100)
         filter.run {
-            release.state = 0
-            release.setOnStateChanged { state ->
-            changeKnob(3, state)
-            // do something
-        }
-
             progress = 100
             changeKnob(4, 100)
             setOnSeekBarChangeListener(object : OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar, i: Int, b: Boolean) {
-                changeKnob(4, i)
-            }
+                override fun onProgressChanged(seekBar: SeekBar, i: Int, b: Boolean) {
+                    changeKnob(4, i)
+                }
 
-            override fun onStartTrackingTouch(seekBar: SeekBar) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar) {}
-        })
+                override fun onStartTrackingTouch(seekBar: SeekBar) {}
+                override fun onStopTrackingTouch(seekBar: SeekBar) {}
+            })
         }
         val Q = findViewById<SeekBar>(id.Q)
         changeKnob(5, 20)
@@ -269,6 +247,7 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
         randomlfo.setBackgroundColor(Color.RED)
         randomlfo.setOnClickListener(object : View.OnClickListener {
             private var randlfo = false
+
             @SuppressLint("ResourceAsColor", "ResourceType")
             override fun onClick(view: View) {
                 randlfo = if (!randlfo) {
@@ -286,6 +265,7 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
         randomovertones.setBackgroundColor(Color.RED)
         randomovertones.setOnClickListener(object : View.OnClickListener {
             private var randover = false
+
             @SuppressLint("ResourceAsColor", "ResourceType")
             override fun onClick(view: View) {
                 randover = if (!randover) {
@@ -303,6 +283,7 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
         looper.setBackgroundColor(Color.RED)
         looper.setOnClickListener(object : View.OnClickListener {
             private var loop = false
+
             @SuppressLint("ResourceAsColor", "ResourceType")
             override fun onClick(view: View) {
                 loop = if (!loop) {
@@ -334,24 +315,24 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
             lfofilter.state = 5
             changeKnob(12, 5)
             lfofilter.setOnStateChanged { state -> // do something
-            changeKnob(12, state)
-        }
+                changeKnob(12, state)
+            }
 
             if (dronebool == false) changeKnob(13, 0)
             setOnClickListener(View.OnClickListener {
-            if (dronebool) {
-                droneint = 0
-                dronebool = false
-                changeKnob(13, 0)
-                changeKnob(16, 0)
-                run { text = "Drone OFF" }
-            } else {
-                droneint = 1
-                dronebool = true
-                changeKnob(13, 1)
-                text = "Drone ON"
-            }
-        })
+                if (dronebool) {
+                    droneint = 0
+                    dronebool = false
+                    changeKnob(13, 0)
+                    changeKnob(16, 0)
+                    run { text = "Drone OFF" }
+                } else {
+                    droneint = 1
+                    dronebool = true
+                    changeKnob(13, 1)
+                    text = "Drone ON"
+                }
+            })
         }
         val selectwave = findViewById<MaterialButton>(id.selectWave)
         selectwave.setOnClickListener {
@@ -362,10 +343,10 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
         val guide = findViewById<MaterialTextView>(id.guide)
         guide.run {
             selectwave.setOnClickListener {
-            currentWave = (currentWave + 1) % waves.size
-            selectwave.text = waves[currentWave]
-            changeKnob(15, currentWave)
-        }
+                currentWave = (currentWave + 1) % waves.size
+                selectwave.text = waves[currentWave]
+                changeKnob(15, currentWave)
+            }
 
             movementMethod = ScrollingMovementMethod()
             text = guidetxt[0]
@@ -404,7 +385,7 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
         val hertz = findViewById<View>(id.hertz) as EditText
         val tube = findViewById<View>(id.tube) as ImageView
         tube.setOnClickListener { view ->
-            val tube = view as ImageView
+
             if (!tubeoff) {
                 tube.setColorFilter(Color.rgb(10, 200, 150), PorterDuff.Mode.SRC_ATOP)
                 tube.alpha = 0.2.toFloat()
@@ -425,7 +406,8 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
                     val test = hertz.text.toString().toDouble()
                     changeKnobDouble(16, test)
                 } catch (e: Exception) {
-                    val toast = Toast.makeText(applicationContext, "Not a number", Toast.LENGTH_SHORT)
+                    val toast =
+                        Toast.makeText(applicationContext, "Not a number", Toast.LENGTH_SHORT)
                     toast.show()
                     //EditText.setValue();
                 }
@@ -433,20 +415,48 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
         })
     }
 
+    private fun envelopeCreation() {
+        val attack = findViewById<Knob>(id.attack)
+        attack.state = 50
+        attack.setOnStateChanged { state -> // do something
+            changeKnob(0, state)
+        }
+        val decay = findViewById<Knob>(id.decay)
+        decay.state = 0
+        decay.setOnStateChanged { state -> // do something
+            changeKnob(1, state)
+        }
+        val sustain = findViewById<Knob>(id.sustain)
+        sustain.state = 0
+        sustain.setOnStateChanged { state -> // do something
+            changeKnob(2, state)
+        }
+        val release = findViewById<Knob>(id.release)
+        release.state = 0
+        release.setOnStateChanged { state ->
+            changeKnob(3, state)
+            // do something
+        }
+
+    }
+
     private var octint = 0
     private var currentins = 0
     private var dronebool = false
     private val tubeon = false
     var guide: TextView? = null
-    private val guidetxt = arrayOf("Welcome to Didg Synth, a simple synth to jam along with or record using an audio interface\n Click next to continue reading instructions for use.", "Attack is the time for the note to get to max volume\nDecay is time from max attack to sustain level\nSustain is level when the note is held for a long period\nRelease is how long for volume to go down as it is released. ",
-            "LFO rate is the speed of the low frequency wave that can affect the pitch or the filter\nLFO Filt is how much it affects the filter\nLFO pitch how much it affects oscillator\n",
-            "Delay and reverb sound good with the drone experiment \nFor delay turn up the delay time, delay wet dry to about 50%, \nratio is the time for each channel either left or right, you can ballance them or make the delay higher in one channel\n, as well as feedback, \nFor reverb turn up the wet dry below this text.",
-            "To play Drone press drone MaterialButton  then select your note.\nTo go to a different octave select the MaterialButton  for it.",
-            """
+    private val guidetxt = arrayOf(
+        "Welcome to Didg Synth, a simple synth to jam along with or record using an audio interface\n Click next to continue reading instructions for use.",
+        "Attack is the time for the note to get to max volume\nDecay is time from max attack to sustain level\nSustain is level when the note is held for a long period\nRelease is how long for volume to go down as it is released. ",
+        "LFO rate is the speed of the low frequency wave that can affect the pitch or the filter\nLFO Filt is how much it affects the filter\nLFO pitch how much it affects oscillator\n",
+        "Delay and reverb sound good with the drone experiment \nFor delay turn up the delay time, delay wet dry to about 50%, \nratio is the time for each channel either left or right, you can ballance them or make the delay higher in one channel\n, as well as feedback, \nFor reverb turn up the wet dry below this text.",
+        "To play Drone press drone MaterialButton  then select your note.\nTo go to a different octave select the MaterialButton  for it.",
+        """
                 To do a sine wave FM synthesis using one of the 3 oscillators as a modifier for the other frequencies but detuned slightly press the MaterialButton  with the wave name until it says FM sine.
                 to go back to regular synth mode press the oscillator waveform MaterialButton  again
                 """.trimIndent(),
-            "Oscillator types, There is Saw Square and Triangle aswell as FM sinusoid. The sinusoid is a pure tone without hamonies, square and saw have alot of harmonies , Noise can sound like ocean waves or wind, triangle has less but its not just one like the sine wave so its a softer tone.")
+        "Oscillator types, There is Saw Square and Triangle aswell as FM sinusoid. The sinusoid is a pure tone without hamonies, square and saw have alot of harmonies , Noise can sound like ocean waves or wind, triangle has less but its not just one like the sine wave so its a softer tone."
+    )
 
     private external fun touchEvent(action: Int, key: Int)
     private external fun changeKnob(knob: Int, `val`: Int)
@@ -479,12 +489,7 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
         }
     }
 
-    //private class TouchListener implements View.OnClickListener {
-    //    @Override
-    //    public void onClick(View view) {
-    //        doKeys;
-    //    }
-    //}
+
     var hertz = 440.0
     private val wavetype: TextView? = null
 
@@ -513,18 +518,14 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
         PlaybackEngine.create(this)
         createStuff()
 
-
+//TODO find replacement
 //        RateThisApp.onCreate(this);
 //        RateThisApp.Config config = new RateThisApp.Config(2, 3);
 //        RateThisApp.init(config);
 //        RateThisApp.showRateDialogIfNeeded(this);
     }
 
-    //    @Override
-    //    public boolean onTouchEvent(MotionEvent event) {
-    //        touchEvent(event.getAction());
-    //        return super.onTouchEvent(event);
-    //    }
+
     override fun onDestroy() {
         if (bp != null) {
             bp!!.release()
@@ -539,103 +540,11 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
 
     fun nextinst() {}
     fun previnst() {}
-    private val rect // Variable rect to hold the bounds of the view
-            : Rect? = null
 
-    private fun checkInterSection(view: MaterialButton, rawX: Float, rawY: Float): Boolean {
-
-//                       // View t=findViewById(R.id.content);
-        val slide = Rect(view.left, view.top + view.height / 2, view.right, view.bottom + view.height / 2)
-        return slide.contains(rawX.toInt(), rawY.toInt())
-    }
 
     var last: MaterialButton? = null
     var noteon = false
 
-    //    @Override
-    //    public boolean onTouch(View v, MotionEvent event) {
-    //       // Log.d("tesst", "test");
-    //
-    //boolean overlap=false;
-    //        switch (event.getActionMasked()) {
-    //            // Construct a rect of the view's bounds
-    //
-    //
-    //
-    //
-    //
-    //
-    //
-    //            case MotionEvent.ACTION_DOWN:
-    //
-    //                for (int i = 0; i < MaterialButton Rect.length; i++) {
-    //                    if (
-    //                            checkInterSection(MaterialButton Rect[i], event.getRawX(), event.getRawY())
-    //                    ) {
-    //
-    //                        if(MaterialButton last==null ||MaterialButton Rect[i].getId()!=MaterialButton last.getId()) {
-    //                           // Log.d("intersection","" +i);
-    //                            Log.d("intersection","" +i);
-    //                            MaterialButton last = MaterialButton Rect[i];
-    //                            doKeys(0,MaterialButton last);
-    //                            noteon=true;
-    //
-    //                        } else {
-    //                            if(noteon!=true) {
-    //                                doKeys(0, MaterialButton Rect[i]);
-    //                                MaterialButton last = MaterialButton Rect[i];
-    //                            } noteon=true;
-    //                        }
-    //
-    //        return false;
-    //
-    //                    }
-    //
-    //
-    //                }
-    //
-    //
-    //
-    //
-    //            case MotionEvent.ACTION_UP:
-    //                doKeys(event, v);
-    //                MaterialButton last=null;
-    //                noteon=false;
-    //                return false;
-    //
-    //
-    ////            if ((rect!=null && !rect.contains(v.getLeft() + (int) event.getX(), v.getTop() + (int) event.getY()) )|| rect==null) {
-    ////                // User moved outside bounds
-    ////
-    ////                boolean found=false;
-    ////                    for(int i=0;i<12;i++) {
-    ////                        View p=MaterialButton Rect[i];
-    ////                       // View t=findViewById(R.id.content);
-    ////                       Rect slide= new Rect(p.getLeft(),p.getTop(),p.getRight(),p.getBottom());
-    ////                       if(slide.contains(p.getLeft() + (int) event.getX(), p.getTop() + (int) event.getY())) {
-    ////                           found=true;
-    ////                           rect=slide;
-    ////                           doKeys(2,p);
-    ////                           doKeys(0,p);
-    ////                           return false;
-    ////
-    ////                       }
-    ////}
-    ////
-    ////                    }
-    ////                touchEvent(2,0);
-    ////
-    ////
-    ////                rect=null;
-    //            default:
-    //
-    //
-    //        }
-    //        touchEvent(2,0);
-    //        MaterialButton last=null;
-    //        return false;
-    //
-    //    }
     var droneint = 0
     fun doKeys(event: Int, v: View) {
         when (v.id) {
@@ -654,35 +563,6 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
         }
     }
 
-    fun doKeys(event: MotionEvent, v: View) {
-        when (v.id) {
-            id.a -> touchEvent(event.actionMasked, 12 * octint + 69)
-            id.b -> touchEvent(event.actionMasked, 12 * octint + 71)
-            id.c -> touchEvent(event.actionMasked, 12 * octint + 60)
-            id.d -> touchEvent(event.actionMasked, 12 * octint + 62)
-            id.e -> touchEvent(event.actionMasked, 12 * octint + 64)
-            id.f -> touchEvent(event.actionMasked, 12 * octint + 65)
-            id.g -> touchEvent(event.actionMasked, 12 * octint + 67)
-            id.asharp -> touchEvent(event.actionMasked, 12 * octint + 70)
-            id.csharp -> touchEvent(event.actionMasked, 12 * octint + 61)
-            id.dsharp -> touchEvent(event.actionMasked, 12 * octint + 63)
-            id.fsharp -> touchEvent(event.actionMasked, 12 * octint + 66)
-            id.gsharp -> touchEvent(event.actionMasked, 12 * octint + 68)
-        }
-    }
-
-    var crect: Rect? = null
-    var drect: Rect? = null
-    var erect: Rect? = null
-    var frect: Rect? = null
-    var grect: Rect? = null
-    var arect: Rect? = null
-    var brect: Rect? = null
-    var csharprect: Rect? = null
-    var dsharprect: Rect? = null
-    var fsharprect: Rect? = null
-    var gsharprect: Rect? = null
-    var asharprect: Rect? = null
     var isdown = false
     override fun onProductPurchased(productId: String, details: TransactionDetails?) {
         if (productId == aiDroneString) {
@@ -693,98 +573,5 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
 
     override fun onPurchaseHistoryRestored() {}
     override fun onBillingError(errorCode: Int, error: Throwable?) {}
-    override fun onBillingInitialized() {} /*
-    @Override
-    public boolean onTouch(View v, MotionEvent me) {
-
-
-
-        switch (me.getActionMasked()) {
-            // Construct a rect of the view's bounds
-
-
-
-
-
-            case MotionEvent.ACTION_DOWN:
-            case MotionEvent.ACTION_MOVE:
-                Log.d("Text", "TEST %d %d"+me.getX()+me.getY());{if(!noteon) {
-                if (arect.contains((int) me.getX(), (int) me.getY())) {
-                    doKeys(0, MaterialButton Rect[0]);
-                    noteon = true;
-
-                } else if (brect.contains((int) me.getX(), (int) me.getY())) {
-                    doKeys(0, MaterialButton Rect[2]);
-                    noteon = true;
-
-                } else if (crect.contains((int) me.getX(), (int) me.getY())) {
-                    doKeys(0, MaterialButton Rect[3]);
-                    noteon = true;
-
-                } else if (drect.contains((int) me.getX(), (int) me.getY())) {
-                    doKeys(0, MaterialButton Rect[5]);
-                    noteon = true;
-
-                } else if (erect.contains((int) me.getX(), (int) me.getY())) {
-                    doKeys(0, MaterialButton Rect[7]);
-                    noteon = true;
-
-                } else if (frect.contains((int) me.getX(), (int) me.getY())) {
-                    doKeys(0, MaterialButton Rect[8]);
-                    noteon = true;
-
-                } else if (grect.contains((int) me.getX(), (int) me.getY())) {
-                    doKeys(0, MaterialButton Rect[10]);
-                    noteon = true;
-
-                } else if (asharprect.contains((int) me.getX(), (int) me.getY())) {
-                    doKeys(0, MaterialButton Rect[1]);
-                    noteon = true;
-
-                } else if (gsharprect.contains((int) me.getX(), (int) me.getY())) {
-                    doKeys(0, MaterialButton Rect[11]);
-                    noteon = true;
-
-                } else if (fsharprect.contains((int) me.getX(), (int) me.getY())) {
-                    doKeys(0, MaterialButton Rect[9]);
-                    noteon = true;
-
-                } else if (dsharprect.contains((int) me.getX(), (int) me.getY())) {
-                    doKeys(0, MaterialButton Rect[6]);
-                    noteon = true;
-
-                } else if (csharprect.contains((int) me.getX(), (int) me.getY())) {
-                    doKeys(0, MaterialButton Rect[4]);
-                    noteon = true;
-
-                }
-
-                return true;
-
-
-            }}
-                case MotionEvent.ACTION_UP:
-                    doKeys(2,MaterialButton Rect[4]);
-                    noteon=false;
-
-
-
-
-
-
-
-return true;
-
-
-            default:
-
-
-        }
-        touchEvent(2,0);
-        MaterialButton last=null;
-        return false;
-
-    }
-
- */
+    override fun onBillingInitialized() {}
 }
