@@ -1,39 +1,32 @@
-package xyz.sufystudios.didgsynth
+package xyz.sufystudios.synthguide
 
-import androidx.appcompat.app.AppCompatActivity
-import com.anjlab.android.iab.v3.BillingProcessor.IBillingHandler
-import xyz.sufystudios.didgsynth.MainActivity
-import android.os.Build
-import android.media.AudioManager
-import com.anjlab.android.iab.v3.BillingProcessor
-import com.google.android.material.button.MaterialButton
-import android.content.Intent
-import xyz.sufystudios.didgsynth.R.id
-import it.beppi.knoblibrary.Knob
-import it.beppi.knoblibrary.Knob.OnStateChanged
-import android.widget.SeekBar.OnSeekBarChangeListener
 import android.annotation.SuppressLint
-import android.text.method.ScrollingMovementMethod
-import android.graphics.PorterDuff
-import android.text.TextWatcher
-import android.text.Editable
-import android.view.View.OnTouchListener
-import android.view.MotionEvent
-import xyz.sufystudios.didgsynth.PlaybackEngine
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.graphics.Color
-import android.graphics.Rect
+import android.graphics.PorterDuff
+import android.media.AudioManager
+import android.os.Build
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
+import android.text.method.ScrollingMovementMethod
 import android.util.Log
+import android.view.MotionEvent
 import android.view.View
-import xyz.sufystudios.didgsynth.R.layout
+import android.view.View.OnTouchListener
 import android.view.WindowManager
 import android.widget.*
+import android.widget.SeekBar.OnSeekBarChangeListener
+import androidx.appcompat.app.AppCompatActivity
+import com.anjlab.android.iab.v3.BillingProcessor
+import com.anjlab.android.iab.v3.BillingProcessor.IBillingHandler
 import com.anjlab.android.iab.v3.TransactionDetails
-import com.google.android.material.slider.Slider
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.textview.MaterialTextView
-import java.lang.Exception
+import it.beppi.knoblibrary.Knob
+import xyz.sufystudios.synthguide.R
 
 
 //import com.kobakei.ratethisapp.RateThisApp;
@@ -105,7 +98,7 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
     }
 
     private fun createStuff() {
-        aiDrone = findViewById<MaterialButton>(id.aibutton)
+        aiDrone = findViewById<MaterialButton>(R.id.aibutton)
         //startEngine();
         bp = BillingProcessor(
             this,
@@ -113,37 +106,37 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
             this
         )
         bp!!.initialize()
-        var a = findViewById<MaterialButton>(id.a)
+        var a = findViewById<MaterialButton>(R.id.a)
         a.setOnTouchListener(motionListener)
 
         aiDrone?.text = "AI:OFF"
         aiDrone?.setOnClickListener { toggleAIDrone() }
-        var asharp = findViewById<MaterialButton>(id.asharp)
+        var asharp = findViewById<MaterialButton>(R.id.asharp)
         asharp.setOnTouchListener(motionListener)
-        var b = findViewById<MaterialButton>(id.b)
+        var b = findViewById<MaterialButton>(R.id.b)
         b.setOnTouchListener(motionListener)
-        var c = findViewById<MaterialButton>(id.c)
+        var c = findViewById<MaterialButton>(R.id.c)
         c.setOnTouchListener(motionListener)
-        var csharp = findViewById<MaterialButton>(id.csharp)
+        var csharp = findViewById<MaterialButton>(R.id.csharp)
         csharp.setOnTouchListener(motionListener)
-        var d = findViewById<MaterialButton>(id.d)
+        var d = findViewById<MaterialButton>(R.id.d)
         d.setOnTouchListener(motionListener)
-        var dsharp = findViewById<MaterialButton>(id.dsharp)
+        var dsharp = findViewById<MaterialButton>(R.id.dsharp)
         dsharp.setOnTouchListener(motionListener)
-        var e = findViewById<MaterialButton>(id.e)
+        var e = findViewById<MaterialButton>(R.id.e)
         e.setOnTouchListener(motionListener)
-        var f = findViewById<MaterialButton>(id.f)
+        var f = findViewById<MaterialButton>(R.id.f)
         f.setOnTouchListener(motionListener)
-        var fsharp = findViewById<MaterialButton>(id.fsharp)
+        var fsharp = findViewById<MaterialButton>(R.id.fsharp)
         fsharp.setOnTouchListener(motionListener)
-        var g = findViewById<MaterialButton>(id.g)
+        var g = findViewById<MaterialButton>(R.id.g)
         g.setOnTouchListener(motionListener)
-        var gsharp = findViewById<MaterialButton>(id.gsharp)
+        var gsharp = findViewById<MaterialButton>(R.id.gsharp)
         gsharp.setOnTouchListener(motionListener)
 
-        val oct = findViewById<TextView>(id.oct)
+        val oct = findViewById<TextView>(R.id.oct)
         oct.text = "0"
-        val down = findViewById<MaterialButton>(id.octdown)
+        val down = findViewById<MaterialButton>(R.id.octdown)
         down.setOnClickListener {
             if (octint > -3) {
                 octint--
@@ -151,7 +144,7 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
                 oct.text = intd.toString()
             }
         }
-        val up = findViewById<MaterialButton>(id.octup)
+        val up = findViewById<MaterialButton>(R.id.octup)
         up.setOnClickListener {
             if (octint < 3) {
                 octint++
@@ -160,7 +153,7 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
             }
         }
         envelopeCreation()
-        val filter = findViewById<SeekBar>(id.filter)
+        val filter = findViewById<SeekBar>(R.id.filter)
 
         changeKnob(4, 100)
         filter.run {
@@ -175,7 +168,7 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
                 override fun onStopTrackingTouch(seekBar: SeekBar) {}
             })
         }
-        val Q = findViewById<SeekBar>(id.Q)
+        val Q = findViewById<SeekBar>(R.id.Q)
         changeKnob(5, 20)
         Q.progress = 20
         Q.setOnSeekBarChangeListener(object : OnSeekBarChangeListener {
@@ -186,7 +179,7 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
             override fun onStartTrackingTouch(seekBar: SeekBar) {}
             override fun onStopTrackingTouch(seekBar: SeekBar) {}
         })
-        val q = findViewById<SeekBar>(id.q)
+        val q = findViewById<SeekBar>(R.id.q)
         changeKnob(19, 23)
         q.progress = 23
         q.setOnSeekBarChangeListener(object : OnSeekBarChangeListener {
@@ -197,31 +190,31 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
             override fun onStartTrackingTouch(seekBar: SeekBar) {}
             override fun onStopTrackingTouch(seekBar: SeekBar) {}
         })
-        val drywet = findViewById<Knob>(id.drywet)
+        val drywet = findViewById<Knob>(R.id.drywet)
         drywet.state = 20
         changeKnob(6, 20)
         drywet.setOnStateChanged { state -> // do something
             changeKnob(6, state)
         }
-        val time = findViewById<Knob>(id.delaytime)
+        val time = findViewById<Knob>(R.id.delaytime)
         time.state = 49
         changeKnob(7, 49)
         time.setOnStateChanged { state -> // do something
             changeKnob(7, state)
         }
-        val delayratio = findViewById<Knob>(id.delayratio)
+        val delayratio = findViewById<Knob>(R.id.delayratio)
         delayratio.state = 18
         changeKnob(8, 18)
         delayratio.setOnStateChanged { state -> // do something
             changeKnob(8, state)
         }
-        val feedback = findViewById<Knob>(id.feedback)
+        val feedback = findViewById<Knob>(R.id.feedback)
         feedback.state = 20
         changeKnob(9, 20)
         feedback.setOnStateChanged { state -> // do something
             changeKnob(9, state)
         }
-        val ratelfo = findViewById<SeekBar>(id.LFORate)
+        val ratelfo = findViewById<SeekBar>(R.id.LFORate)
         ratelfo.progress = 70
         changeKnob(10, 50)
         ratelfo.setOnSeekBarChangeListener(object : OnSeekBarChangeListener {
@@ -232,7 +225,7 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
             override fun onStartTrackingTouch(seekBar: SeekBar) {}
             override fun onStopTrackingTouch(seekBar: SeekBar) {}
         })
-        val reverb = findViewById<SeekBar>(id.reverb)
+        val reverb = findViewById<SeekBar>(R.id.reverb)
         reverb.progress = 20
         changeKnob(14, 20)
         reverb.setOnSeekBarChangeListener(object : OnSeekBarChangeListener {
@@ -243,7 +236,7 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
             override fun onStartTrackingTouch(seekBar: SeekBar) {}
             override fun onStopTrackingTouch(seekBar: SeekBar) {}
         })
-        val randomlfo = findViewById<MaterialButton>(id.randlfo)
+        val randomlfo = findViewById<MaterialButton>(R.id.randlfo)
         randomlfo.setBackgroundColor(Color.RED)
         randomlfo.setOnClickListener(object : View.OnClickListener {
             private var randlfo = false
@@ -261,7 +254,7 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
                 }
             }
         })
-        val randomovertones = findViewById<MaterialButton>(id.randomovertones)
+        val randomovertones = findViewById<MaterialButton>(R.id.randomovertones)
         randomovertones.setBackgroundColor(Color.RED)
         randomovertones.setOnClickListener(object : View.OnClickListener {
             private var randover = false
@@ -279,7 +272,7 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
                 }
             }
         })
-        val looper = findViewById<MaterialButton>(id.looper)
+        val looper = findViewById<MaterialButton>(R.id.looper)
         looper.setBackgroundColor(Color.RED)
         looper.setOnClickListener(object : View.OnClickListener {
             private var loop = false
@@ -297,19 +290,19 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
                 }
             }
         })
-        val lfopitch = findViewById<Knob>(id.LFOPitch)
+        val lfopitch = findViewById<Knob>(R.id.LFOPitch)
         lfopitch.state = 2
         changeKnob(11, 2)
         lfopitch.setOnStateChanged { state -> // do something
             changeKnob(11, state)
         }
-        val lfofilter = findViewById<Knob>(id.LFOFilter)
+        val lfofilter = findViewById<Knob>(R.id.LFOFilter)
         lfofilter.state = 5
         changeKnob(12, 5)
         lfofilter.setOnStateChanged { state -> // do something
             changeKnob(12, state)
         }
-        val drone = findViewById<View>(id.drone) as MaterialButton
+        val drone = findViewById<View>(R.id.drone) as MaterialButton
         if (dronebool == false) changeKnob(13, 0)
         drone.run {
             lfofilter.state = 5
@@ -334,13 +327,13 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
                 }
             })
         }
-        val selectwave = findViewById<MaterialButton>(id.selectWave)
+        val selectwave = findViewById<MaterialButton>(R.id.selectWave)
         selectwave.setOnClickListener {
             currentWave = (currentWave + 1) % waves.size
             selectwave.text = waves[currentWave]
             changeKnob(15, currentWave)
         }
-        val guide = findViewById<MaterialTextView>(id.guide)
+        val guide = findViewById<MaterialTextView>(R.id.guide)
         guide.run {
             selectwave.setOnClickListener {
                 currentWave = (currentWave + 1) % waves.size
@@ -351,9 +344,9 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
             movementMethod = ScrollingMovementMethod()
             text = guidetxt[0]
         }
-        val next = findViewById<MaterialButton>(id.next)
-        val prev = findViewById<MaterialButton>(id.prev)
-        val hide = findViewById<MaterialButton>(id.hidehelp)
+        val next = findViewById<MaterialButton>(R.id.next)
+        val prev = findViewById<MaterialButton>(R.id.prev)
+        val hide = findViewById<MaterialButton>(R.id.hidehelp)
         hide.setOnClickListener(object : View.OnClickListener {
             var helphidden = false
             override fun onClick(view: View) {
@@ -382,8 +375,8 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
             }
             displayinst()
         }
-        val hertz = findViewById<View>(id.hertz) as EditText
-        val tube = findViewById<View>(id.tube) as ImageView
+        val hertz = findViewById<View>(R.id.hertz) as EditText
+        val tube = findViewById<View>(R.id.tube) as ImageView
         tube.setOnClickListener { view ->
 
             if (!tubeoff) {
@@ -416,22 +409,22 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
     }
 
     private fun envelopeCreation() {
-        val attack = findViewById<Knob>(id.attack)
+        val attack = findViewById<Knob>(R.id.attack)
         attack.state = 50
         attack.setOnStateChanged { state -> // do something
             changeKnob(0, state)
         }
-        val decay = findViewById<Knob>(id.decay)
+        val decay = findViewById<Knob>(R.id.decay)
         decay.state = 0
         decay.setOnStateChanged { state -> // do something
             changeKnob(1, state)
         }
-        val sustain = findViewById<Knob>(id.sustain)
+        val sustain = findViewById<Knob>(R.id.sustain)
         sustain.state = 0
         sustain.setOnStateChanged { state -> // do something
             changeKnob(2, state)
         }
-        val release = findViewById<Knob>(id.release)
+        val release = findViewById<Knob>(R.id.release)
         release.state = 0
         release.setOnStateChanged { state ->
             changeKnob(3, state)
@@ -446,17 +439,19 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
     private val tubeon = false
     var guide: TextView? = null
     private val guidetxt = arrayOf(
-        "Welcome to Didg Synth, a simple synth to jam along with or record using an audio interface\n Click next to continue reading instructions for use.",
-        "Attack is the time for the note to get to max volume\nDecay is time from max attack to sustain level\nSustain is level when the note is held for a long period\nRelease is how long for volume to go down as it is released. ",
+        "Welcome to Drone Synth, a simple synth to jam along with or record using an audio interface\n Click next to continue reading instructions for use.", "Attack is the time for the note to get to max volume\nDecay is time from max attack to sustain level\nSustain is level when the note is held for a long period\nRelease is how long for volume to go down as it is released. ",
+
         "LFO rate is the speed of the low frequency wave that can affect the pitch or the filter\nLFO Filt is how much it affects the filter\nLFO pitch how much it affects oscillator\n",
+
         "Delay and reverb sound good with the drone experiment \nFor delay turn up the delay time, delay wet dry to about 50%, \nratio is the time for each channel either left or right, you can ballance them or make the delay higher in one channel\n, as well as feedback, \nFor reverb turn up the wet dry below this text.",
-        "To play Drone press drone MaterialButton  then select your note.\nTo go to a different octave select the MaterialButton  for it.",
-        """
-                To do a sine wave FM synthesis using one of the 3 oscillators as a modifier for the other frequencies but detuned slightly press the MaterialButton  with the wave name until it says FM sine.
-                to go back to regular synth mode press the oscillator waveform MaterialButton  again
-                """.trimIndent(),
-        "Oscillator types, There is Saw Square and Triangle aswell as FM sinusoid. The sinusoid is a pure tone without hamonies, square and saw have alot of harmonies , Noise can sound like ocean waves or wind, triangle has less but its not just one like the sine wave so its a softer tone."
-    )
+
+        "To play Drone press drone button then select your note.\nTo go to a different octave select the button for it.",
+        "To do a sine wave FM synthesis using one of the 3 oscillators as a modifier for the other frequencies but detuned slightly press the button with the wave name until it says FM sine.\n" +
+
+                "to go back to regular synth mode press the oscillator waveform button again",
+        "Oscillator types, There is Saw Square and Triangle aswell as FM sinusoid. The sinusoid is a pure tone without hamonies, square and saw have alot of harmonies , Noise can sound like ocean waves or wind, triangle has less but its not just one like the sine wave so its a softer tone.",
+
+        )
 
     private external fun touchEvent(action: Int, key: Int)
     private external fun changeKnob(knob: Int, `val`: Int)
@@ -468,7 +463,7 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
     private val mSwiping = false
     private var tubeoff = false
     private var filter: SeekBar? = null
-    private val waves = arrayOf("Harmony", "Drone")
+    private val waves = arrayOf("Saw", "FM Sine", "Tri", "Square", "Noise")
     private var currentWave = 0
     private val lastview: View? = null
     var motionListener: OnTouchListener = object : OnTouchListener {
@@ -513,7 +508,7 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
         context = this.applicationContext
         //getSupportActionBar().hide(); //<< this
         thisactivity = this
-        setContentView(layout.activity_main)
+        setContentView(R.layout.activity_main)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         PlaybackEngine.create(this)
         createStuff()
@@ -548,18 +543,18 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
     var droneint = 0
     fun doKeys(event: Int, v: View) {
         when (v.id) {
-            id.a -> touchEvent(event + droneint, 12 * octint + 69)
-            id.b -> touchEvent(event + droneint, 12 * octint + 71)
-            id.c -> touchEvent(event + droneint, 12 * octint + 60)
-            id.d -> touchEvent(event + droneint, 12 * octint + 62)
-            id.e -> touchEvent(event + droneint, 12 * octint + 64)
-            id.f -> touchEvent(event + droneint, 12 * octint + 65)
-            id.g -> touchEvent(event + droneint, 12 * octint + 67)
-            id.asharp -> touchEvent(event + droneint, 12 * octint + 70)
-            id.csharp -> touchEvent(event + droneint, 12 * octint + 61)
-            id.dsharp -> touchEvent(event + droneint, 12 * octint + 63)
-            id.fsharp -> touchEvent(event + droneint, 12 * octint + 66)
-            id.gsharp -> touchEvent(event + droneint, 12 * octint + 68)
+            R.id.a -> touchEvent(event + droneint, 12 * octint + 69)
+            R.id.b -> touchEvent(event + droneint, 12 * octint + 71)
+            R.id.c -> touchEvent(event + droneint, 12 * octint + 60)
+            R.id.d -> touchEvent(event + droneint, 12 * octint + 62)
+            R.id.e -> touchEvent(event + droneint, 12 * octint + 64)
+            R.id.f -> touchEvent(event + droneint, 12 * octint + 65)
+            R.id.g -> touchEvent(event + droneint, 12 * octint + 67)
+            R.id.asharp -> touchEvent(event + droneint, 12 * octint + 70)
+            R.id.csharp -> touchEvent(event + droneint, 12 * octint + 61)
+            R.id.dsharp -> touchEvent(event + droneint, 12 * octint + 63)
+            R.id.fsharp -> touchEvent(event + droneint, 12 * octint + 66)
+            R.id.gsharp -> touchEvent(event + droneint, 12 * octint + 68)
         }
     }
 

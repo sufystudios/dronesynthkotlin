@@ -1,7 +1,6 @@
-package xyz.sufystudios.didgsynth
+package xyz.sufystudios.synthguide
 
 import android.content.Context
-import xyz.sufystudios.didgsynth.PlaybackEngine
 import android.os.Build
 import android.media.AudioManager
 
@@ -36,7 +35,7 @@ import android.media.AudioManager
             val defaultSampleRate = sampleRateStr.toInt()
             val framesPerBurstStr = myAudioMgr.getProperty(AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER)
             val defaultFramesPerBurst = framesPerBurstStr.toInt()
-            native_setDefaultSampleRate(defaultSampleRate)
+            //native_setDefaultSampleRate(defaultSampleRate)
             native_setDefaultFramesPerBurst(defaultFramesPerBurst)
         }
     }
@@ -89,7 +88,7 @@ import android.media.AudioManager
     private external fun native_setBufferSizeInBursts(engineHandle: Long, bufferSizeInBursts: Int)
     private external fun native_getCurrentOutputLatencyMillis(engineHandle: Long): Double
     private external fun native_isLatencyDetectionSupported(engineHandle: Long): Boolean
-    private external fun native_setDefaultSampleRate(sampleRate: Int)
+   // private external fun native_setDefaultSampleRate(sampleRate: Int)
     private external fun native_setDefaultFramesPerBurst(framesPerBurst: Int)
 
     // Load native library

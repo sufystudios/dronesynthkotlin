@@ -9,7 +9,7 @@
     android:focusable="true"
     android:focusableInTouchMode="true"
     android:keepScreenOn="true"
-    tools:context="xyz.sufystudios.didgsynth.MainActivity">
+    tools:context="xyz.sufystudios.synthguide.MainActivity">
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/qtxt2"

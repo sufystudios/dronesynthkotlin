@@ -4,7 +4,7 @@ apply plugin: 'kotlin-android'
 android {
     compileSdkVersion 30
     defaultConfig {
-        applicationId "xyz.sufystudios.didgsynth"
+        applicationId "xyz.sufystudios.synthguide"
         minSdkVersion 16
         targetSdkVersion 30
         versionCode 10506
@@ -31,6 +31,8 @@ android {
         }
     }
     ndkVersion '21.1.6352462'
+
+
 }
 
 
@@ -53,5 +55,4 @@ dependencies {
     implementation "androidx.core:core-ktx:1.6.0"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
 }
-
 

@@ -1,4 +1,4 @@
-package xyz.sufystudios.didgsynth;
+package xyz.sufystudios.synthguide;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;

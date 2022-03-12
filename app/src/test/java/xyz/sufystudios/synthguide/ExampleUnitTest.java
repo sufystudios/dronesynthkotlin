@@ -1,4 +1,4 @@
-package xyz.sufystudios.didgsynth;
+package xyz.sufystudios.synthguide;
 
 import org.junit.Test;
 
