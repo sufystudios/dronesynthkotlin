@@ -544,6 +544,7 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
     fun doKeys(event: Int, v: View) {
         when (v.id) {
             R.id.a -> touchEvent(event + droneint, 12 * octint + 69)
+
             R.id.b -> touchEvent(event + droneint, 12 * octint + 71)
             R.id.c -> touchEvent(event + droneint, 12 * octint + 60)
             R.id.d -> touchEvent(event + droneint, 12 * octint + 62)

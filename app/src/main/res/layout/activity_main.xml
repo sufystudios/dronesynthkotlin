@@ -684,7 +684,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
 
-        android:text="@string/harmony"
+        android:text="Saw"
         android:textColor="@color/colorPrimaryDark"
         app:backgroundTint="#F44336"
         app:iconTint="#F44336"
