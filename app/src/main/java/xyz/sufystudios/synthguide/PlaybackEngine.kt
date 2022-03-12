@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Build
 import android.media.AudioManager
 
+
 /*
  * Copyright 2017 The Android Open Source Project
  *
@@ -36,7 +37,7 @@ import android.media.AudioManager
             val framesPerBurstStr = myAudioMgr.getProperty(AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER)
             val defaultFramesPerBurst = framesPerBurstStr.toInt()
             //native_setDefaultSampleRate(defaultSampleRate)
-            native_setDefaultFramesPerBurst(defaultFramesPerBurst)
+            //native_setDefaultFramesPerBurst(defaultFramesPerBurst)
         }
     }
 
@@ -45,7 +46,7 @@ import android.media.AudioManager
     }
 
     fun setToneOn(isToneOn: Boolean) {
-        //  if (mEngineHandle != 0) native_setToneOn(mEngineHandle, isToneOn);
+        // if (mEngineHandle != 0) native_setToneOn(mEngineHandle, isToneOn);
     }
 
     fun setAudioApi(audioApi: Int) {
