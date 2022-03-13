@@ -300,7 +300,7 @@
         android:background="#0E0D0D"
         android:text="A#"
         android:textColor="@color/colorPrimary"
-        app:backgroundTint="#000000"
+
         app:iconPadding="2dp"
         app:layout_constraintBottom_toBottomOf="@id/csharp"
         app:layout_constraintEnd_toStartOf="@id/b"
@@ -312,10 +312,11 @@
         android:layout_width="47dp"
         android:layout_height="50dp"
 
+
         android:background="#0C0C0C"
         android:text="C#"
+
         android:textColor="@color/colorPrimary"
-        app:backgroundTint="#000000"
         app:layout_constraintBottom_toTopOf="@id/whitetop"
         app:layout_constraintEnd_toStartOf="@id/d"
         app:layout_constraintStart_toEndOf="@+id/c"
@@ -328,7 +329,7 @@
         android:background="#0E0D0D"
         android:text="D#"
         android:textColor="@color/colorPrimary"
-        app:backgroundTint="#000000"
+
         app:layout_constraintBottom_toBottomOf="@+id/csharp"
         app:layout_constraintEnd_toStartOf="@id/e"
         app:layout_constraintStart_toEndOf="@+id/d"
@@ -338,10 +339,10 @@
         android:id="@+id/fsharp"
         android:layout_width="47dp"
         android:layout_height="50dp"
-        android:background="#121010"
+        android:background="#000000"
         android:text="F#"
         android:textColor="@color/colorPrimary"
-        app:backgroundTint="#000000"
+
         app:layout_constraintBottom_toBottomOf="@id/csharp"
         app:layout_constraintEnd_toStartOf="@id/g"
         app:layout_constraintStart_toEndOf="@+id/f"
@@ -356,7 +357,7 @@
         android:text="G#"
         android:textAppearance="@style/TextAppearance.AppCompat.Body1"
         android:textColor="@color/colorPrimary"
-        app:backgroundTint="#000000"
+
         app:layout_constraintBottom_toBottomOf="@id/csharp"
         app:layout_constraintEnd_toStartOf="@id/a"
         app:layout_constraintStart_toEndOf="@+id/g"

@@ -469,12 +469,25 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
     var motionListener: OnTouchListener = object : OnTouchListener {
         var isplaying = false
         override fun onTouch(v: View, event: MotionEvent): Boolean {
+            var button =  v as MaterialButton
             when (event.actionMasked) {
+
                 MotionEvent.ACTION_DOWN -> {
                     doKeys(0, v)
+                    button.setBackgroundColor(Color.GREEN)
+                    if (button.text.toString().contains("#")){
+                        button.alpha=0.7.toFloat()
+                    }
                     return true
                 }
                 MotionEvent.ACTION_UP -> {
+                    if (button.text.toString().contains("#"))
+                    {
+                        button.alpha=1.0.toFloat()
+                    }
+                    else {
+                        button.setBackgroundColor(Color.WHITE)
+                    }
                     doKeys(2, v)
                     // doKeys(2, v);
                     return true
@@ -542,8 +555,10 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
 
     var droneint = 0
     fun doKeys(event: Int, v: View) {
+        var button = v as MaterialButton
         when (v.id) {
             R.id.a -> touchEvent(event + droneint, 12 * octint + 69)
+            //button.set
 
             R.id.b -> touchEvent(event + droneint, 12 * octint + 71)
             R.id.c -> touchEvent(event + droneint, 12 * octint + 60)
