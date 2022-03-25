@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Didgeridoo Synth</string>
+    <string name="app_name">Drone Synth</string>
     <string name="instructions">
     Attack is the time for the note to get to max volume
     Decay is time from max attack to sustain level

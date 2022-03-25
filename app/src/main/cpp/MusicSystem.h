@@ -341,7 +341,7 @@ public :
 
                 }
                 if (currentState == TUBE || secondaryState == TUBE) {
-                    AiTube = (AILFOOut1 * SATURATION_INTENSITY);
+                    AiTube = (AILFOOut1 * 1);
                 }
 
             }
@@ -547,12 +547,12 @@ public :
 
                 if (tubeon) {
                     filt = softClipWaveShaper(
-                            softClipWaveShaper(filt+randomNoiseL, reverb.m_fWet_pct / 80 + 1 + (AiTube)),
-                            reverb.m_fWet_pct / 90 + 1.3 + AiTube );
+                            softClipWaveShaper(filt+randomNoiseL, 1 / 80 + 1 + (AiTube)),
+                            1/ 90 + 1.3 + AiTube );
 
                     filt2 = softClipWaveShaper(
-                            softClipWaveShaper(filt2+randomNoiseR, reverb.m_fWet_pct / 80 + 1 - AiTube),
-                            reverb.m_fWet_pct / 90 + 1.3 - AiTube );
+                            softClipWaveShaper(filt2+randomNoiseR, 1 / 80 + 1 - AiTube),
+                            1 / 90 + 1.3 - AiTube );
                 }
 
 
@@ -741,12 +741,12 @@ public :
 
                     if (tubeon) {
                         filt = softClipWaveShaper(
-                                softClipWaveShaper(filt, reverb.m_fWet_pct / 80 + 1),
-                                reverb.m_fWet_pct / 90 + 1.3 + (oscillator_->m_uWaveform==4)? 2:0);
+                                softClipWaveShaper(filt, 1 / 80 + 1),
+                                1 / 90 + 1.3 + (oscillator_->m_uWaveform==4)? 2:0);
 
                         filt2 = softClipWaveShaper(
-                                softClipWaveShaper(filt2, reverb.m_fWet_pct / 80 + 1),
-                                reverb.m_fWet_pct / 90 + 1.3+ (oscillator_->m_uWaveform==4)? 2:0);
+                                softClipWaveShaper(filt2, 1 / 80 + 1),
+                                1 / 90 + 1.3+ (oscillator_->m_uWaveform==4)? 2:0);
                     }
 
 

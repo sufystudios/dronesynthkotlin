@@ -15,6 +15,7 @@ import android.text.method.ScrollingMovementMethod
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
+import android.view.View.INVISIBLE
 import android.view.View.OnTouchListener
 import android.view.WindowManager
 import android.widget.*
@@ -22,7 +23,8 @@ import android.widget.SeekBar.OnSeekBarChangeListener
 import androidx.appcompat.app.AppCompatActivity
 import com.anjlab.android.iab.v3.BillingProcessor
 import com.anjlab.android.iab.v3.BillingProcessor.IBillingHandler
-import com.anjlab.android.iab.v3.TransactionDetails
+import com.anjlab.android.iab.v3.BillingProcessor.IPurchasesResponseListener
+import com.anjlab.android.iab.v3.PurchaseInfo
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textview.MaterialTextView
 import it.beppi.knoblibrary.Knob
@@ -68,13 +70,9 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
     var AI_PURHCASED = false
     var AION = false
     var aiDrone: MaterialButton? = null
+    lateinit var purchaseInfo : PurchaseInfo
 
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (!bp!!.handleActivityResult(requestCode, resultCode, data)) {
-            super.onActivityResult(requestCode, resultCode, data)
-        }
-    }
 
     protected fun toggleAIDrone() {
         val products = bp!!.listOwnedProducts()
@@ -84,7 +82,9 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
             }
         }
         if (!AI_PURHCASED) {
-            bp!!.purchase(this, aiDroneString)
+            if(bp!!.isConnected) {
+                bp!!.purchase(this, aiDroneString)
+            }
         }
         if (AI_PURHCASED && !AION) {
             aiDrone!!.text = "AI:ON"
@@ -98,7 +98,7 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
     }
 
     private fun createStuff() {
-        aiDrone = findViewById<MaterialButton>(R.id.aibutton)
+        aiDrone = findViewById(R.id.aibutton)
         //startEngine();
         bp = BillingProcessor(
             this,
@@ -344,21 +344,25 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
             movementMethod = ScrollingMovementMethod()
             text = guidetxt[0]
         }
+        guide.visibility= INVISIBLE
         val next = findViewById<MaterialButton>(R.id.next)
+        next.visibility= INVISIBLE
         val prev = findViewById<MaterialButton>(R.id.prev)
+        prev.visibility= INVISIBLE
         val hide = findViewById<MaterialButton>(R.id.hidehelp)
+        hide.visibility= INVISIBLE
         hide.setOnClickListener(object : View.OnClickListener {
             var helphidden = false
             override fun onClick(view: View) {
                 if (!helphidden) {
-                    guide.visibility = View.GONE
-                    next.visibility = View.GONE
-                    prev.visibility = View.GONE
+                    //guide.visibility = View.GONE
+                   // next.visibility = View.GONE
+                  //  prev.visibility = View.GONE
                     helphidden = true
                 } else {
-                    guide.visibility = View.VISIBLE
-                    next.visibility = View.VISIBLE
-                    prev.visibility = View.VISIBLE
+                    //guide.visibility = View.VISIBLE
+                  //  next.visibility = View.VISIBLE
+                 //   prev.visibility = View.VISIBLE
                     helphidden = false
                 }
             }
@@ -367,7 +371,7 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
             if (currentins < guidetxt.size - 1) {
                 currentins++
             }
-            displayinst()
+            runOnUiThread { displayinst() }
         }
         prev.setOnClickListener {
             if (currentins > 0) {
@@ -406,6 +410,7 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
                 }
             }
         })
+
     }
 
     private fun envelopeCreation() {
@@ -439,17 +444,7 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
     private val tubeon = false
     var guide: TextView? = null
     private val guidetxt = arrayOf(
-        "Welcome to Drone Synth, a simple synth to jam along with or record using an audio interface\n Click next to continue reading instructions for use.", "Attack is the time for the note to get to max volume\nDecay is time from max attack to sustain level\nSustain is level when the note is held for a long period\nRelease is how long for volume to go down as it is released. ",
-
-        "LFO rate is the speed of the low frequency wave that can affect the pitch or the filter\nLFO Filt is how much it affects the filter\nLFO pitch how much it affects oscillator\n",
-
-        "Delay and reverb sound good with the drone experiment \nFor delay turn up the delay time, delay wet dry to about 50%, \nratio is the time for each channel either left or right, you can ballance them or make the delay higher in one channel\n, as well as feedback, \nFor reverb turn up the wet dry below this text.",
-
-        "To play Drone press drone button then select your note.\nTo go to a different octave select the button for it.",
-        "To do a sine wave FM synthesis using one of the 3 oscillators as a modifier for the other frequencies but detuned slightly press the button with the wave name until it says FM sine.\n" +
-
-                "to go back to regular synth mode press the oscillator waveform button again",
-        "Oscillator types, There is Saw Square and Triangle aswell as FM sinusoid. The sinusoid is a pure tone without hamonies, square and saw have alot of harmonies , Noise can sound like ocean waves or wind, triangle has less but its not just one like the sine wave so its a softer tone.",
+        "Welcome to Drone Synth, a simple synth to jam along with or record using an audio interface\n Click next to continue reading instructions for use.\nAttack is the time for the note to get to max volume\nDecay is time from max attack to sustain level\nSustain is level when the note is held for a long period\nRelease is how long for volume to go down as it is released. LFO rate is the speed of the low frequency wave that can affect the pitch or the filter\nLFO Filt is how much it affects the filter\nLFO pitch how much it affects oscillator\n, Delay and reverb sound good with the drone experiment \nFor delay turn up the delay time, delay wet dry to about 50%, \nratio is the time for each channel either left or right, you can ballance them or make the delay higher in one channel\n, as well as feedback, \nFor reverb turn up the wet dry below this text.\nTo play Drone press drone button then select your note.\nTo go to a different octave select the button for it.\nTo do a sine wave FM synthesis using one of the 3 oscillators as a modifier for the other frequencies but detuned slightly press the button with the wave name until it says FM sine.\nto go back to regular synth mode press the oscillator waveform button again\nOscillator types, There is Saw Square and Triangle aswell as FM sinusoid. The sinusoid is a pure tone without hamonies, square and saw have alot of harmonies , Noise can sound like ocean waves or wind, triangle has less but its not just one like the sine wave so its a softer tone.",
 
         )
 
@@ -524,6 +519,7 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
         setContentView(R.layout.activity_main)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         PlaybackEngine.create(this)
+//        purchaseInfo = bp?.getPurchaseInfo(aiDroneString)!!
         createStuff()
 
 //TODO find replacement
@@ -543,7 +539,7 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
     }
 
     private fun displayinst() {
-        guide!!.text = guidetxt[currentins]
+        guide!!.text = guidetxt.get(currentins).toString()
     }
 
     fun nextinst() {}
@@ -575,12 +571,10 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
     }
 
     var isdown = false
-    override fun onProductPurchased(productId: String, details: TransactionDetails?) {
-        if (productId == aiDroneString) {
-            AI_PURHCASED = true
-            toggleAIDrone()
-        }
+    override fun onProductPurchased(productId: String, details: PurchaseInfo?) {
+
     }
+
 
     override fun onPurchaseHistoryRestored() {}
     override fun onBillingError(errorCode: Int, error: Throwable?) {}
