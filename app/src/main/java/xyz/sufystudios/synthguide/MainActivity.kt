@@ -27,6 +27,8 @@ import com.anjlab.android.iab.v3.BillingProcessor.IPurchasesResponseListener
 import com.anjlab.android.iab.v3.PurchaseInfo
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textview.MaterialTextView
+import com.suddenh4x.ratingdialog.AppRating
+import com.suddenh4x.ratingdialog.preferences.RatingThreshold
 import it.beppi.knoblibrary.Knob
 import xyz.sufystudios.synthguide.R
 
@@ -514,6 +516,13 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         context = this.applicationContext
+        AppRating.Builder(this)
+            .setMinimumLaunchTimes(5)
+            .setMinimumDays(7)
+            .setMinimumLaunchTimesToShowAgain(5)
+            .setMinimumDaysToShowAgain(10)
+            .setRatingThreshold(RatingThreshold.FOUR)
+            .showIfMeetsConditions()
         //getSupportActionBar().hide(); //<< this
         thisactivity = this
         setContentView(R.layout.activity_main)
@@ -572,11 +581,16 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
 
     var isdown = false
     override fun onProductPurchased(productId: String, details: PurchaseInfo?) {
+Toast.makeText(this,"purchased aidrone", Toast.LENGTH_LONG)
 
     }
 
 
-    override fun onPurchaseHistoryRestored() {}
+    override fun onPurchaseHistoryRestored() {
+        Toast.makeText(thisactivity,"Ai drone Available",Toast.LENGTH_LONG)
+    }
     override fun onBillingError(errorCode: Int, error: Throwable?) {}
-    override fun onBillingInitialized() {}
+    override fun onBillingInitialized() {
+        Toast.makeText(thisactivity,"Ai Drone Available",Toast.LENGTH_LONG)
+    }
 }

@@ -7,8 +7,8 @@ android {
         applicationId "xyz.sufystudios.synthguide"
         minSdkVersion 16
         targetSdkVersion 32
-        versionCode  210004
-        versionName "1.21.04"
+        versionCode  210005
+        versionName "1.21.05"
         resConfigs 'en', 'US'
         externalNativeBuild {
             cmake {
@@ -53,5 +53,6 @@ dependencies {
     implementation 'com.google.android.material:material:1.5.0'
     implementation "androidx.core:core-ktx:1.7.0"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    implementation 'com.suddenh4x.ratingdialog:awesome-app-rating:2.4.0'
 }
 
