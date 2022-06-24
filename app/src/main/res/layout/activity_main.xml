@@ -11,21 +11,29 @@
     android:keepScreenOn="true"
     tools:context="xyz.sufystudios.synthguide.MainActivity">
 
+    <ImageView
+        android:id="@+id/view"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:scaleType="fitXY"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/qtxt2"
         android:layout_width="wrap_content"
-        android:layout_height="0dp"
+        android:layout_height="16dp"
         android:layout_marginStart="9dp"
         android:layout_marginLeft="9dp"
         android:layout_marginEnd="24dp"
         android:layout_marginRight="24dp"
         android:text="Qright"
         android:textColor="@color/colorPrimary"
-        app:layout_constraintBottom_toTopOf="@id/guideline5"
         app:layout_constraintEnd_toEndOf="@+id/q"
         app:layout_constraintStart_toEndOf="@id/qtxt"
         app:layout_constraintStart_toStartOf="@+id/q"
-        app:layout_constraintTop_toBottomOf="@id/Q" />
+        app:layout_constraintTop_toBottomOf="@+id/q" />
 
     <it.beppi.knoblibrary.Knob
         android:id="@+id/attack"
@@ -289,6 +297,7 @@
         android:textColor="@color/colorPrimary"
         app:layout_constraintBottom_toTopOf="@id/guideline4"
         app:layout_constraintEnd_toStartOf="@+id/aibutton"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="@id/LFORate"
         app:layout_constraintTop_toBottomOf="@id/LFORate" />
 
@@ -500,101 +509,44 @@
         app:layout_constraintTop_toTopOf="@id/octdown" />
     <!-- filter -->
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/prev"
-        android:layout_width="wrap_content"
-        android:layout_height="0dp"
-
-
-        android:gravity="center|top"
-        android:text="previous"
-        android:textColor="#DFFFFFFF"
-        android:textSize="8sp"
-        android:textStyle="bold"
-        app:backgroundTint="#9C27B0"
-        app:layout_constraintBottom_toTopOf="@id/filter"
-        app:layout_constraintEnd_toStartOf="@id/next"
-        app:layout_constraintStart_toStartOf="@id/sustain"
-        app:layout_constraintTop_toBottomOf="@id/guideline" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/next"
-        android:layout_width="wrap_content"
-        android:layout_height="0dp"
-
-
-        android:gravity="center|top"
-
-        android:text="next"
-        android:textColor="#E9EAEC"
-        android:textSize="8sp"
-        android:textStyle="bold"
-        app:backgroundTint="#673AB7"
-        app:layout_constraintBottom_toTopOf="@+id/filter"
-        app:layout_constraintEnd_toStartOf="@+id/hidehelp"
-        app:layout_constraintStart_toEndOf="@id/prev"
-        app:layout_constraintTop_toBottomOf="@id/guideline" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/hidehelp"
-        android:layout_width="27dp"
-        android:layout_height="28dp"
-
-
-        android:gravity="center|top"
-
-        android:text="Hide"
-        android:textColor="#F3F3F3"
-        android:textSize="8sp"
-        android:textStyle="bold"
-
-        app:backgroundTint="#E91E63"
-
-        app:layout_constraintBottom_toTopOf="@+id/filter"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/next"
-        app:layout_constraintTop_toBottomOf="@+id/guide" />
 
     <SeekBar
         android:id="@+id/filter"
         android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:max="333"
+        android:layout_height="wrap_content"
 
+        android:max="333"
         android:progress="0"
         android:progressDrawable="@drawable/volume_seekbar"
         android:thumbTint="@color/green"
-        app:layout_constraintBottom_toTopOf="@id/filtertxt"
-        app:layout_constraintEnd_toEndOf="@+id/sustain"
-        app:layout_constraintEnd_toStartOf="@+id/fsharp"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="@id/attack"
-        app:layout_constraintTop_toBottomOf="@id/prev" />
+        app:layout_constraintBottom_toTopOf="@+id/octup"
+        app:layout_constraintEnd_toStartOf="@+id/drone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/Q" />
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/filtertxt"
         android:layout_width="wrap_content"
-        android:layout_height="0dp"
-        android:layout_marginBottom="8dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
         android:text="FilterFc"
         android:textColor="@color/colorPrimary"
-        app:layout_constraintBottom_toTopOf="@+id/guideline5"
-        app:layout_constraintStart_toStartOf="@id/attack"
-        app:layout_constraintTop_toBottomOf="@id/filter" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/qtxt2"
+        app:layout_constraintTop_toBottomOf="@+id/qtxt2" />
 
     <SeekBar
         android:id="@+id/Q"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:max="100"
-        android:padding="3dp"
 
+        android:padding="3dp"
         android:progressDrawable="@drawable/volume_seekbar"
         android:thumbTint="@color/green"
-        app:layout_constraintBottom_toTopOf="@id/qtxt"
-        app:layout_constraintEnd_toStartOf="@id/q"
-        app:layout_constraintStart_toEndOf="@+id/filter"
-        app:layout_constraintTop_toBottomOf="@id/next" />
+        app:layout_constraintEnd_toStartOf="@+id/q"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/hertz" />
 
     <SeekBar
         android:id="@+id/q"
@@ -606,19 +558,17 @@
         android:progressDrawable="@drawable/volume_seekbar"
         android:thumbTint="@color/green"
         app:layout_constraintBottom_toTopOf="@id/qtxt"
-        app:layout_constraintEnd_toEndOf="@id/release"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/Q"
-        app:layout_constraintTop_toBottomOf="@id/next" />
-
+        app:layout_constraintTop_toBottomOf="@+id/hertz" />
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/qtxt"
         android:layout_width="wrap_content"
-        android:layout_height="0dp"
+        android:layout_height="16dp"
         android:layout_marginStart="8dp"
         android:layout_marginLeft="8dp"
         android:text="Qleft"
         android:textColor="@color/colorPrimary"
-        app:layout_constraintBottom_toTopOf="@id/guideline5"
         app:layout_constraintEnd_toEndOf="@id/Q"
         app:layout_constraintStart_toStartOf="@+id/Q"
         app:layout_constraintTop_toBottomOf="@id/Q" />
@@ -735,19 +685,6 @@
         android:orientation="horizontal"
         app:layout_constraintGuide_percent="0.5" />
 
-    <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/guide"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="@drawable/textview_border"
-        android:scrollbars="vertical"
-        android:text="TextView"
-        android:textColor="@color/colorPrimary"
-        app:layout_constraintBottom_toTopOf="@id/guideline"
-        app:layout_constraintEnd_toEndOf="@id/release"
-        app:layout_constraintStart_toEndOf="@+id/tube"
-        app:layout_constraintTop_toBottomOf="@id/guideline4" />
-
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline5"
         android:layout_width="wrap_content"
@@ -774,8 +711,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.08"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintGuide_percent="0.08" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline9"
@@ -846,8 +782,6 @@
         android:textSize="8sp"
         android:visibility="invisible"
         app:layout_constraintBottom_toTopOf="@+id/hertz"
-        app:layout_constraintEnd_toStartOf="@+id/guide"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toEndOf="@+id/selectWave"
         app:layout_constraintTop_toBottomOf="@+id/tube" />
 
@@ -857,9 +791,26 @@
         android:layout_height="wrap_content"
         android:text="AI DRONE"
         app:backgroundTint="#009688"
-        app:layout_constraintBottom_toTopOf="@+id/guide"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/LFORate" />
+
+    <Button
+        android:id="@+id/space"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="SpaceSkin"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/guideline4" />
+
+    <Button
+        android:id="@+id/removeSkin"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="NoSkin"
+        app:layout_constraintBottom_toTopOf="@+id/guideline"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/space" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

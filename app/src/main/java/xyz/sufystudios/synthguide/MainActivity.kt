@@ -15,8 +15,7 @@ import android.text.method.ScrollingMovementMethod
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
-import android.view.View.INVISIBLE
-import android.view.View.OnTouchListener
+import android.view.View.*
 import android.view.WindowManager
 import android.widget.*
 import android.widget.SeekBar.OnSeekBarChangeListener
@@ -71,6 +70,11 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
     var aiDroneString = "ai_drone_upgrade"
     var AI_PURHCASED = false
     var AION = false
+    var SPACESKINPURCHASED = false;
+    var ROSESKINPURCHASED= false;
+    val ROSESKINSTRING="roseskin"
+    var SPACESKINSTRING="spaceskin"
+
     var aiDrone: MaterialButton? = null
     lateinit var purchaseInfo : PurchaseInfo
 
@@ -89,6 +93,7 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
             }
         }
         if (AI_PURHCASED && !AION) {
+
             aiDrone!!.text = "AI:ON"
             AION = true
             changeKnob(21, 1)
@@ -108,6 +113,7 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
             this
         )
         bp!!.initialize()
+
         var a = findViewById<MaterialButton>(R.id.a)
         a.setOnTouchListener(motionListener)
 
@@ -335,7 +341,7 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
             selectwave.text = waves[currentWave]
             changeKnob(15, currentWave)
         }
-        val guide = findViewById<MaterialTextView>(R.id.guide)
+
         guide.run {
             selectwave.setOnClickListener {
                 currentWave = (currentWave + 1) % waves.size
@@ -343,44 +349,14 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
                 changeKnob(15, currentWave)
             }
 
-            movementMethod = ScrollingMovementMethod()
-            text = guidetxt[0]
+
         }
-        guide.visibility= INVISIBLE
-        val next = findViewById<MaterialButton>(R.id.next)
-        next.visibility= INVISIBLE
-        val prev = findViewById<MaterialButton>(R.id.prev)
-        prev.visibility= INVISIBLE
-        val hide = findViewById<MaterialButton>(R.id.hidehelp)
-        hide.visibility= INVISIBLE
-        hide.setOnClickListener(object : View.OnClickListener {
-            var helphidden = false
-            override fun onClick(view: View) {
-                if (!helphidden) {
-                    //guide.visibility = View.GONE
-                   // next.visibility = View.GONE
-                  //  prev.visibility = View.GONE
-                    helphidden = true
-                } else {
-                    //guide.visibility = View.VISIBLE
-                  //  next.visibility = View.VISIBLE
-                 //   prev.visibility = View.VISIBLE
-                    helphidden = false
-                }
-            }
-        })
-        next.setOnClickListener {
-            if (currentins < guidetxt.size - 1) {
-                currentins++
-            }
-            runOnUiThread { displayinst() }
-        }
-        prev.setOnClickListener {
-            if (currentins > 0) {
-                currentins--
-            }
-            displayinst()
-        }
+
+
+
+
+
+
         val hertz = findViewById<View>(R.id.hertz) as EditText
         val tube = findViewById<View>(R.id.tube) as ImageView
         tube.setOnClickListener { view ->
@@ -517,12 +493,13 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
         super.onCreate(savedInstanceState)
         context = this.applicationContext
         AppRating.Builder(this)
-            .setMinimumLaunchTimes(5)
-            .setMinimumDays(7)
+            .setMinimumLaunchTimes(3)
+            .setMinimumDays(3)
             .setMinimumLaunchTimesToShowAgain(5)
-            .setMinimumDaysToShowAgain(10)
             .setRatingThreshold(RatingThreshold.FOUR)
             .showIfMeetsConditions()
+
+
         //getSupportActionBar().hide(); //<< this
         thisactivity = this
         setContentView(R.layout.activity_main)
@@ -530,6 +507,45 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
         PlaybackEngine.create(this)
 //        purchaseInfo = bp?.getPurchaseInfo(aiDroneString)!!
         createStuff()
+
+        var spaceskin = findViewById<Button>(R.id.space)
+        spaceskin.setOnClickListener {
+            findViewById<ImageView>(R.id.view).visibility= VISIBLE
+            val products = bp!!.listOwnedProducts()
+            for (i in products) {
+                if (i == SPACESKINSTRING) {
+                    SPACESKINPURCHASED = true
+                }
+            }
+            if (!SPACESKINPURCHASED) {
+                if (bp!!.isConnected) {
+                    bp!!.purchase(this, SPACESKINSTRING)
+                }
+            } else {
+                var skin = findViewById<ImageView>(R.id.view)
+                skin.setImageResource(R.drawable.space)
+                //skin.
+            }
+        }
+        var removeSkin=findViewById<Button>(R.id.removeSkin)
+        removeSkin.setOnClickListener {
+            findViewById<ImageView>(R.id.view).visibility = INVISIBLE
+        }
+//        var roseskin = findViewById<Button>(R.id.rose)
+//        roseskin.setOnClickListener {
+//            val products = bp!!.listOwnedProducts()
+//            for (i in products) {
+//                if (i == "roseskin")
+//                    ROSESKINPURCHASED = true
+//            }
+//            if (false)
+//                bp!!.purchase(this, ROSESKINSTRING)
+//            else {
+//                var skin = findViewById<ImageView>(R.id.view)
+//                skin.setImageResource(R.drawable.rose)
+//            }
+//        }
+
 
 //TODO find replacement
 //        RateThisApp.onCreate(this);
