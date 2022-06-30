@@ -800,6 +800,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
         android:text="SpaceSkin"
+        android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/guideline4" />
 
@@ -808,6 +809,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="NoSkin"
+        android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@+id/guideline"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/space" />
