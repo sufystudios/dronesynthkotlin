@@ -11,6 +11,7 @@
 #include "Oscillator.h"
 //#include "QBLimitedOscillator.h"
 #include "EnvelopeGenerator.h"
+//#include "OboeAudioRecorder.h"
 #include "MusicSystem.h"
 #include "DCA.h"
 #include "ModulationMatrix.h"
@@ -42,13 +43,17 @@ public:
     void onErrorAfterClose(oboe::AudioStream *oboeStream, oboe::Result error);
     bool fmsynth = false;
 
-
+//OboeAudioRecorder recorder;
     void setChannelCount(int channelCount);
     double getCurrentOutputLatencyMillis();
 
     bool isLatencyDetectionSupported();
     void setDeviceId(int32_t deviceId);
-
+//    void startRecord(void) {
+//
+//        recorder= OboeAudioRecorder::get();
+//        recorder->StartAudioRecorder("file.wav",44100);
+//    }
     void setAudioApi(oboe::AudioApi audioApi);
     oboe::Result calculateCurrentOutputLatencyMillis( double *latencyMillis);
     void onErrorBeforeClose(AudioStream *oboeStream, Result error) override;
@@ -58,6 +63,7 @@ public:
     double basehertz=440.0;
     float getHertz(int key);
     void UpdateEnv() ;
+    //OboeAudioRecorder* recorder;
     void ChangeKnob(int, int);
     void ChangeKnobDouble(int, double);
     int32_t mBufferSizeSelection = kBufferSizeAutomatic;

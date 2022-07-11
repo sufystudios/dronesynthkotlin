@@ -53,10 +53,13 @@ Java_xyz_sufystudios_synthguide_PlaybackEngine_native_1setDefaultFramesPerBurst(
 
 }
 JNIEXPORT void JNICALL
-Java_xyz_sufystudios_synthguide_MainActivity_native_1setTube(JNIEnv *env,
-                                                             jclass type,
-                                                             jint tube) {
+Java_xyz_sufystudios_synthguide_MainActivity_00024Companion_native_1setTube(JNIEnv *env,
+                                                                            jobject type,jint tube) {
 
+if (tube==1)
+LOGE("TUBEON");
+else
+    LOGE("TUBEOFF");
     mainengine->tubeon(tube);
 
 }
@@ -268,11 +271,6 @@ Java_xyz_sufystudios_synthguide_PlaybackEngine_native_1isLatencyDetectionSupport
     __android_log_print(ANDROID_LOG_ERROR, "tagtestosc","testing1");
     return (engine->isLatencyDetectionSupported() ? JNI_TRUE : JNI_FALSE);
 }
-}
-extern "C"
-JNIEXPORT void JNICALL
-Java_xyz_sufystudios_synthguide_MainActivity_00024Companion_native_1setTube(JNIEnv *env,
-                                                                           jobject thiz,
-                                                                           jint tube) {
-    // TODO: implement native_setTube()
+
+
 }

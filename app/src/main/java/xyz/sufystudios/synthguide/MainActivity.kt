@@ -107,6 +107,7 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
     private fun createStuff() {
         aiDrone = findViewById(R.id.aibutton)
         //startEngine();
+
         bp = BillingProcessor(
             this,
             "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAp60Ho4VkC75TR1HXwwbYK/1MIMP2vhE8S6LyHIY6WdAWuThV8czkvzlGv3HaExH1bbVUl3k5jKYvS+JLIyuHCY7bSFLKs/nQTI8ZynbEElvmnVL7sW84LlRLA32/K1u1YNligjY6b8m20hroZZNuSavaHpn6foSfrLaIXMIKBLCQEqmhd+V5Y3xSVCF2/5b0ACPyG95GYcquEuX5N93/42i5xVb3ZotBrclwQf/9tIfMne3BDcWJFS7rQOlpNM0+QrW1Q9dTUP3bLVkEHRbtyhPUSBa5O03c0lmil+I/86TnO24Y5d0+A64EWnvIiP/+AtA2Ud62htGOhKVLWtK6cQIDAQAB",
@@ -118,6 +119,7 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
         a.setOnTouchListener(motionListener)
 
         aiDrone?.text = "AI:OFF"
+
         aiDrone?.setOnClickListener { toggleAIDrone() }
         var asharp = findViewById<MaterialButton>(R.id.asharp)
         asharp.setOnTouchListener(motionListener)
@@ -364,7 +366,7 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
             if (!tubeoff) {
                 tube.setColorFilter(Color.rgb(10, 200, 150), PorterDuff.Mode.SRC_ATOP)
                 tube.alpha = 0.2.toFloat()
-                native_setTube(1)
+                native_setTube(0)
                 tubeoff = true
             } else {
                 tubeoff = false

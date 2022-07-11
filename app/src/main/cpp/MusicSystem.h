@@ -20,6 +20,7 @@
 #include "../../../../../oboe/src/common/OboeDebug.h"
 #include "Reverb.h"
 #include "AudioEngine.h"
+//#include "OboeAudioRecorder.h"
 
 #ifndef WAVEMAKER_MUSICSYSTEM_H
 #define WAVEMAKER_MUSICSYSTEM_H
@@ -210,19 +211,19 @@ public :
     int delayChanged = 0;
     enum State {
         PAUSE,
-        FILTER_SWEEP,
-        Q1,
-        Q2,
-        DELAY,
-        OVERTONES,
-        LFO_FILTER,
-        LFO_SPEED,
-        TUBE,
-        NOISE_MIX,
-        RANDOM_CENTS,
-        RANDOM_FIFTH,
-        SUB,
-        RANDOM_EIGHTH
+        //FILTER_SWEEP,
+        //Q1,
+        //Q2,
+        //DELAY,
+        //OVERTONES,
+        //LFO_FILTER,
+        //LFO_SPEED,
+        //TUBE,
+        //NOISE_MIX,
+        //RANDOM_CENTS,
+       // RANDOM_FIFTH,
+        //SUB,
+        //RANDOM_EIGHTH
     };
 
     State currentState = PAUSE;
@@ -238,9 +239,9 @@ public :
             return 0;
         else return 8.0;
     }
-
+/*
     void performAI(float *data, int32_t numframes) {
-
+        //LOGE("Perform AI");
         filt = 0;
         filt2 = 0;
         currentlfoslow = 0;
@@ -300,7 +301,7 @@ public :
                         trinaryState = static_cast<State>(rand() % 5);
 
                     } while (trinaryState == currentState || trinaryState == secondaryState);
-                    __android_log_print(ANDROID_LOG_DEBUG, "state",
+                  /*  __android_log_print(ANDROID_LOG_DEBUG, "state",
                                         "Current state %d, secondary state%d,trinary state%d",
                                         currentState, secondaryState, trinaryState);
                     if (randomNote < 5 && randomNote > 0) {
@@ -309,7 +310,7 @@ public :
                     }
 
                     randomNote = rand() % 5;
-                    if (currentState == RANDOM_EIGHTH) {
+                   /* if (currentState == RANDOM_EIGHTH) {
                         notes[randomNote]->m_nOctave = rand() % 2;
                         envelopes[randomNote].reset();
                     } else if (currentState == RANDOM_FIFTH) {
@@ -319,56 +320,55 @@ public :
                         notes[randomNote]->m_nOctave = -(rand() % 1);
                         envelopes[randomNote].reset();
                     }
-                    if (currentState == LFO_FILTER || secondaryState == LFO_FILTER) {
+                    */
+                /*    if (currentState == LFO_FILTER || secondaryState == LFO_FILTER) {
                         lfoc->filterFc = rand() % 50;
                     }
-                    if (currentState == DELAY || secondaryState == DELAY) {
+                    */
+                   /* if (currentState == DELAY || secondaryState == DELAY) {
                         delay->setMode(rand() % 3);
                     } else {
                         delay->setMode(2);
                     }
 
-                    if (currentState == LFO_SPEED || secondaryState == LFO_SPEED)
-                        AiLfo = exp((double) ((rand() + 30) % 55) / 20) * (20 / (exp(5)));
+
+                 //   if (currentState == LFO_SPEED || secondaryState == LFO_SPEED)
+                 //       AiLfo = exp((double) ((rand() + 30) % 55) / 20) * (20 / (exp(5)));
 
                 } else {
                     currentState = PAUSE;
                 }
-                if (currentState == RANDOM_CENTS || secondaryState == RANDOM_CENTS) {
+              /*  if (currentState == RANDOM_CENTS || secondaryState == RANDOM_CENTS) {
                     for (int i = 0; i < 5; i++) {
                         notes[i]->m_nCents = rand() % 10 - 5;
                     }
 
                 }
-                if (currentState == TUBE || secondaryState == TUBE) {
+
+               /* if (currentState == TUBE || secondaryState == TUBE) {
                     AiTube = (AILFOOut1 * 1);
                 }
 
             }
-            if(AILFO1.checkWrapModulo()) {
-                switch(currentState) {
-                    case RANDOM_CENTS:
-                    case RANDOM_EIGHTH:
-                    case RANDOM_FIFTH:
+
+                   /* case RANDOM_CENTS:
+                   // case RANDOM_EIGHTH:
+                    //case RANDOM_FIFTH:
                         randomSparkle = rand() % 4;
                         break;
 
-                    case TUBE:
-                        filter->m_dQControl=2;
-                        filter2->m_dQControl=2;
-                        randomNoiseR=rand()%100/1000;
-                        randomNoiseL=rand()%100/1000;
-                        break;
+                 //   case TUBE:
+                      //  filter->m_dQControl=2;
+                      //  filter2->m_dQControl=2;
+                       // randomNoiseR=rand()%100/1000;
+                      //  randomNoiseL=rand()%100/1000;
+                      //  break;
 
-                    case FILTER_SWEEP:
-                    case LFO_FILTER:
-                        randomNoiseR=rand()%100/1000;
-                        randomNoiseL=rand()%100/1000;
+                   //case LFO_FILTER:
+
                         AILFO1.oscfc=rand()%100/100;
-                }
 
 
-            }
 
             if( stateTimer++>6*sampleRate) {
                 stateTimer=0;
@@ -428,8 +428,8 @@ public :
                         oscilate1 = oscillator1_->doOscillate();
                         oscilate2 = oscillator2_->doOscillate();
 
-                        if (currentState == NOISE_MIX || secondaryState == NOISE_MIX)
-                            oscilate2 = doWhiteNoise();
+                       // if (currentState == NOISE_MIX || secondaryState == NOISE_MIX)
+                        //    oscilate2 = doWhiteNoise();
                         combinedosc =
                                 ((oscilate0 * 0.3 * AIEnvelopeOut3 +
                                   oscilate1 * 0.2 * AIEnvelopeOut2 +
@@ -486,11 +486,12 @@ public :
                 if (lfoc->checkWrapModulo()) {
                     AIEnvelope1.reset();
                     AIEnvelope2.reset();
-                    if (randomlfo || currentState == LFO_SPEED) {
+                 /*   if (randomlfo || currentState == LFO_SPEED) {
                         lfoc->m_dOscFo = AiLfo;
 
                     }
-                    if (randomovertones || currentState == OVERTONES) {
+
+                    if (randomovertones ) {
                         oscillator1_->m_nOctave = random() % 3 - 1;
                         oscillator_->m_nOctave = random() % 3 - 1;
                     }
@@ -505,17 +506,18 @@ public :
 
 
                     }
-                    if (currentState == Q1 || secondaryState == Q1 || trinaryState == Q1) {
+                   /* if (currentState == Q1 || secondaryState == Q1 || trinaryState == Q1) {
 
                         AiQ1 = ((AILFOOut3 + 1) / 2) * 8 + 1;
                         AiQ2 = AiQ1 * 0.70;
                         filter->m_dQControl = limitQ(AiQ1);
                         filter2->m_dQControl = limitQ(AiQ2);
                     }
+
                     filter->setFcMod(lfoc->filterFc * lfo + AiFilter * AIEnvelopeOut1);
                     filter->update();
                     currentlfoslow = 0;
-                    if (currentState == FILTER_SWEEP || secondaryState == FILTER_SWEEP ||
+                   // if (currentState == FILTER_SWEEP || secondaryState == FILTER_SWEEP ||
                         trinaryState == FILTER_SWEEP) {
                         AiFilter = (AILFOOut1 * (AILFOOut2 * AI_LFO_MODIFY + 1)) * 50 * filtEnvelope;
 
@@ -523,14 +525,16 @@ public :
                     }
 
                 }
-                if (currentlfoslow == lfoslow1) {
+                if (currentlfoslow == lfoslow1*40) {
 
-                    if (currentState == Q2 || secondaryState == Q2 || trinaryState == Q2) {
-                        AiQ2 = ((AILFOOut3 + 1) / 2) * 8 + 1;
-                        AiQ1 = AiQ2 * 0.75;
-                        filter->m_dQControl = limitQ(AiQ1);
-                        filter2->m_dQControl = limitQ(AiQ2);
-                    }
+                 /*   if (currentState == Q2 || secondaryState == Q2 || trinaryState == Q2) {
+
+                       // AiQ2 = ((AILFOOut3 + 1) / 2) * 8 + 1;
+                       // AiQ1 = AiQ2 * 0.75;
+
+                       // filter->m_dQControl = limitQ(AiQ1);
+                      //  filter2->m_dQControl = limitQ(AiQ2);
+
 
                     filter2->setFcMod(lfoc->filterFc * lfo + AiFilter * AIEnvelopeOut2);
                     filter2->update();
@@ -542,17 +546,17 @@ public :
 
 //                filter->setFcMod(AIEnvelopeOut1);
 //                filter2->setFcMod( AIEnvelopeOut1);
-                filt = (filter->doFilter(en * combinedosc+randomNoiseL));
-                filt2 = (filter2->doFilter(en * combinedosc+randomNoiseR));
+                filt = (filter->doFilter(en * combinedosc));
+                filt2 = (filter2->doFilter(en * combinedosc));
 
                 if (tubeon) {
                     filt = softClipWaveShaper(
-                            softClipWaveShaper(filt+randomNoiseL, 1 / 80 + 1 + (AiTube)),
-                            1/ 90 + 1.3 + AiTube );
+                            softClipWaveShaper(filt, 2),
+                            2 );
 
                     filt2 = softClipWaveShaper(
-                            softClipWaveShaper(filt2+randomNoiseR, 1 / 80 + 1 - AiTube),
-                            1 / 90 + 1.3 - AiTube );
+                            softClipWaveShaper(filt2,  2),
+                            2 );
                 }
 
 
@@ -592,10 +596,11 @@ public :
 
         }
     }
+    */
 
     double filterfc = 0;
 
-    bool AI = false;
+    bool AI = true;
     double feedback = 3;
 
     double filt = 0;
@@ -613,8 +618,8 @@ public :
     double randomSpark=2;
     double outl = 0, outr = 0;
     void render(float *data, int32_t numframes) {
-        if (AI) {
-            performAI(data, numframes);
+        if (false) {
+            //performAI(data, numframes);
         } else {
 
             filt = 0;
@@ -741,12 +746,12 @@ public :
 
                     if (tubeon) {
                         filt = softClipWaveShaper(
-                                softClipWaveShaper(filt, 1 / 80 + 1),
-                                1 / 90 + 1.3 + (oscillator_->m_uWaveform==4)? 2:0);
+                                softClipWaveShaper(filt, 2),
+                                2);
 
                         filt2 = softClipWaveShaper(
-                                softClipWaveShaper(filt2, 1 / 80 + 1),
-                                1 / 90 + 1.3+ (oscillator_->m_uWaveform==4)? 2:0);
+                                softClipWaveShaper(filt2, 2),
+                                2);
                     }
 
 
@@ -788,6 +793,11 @@ public :
 
 
             }
+
+
+
+
+
         }
 
 
