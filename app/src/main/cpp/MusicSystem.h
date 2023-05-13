@@ -20,6 +20,7 @@
 #include "../../../../../oboe/src/common/OboeDebug.h"
 #include "Reverb.h"
 #include "AudioEngine.h"
+//#include "Flanger.h"
 //#include "OboeAudioRecorder.h"
 
 #ifndef WAVEMAKER_MUSICSYSTEM_H
@@ -48,6 +49,7 @@ public :
     CWTOscillator *oscillator1_;
     CWTOscillator *oscillator2_;
     CWTOscillator *oscillator3_;
+    //Flanger flanger;
 
     CEnvelopeGenerator *env;
     bool fmsynth = false;
@@ -90,7 +92,7 @@ public :
         filter = fil;
         filter2 = fil2;
 //        filter->m_dSaturation=(2);
-//        filter2->m_dSaturation=2;
+//        filterpurchase2->m_dSaturation=2;
 
     }
 
@@ -239,368 +241,11 @@ public :
             return 0;
         else return 8.0;
     }
-/*
-    void performAI(float *data, int32_t numframes) {
-        //LOGE("Perform AI");
-        filt = 0;
-        filt2 = 0;
-        currentlfoslow = 0;
-        oscilate = 0;
-        oscilate0 = 0;
-        oscilate1 = 0;
 
-        oscilate2 = 0;
-        oscilate3 = 0;
-
-        combinedosc;
-        feedback = 3;
-
-        float en;
-        float lfo;
-        double AIEnvelopeOut1;
-        double AIEnvelopeOut2;
-        double AIEnvelopeOut3;
-        double AIEnvelopeOut4;
-        double AIEnvelopeOut5;
-        double AILFOOut1;
-        double AILFOOut2;
-        double AILFOOut3;
-        double filtAI;
-        double AiFilter;
-        double AiLfo;
-        double AiQ1, AiQ2;
-        double lfoFilter = 0;
-        double lfoSpeed = 0;
-        double filtEnvelope = 0;
-        double currentFilt = 0;
-        double currentQl = 0;
-        double currentQr = 0;
-        double AiTube = 0;
-        double delayEnv = 0;
-        int randomFifth = 0;
-        int sub = 0;
-        int randomEighth = 0;
-        int randomNote = 0;
-        CWTOscillator *notes[] = {oscillator_, oscillator0_, oscillator1_, oscillator2_,
-                                  oscillator3_};
-
-        CEnvelopeGenerator envelopes[] = {AIEnvelope1, AIEnvelope2, AIEnvelope3, AIEnvelope4,
-                                          AIEnvelope5};
-        for (int i = 0; i < numframes; i++) { ;
-
-
-            if (stateTimer == 0) {
-
-
-                if (currentState == PAUSE) {
-                    currentState = static_cast<State >(rand() % 14);
-                    do {
-                        secondaryState = static_cast<State>(rand() % 10);
-                    } while (secondaryState == currentState);
-                    do {
-                        trinaryState = static_cast<State>(rand() % 5);
-
-                    } while (trinaryState == currentState || trinaryState == secondaryState);
-                  /*  __android_log_print(ANDROID_LOG_DEBUG, "state",
-                                        "Current state %d, secondary state%d,trinary state%d",
-                                        currentState, secondaryState, trinaryState);
-                    if (randomNote < 5 && randomNote > 0) {
-                        notes[randomNote]->m_nOctave = 0;
-                        notes[randomNote]->m_nSemitones = 0;
-                    }
-
-                    randomNote = rand() % 5;
-                   /* if (currentState == RANDOM_EIGHTH) {
-                        notes[randomNote]->m_nOctave = rand() % 2;
-                        envelopes[randomNote].reset();
-                    } else if (currentState == RANDOM_FIFTH) {
-                        notes[randomNote]->m_nSemitones = 7 + (12 * (rand() % 2));
-                        envelopes[randomNote].reset();
-                    } else if (currentState == SUB) {
-                        notes[randomNote]->m_nOctave = -(rand() % 1);
-                        envelopes[randomNote].reset();
-                    }
-                    */
-                /*    if (currentState == LFO_FILTER || secondaryState == LFO_FILTER) {
-                        lfoc->filterFc = rand() % 50;
-                    }
-                    */
-                   /* if (currentState == DELAY || secondaryState == DELAY) {
-                        delay->setMode(rand() % 3);
-                    } else {
-                        delay->setMode(2);
-                    }
-
-
-                 //   if (currentState == LFO_SPEED || secondaryState == LFO_SPEED)
-                 //       AiLfo = exp((double) ((rand() + 30) % 55) / 20) * (20 / (exp(5)));
-
-                } else {
-                    currentState = PAUSE;
-                }
-              /*  if (currentState == RANDOM_CENTS || secondaryState == RANDOM_CENTS) {
-                    for (int i = 0; i < 5; i++) {
-                        notes[i]->m_nCents = rand() % 10 - 5;
-                    }
-
-                }
-
-               /* if (currentState == TUBE || secondaryState == TUBE) {
-                    AiTube = (AILFOOut1 * 1);
-                }
-
-            }
-
-                   /* case RANDOM_CENTS:
-                   // case RANDOM_EIGHTH:
-                    //case RANDOM_FIFTH:
-                        randomSparkle = rand() % 4;
-                        break;
-
-                 //   case TUBE:
-                      //  filter->m_dQControl=2;
-                      //  filter2->m_dQControl=2;
-                       // randomNoiseR=rand()%100/1000;
-                      //  randomNoiseL=rand()%100/1000;
-                      //  break;
-
-                   //case LFO_FILTER:
-
-                        AILFO1.oscfc=rand()%100/100;
-
-
-
-            if( stateTimer++>6*sampleRate) {
-                stateTimer=0;
-            }
-
-
-            AiFilter = 0;
-            AiLfo = 0;
-            AIEnvelopeOut1 = AIEnvelope1.doEnvelope();
-            AIEnvelopeOut2 = AIEnvelope2.doEnvelope();
-            AIEnvelopeOut3 = AIEnvelope3.doEnvelope();
-            AIEnvelopeOut4 = AIEnvelope4.doEnvelope();
-            AIEnvelope1.update();
-            AIEnvelope2.update();
-            AIEnvelope3.update();
-            AIEnvelope4.update();
-
-            filtEnvelope = filterEnvelope.doEnvelope();
-            filterEnvelope.update();
-
-
-
-            AILFOOut1 = AILFO1.doOscillate();
-            AILFO1.update();
-            AILFOOut2 = AILFO2.doOscillate();
-            AILFO2.update();
-            AILFOOut3 = AILFO3.doOscillate();
-            AILFO3.update();
-
-
-
-
-
-
-            // __android_log_print(ANDROID_LOG_DEBUG, "Envelope", "env%f", AIEnvelopeOut1);
-
-
-
-            outl = 0, outr = 0;
-
-            // LOGE ("test0");
-            if (oscillator_->m_bNoteOn) {
-
-
-                en = (float) env->doEnvelope();
-                lfo = lfoc->doOscillate();
-
-
-                if (noise) { combinedosc = doWhiteNoise(); }
-                else {
-                    if (!fmsynth) {
-
-                        oscilate = oscillator_->doOscillate();
-                        oscilate0 = oscillator0_->doOscillate();
-
-
-                        oscilate1 = oscillator1_->doOscillate();
-                        oscilate2 = oscillator2_->doOscillate();
-
-                       // if (currentState == NOISE_MIX || secondaryState == NOISE_MIX)
-                        //    oscilate2 = doWhiteNoise();
-                        combinedosc =
-                                ((oscilate0 * 0.3 * AIEnvelopeOut3 +
-                                  oscilate1 * 0.2 * AIEnvelopeOut2 +
-                                  (oscilate * 0.25 * AIEnvelopeOut1 +
-                                   oscilate2 * 0.25 * AIEnvelopeOut4)));
-                        oscillator_->setFoModExp(lfo * lfoc->oscfc);
-                        oscillator0_->setFoModExp(lfo * lfoc->oscfc);
-                        oscillator1_->setFoModExp(lfo * lfoc->oscfc);
-                        oscillator2_->setFoModExp(lfo * lfoc->oscfc);
-                        oscillator_->update();
-                        oscillator0_->update();
-                        oscillator1_->update();
-                        oscillator2_->update();
-                        combinedosc=softClipWaveShaper(combinedosc,randomSparkle+1 );
-
-                    } else {
-                        oscilate = oscillator_->doOscillate();
-
-                        oscillator_->update();
-
-                        oscillator0_->setPhaseMod(oscilate * 0.3);
-                        oscilate0 = oscillator0_->doOscillate();
-                        oscillator0_->update();
-                        oscillator1_->setPhaseMod(oscilate0 * (en) * lfo);
-                        oscilate1 = oscillator1_->doOscillate();
-
-                        oscillator1_->update();
-
-
-                        oscillator2_->update();
-
-                        oscilate2 = oscillator2_->doOscillate();
-                        oscillator2_->setPhaseMod(oscilate2 * 0.2);
-                        oscillator3_->setPhaseMod(oscilate2 * 0.5);
-                        oscilate3 = oscillator3_->doOscillate();
-                        oscillator3_->update();
-
-
-                        combinedosc = (oscilate * 0.2 * AIEnvelopeOut3 * AIEnvelopeOut1 +
-                                       oscilate1 * 0.3 * AIEnvelopeOut2 + oscilate3 * 0.5);
-                        oscillator_->setFoModExp(lfo * lfoc->oscfc);
-                        oscillator0_->setFoModExp(lfo * lfoc->oscfc);
-                        oscillator1_->setFoModExp(lfo * lfoc->oscfc);
-                        oscillator2_->setFoModExp(lfo * lfoc->oscfc);
-                        oscillator3_->setFoModExp(lfo * lfoc->oscfc);
-                        oscillator3_->update();
-                        combinedosc =softClipWaveShaper(combinedosc,randomSparkle+1);
-
-                    }
-                }
-
-                env->update();
-                lfoc->update();
-                if (lfoc->checkWrapModulo()) {
-                    AIEnvelope1.reset();
-                    AIEnvelope2.reset();
-                 /*   if (randomlfo || currentState == LFO_SPEED) {
-                        lfoc->m_dOscFo = AiLfo;
-
-                    }
-
-                    if (randomovertones ) {
-                        oscillator1_->m_nOctave = random() % 3 - 1;
-                        oscillator_->m_nOctave = random() % 3 - 1;
-                    }
-
-                }
-
-
-                if (currentlfoslow++ == lfoslow * 3) {
-                    if (currentState == FILTER_SWEEP || secondaryState == FILTER_SWEEP ||
-                        trinaryState == FILTER_SWEEP) {
-                        AiFilter = (AILFOOut1 * (AILFOOut2 * AI_LFO_MODIFY + 1)) * 50 * filtEnvelope;
-
-
-                    }
-                   /* if (currentState == Q1 || secondaryState == Q1 || trinaryState == Q1) {
-
-                        AiQ1 = ((AILFOOut3 + 1) / 2) * 8 + 1;
-                        AiQ2 = AiQ1 * 0.70;
-                        filter->m_dQControl = limitQ(AiQ1);
-                        filter2->m_dQControl = limitQ(AiQ2);
-                    }
-
-                    filter->setFcMod(lfoc->filterFc * lfo + AiFilter * AIEnvelopeOut1);
-                    filter->update();
-                    currentlfoslow = 0;
-                   // if (currentState == FILTER_SWEEP || secondaryState == FILTER_SWEEP ||
-                        trinaryState == FILTER_SWEEP) {
-                        AiFilter = (AILFOOut1 * (AILFOOut2 * AI_LFO_MODIFY + 1)) * 50 * filtEnvelope;
-
-
-                    }
-
-                }
-                if (currentlfoslow == lfoslow1*40) {
-
-                 /*   if (currentState == Q2 || secondaryState == Q2 || trinaryState == Q2) {
-
-                       // AiQ2 = ((AILFOOut3 + 1) / 2) * 8 + 1;
-                       // AiQ1 = AiQ2 * 0.75;
-
-                       // filter->m_dQControl = limitQ(AiQ1);
-                      //  filter2->m_dQControl = limitQ(AiQ2);
-
-
-                    filter2->setFcMod(lfoc->filterFc * lfo + AiFilter * AIEnvelopeOut2);
-                    filter2->update();
-
-                    //  __android_log_print(ANDROID_LOG_ERROR, "tagtest","filter:%s","test");
-                }
-
-
-
-//                filter->setFcMod(AIEnvelopeOut1);
-//                filter2->setFcMod( AIEnvelopeOut1);
-                filt = (filter->doFilter(en * combinedosc));
-                filt2 = (filter2->doFilter(en * combinedosc));
-
-                if (tubeon) {
-                    filt = softClipWaveShaper(
-                            softClipWaveShaper(filt, 2),
-                            2 );
-
-                    filt2 = softClipWaveShaper(
-                            softClipWaveShaper(filt2,  2),
-                            2 );
-                }
-
-
-
-
-                //  outl = filt;
-
-                //' __android_log_print(ANDROID_LOG_ERROR, "tagtest","data:%f",amt);
-                if (env->getState() == 0) {
-                    oscillator_->stopOscillator();
-                    oscillator0_->stopOscillator();
-                    oscillator1_->stopOscillator();
-                    oscillator2_->stopOscillator();
-                    oscillator3_->stopOscillator();
-                    env->stopEG();
-                }
-            } else {
-                filt = 0;
-                filt2 = 0;
-            }
-
-//            if(delaychanged<44100) {}
-//                delayChanged++;
-//                delay->setWetMix(delayEnvelope.doEnvelope());
-
-            delay->processAudio(&filt, &filt2, &outl, &outr);
-            reverb.doReverb(outl, outr, outl, outr);
-
-
-            if (channels > 1) {
-                data[i * channels] = (float) (outl);
-                data[i * channels + 1] = (float) (outr);
-            } else if (channels == 1) {
-                data[i] = (float) outl;
-            }
-
-
-        }
-    }
-    */
 
     double filterfc = 0;
 
-    bool AI = true;
+    bool filterpurchase2 = false;
     double feedback = 3;
 
     double filt = 0;
@@ -655,23 +300,27 @@ public :
 
                             oscilate = oscillator_->doOscillate();
                             oscilate0 = oscillator0_->doOscillate();
+                           // oscilate0 = oscillator0_->doOscillate();
 
 
-                            oscilate1 = oscillator1_->doOscillate();
-                            oscilate2 = oscillator2_->doOscillate();
-
-                            combinedosc =
+                            //oscilate1 = oscillator1_->doOscillate();
+                            //oscilate2 = oscillator2_->doOscillate();
+combinedosc=oscilate*0.5+oscilate0*0.5;
+                           /*combinedosc =
                                     ((oscilate0 * 0.3 + oscilate1 * 0.2 +
                                       (oscilate * 0.25 + oscilate2 * 0.25)));
+                                      */
                             oscillator_->setFoModExp(lfo * lfoc->oscfc);
-                            oscillator0_->setFoModExp(lfo * lfoc->oscfc);
-                            oscillator1_->setFoModExp(lfo * lfoc->oscfc);
-                            oscillator2_->setFoModExp(lfo * lfoc->oscfc);
+                            oscillator0_->setFoModExp(lfo*lfoc->oscfc);
+                            //oscillator0_->setFoModExp(lfo * lfoc->oscfc);
+                            //oscillator1_->setFoModExp(lfo * lfoc->oscfc);
+                            //oscillator2_->setFoModExp(lfo * lfoc->oscfc);
                             oscillator_->update();
                             oscillator0_->update();
-                            oscillator1_->update();
-                            oscillator2_->update();
-                            combinedosc=softClipWaveShaper(combinedosc,randomSparkle+1 + (oscillator_->m_uWaveform==4)? 2:0);
+                            //oscillator0_->update();
+                            //oscillator1_->update();
+                            //oscillator2_->update();
+                            //combinedosc=softClipWaveShaper(combinedosc,randomSparkle+1 + (oscillator_->m_uWaveform==4)? 2:0);
 
 
                         } else {
@@ -679,31 +328,34 @@ public :
 
                             oscillator_->update();
 
-                            oscillator0_->setPhaseMod(oscilate * 0.3);
+
                             oscilate0 = oscillator0_->doOscillate();
+                            oscillator0_->setPhaseMod(oscilate0 * 0.1);
+                            oscillator0_->setPhaseMod(oscilate*0.1);
                             oscillator0_->update();
-                            oscillator1_->setPhaseMod(oscilate0 * (en) * lfo);
-                            oscilate1 = oscillator1_->doOscillate();
+                           // oscillator1_->setPhaseMod(oscilate0 * (en) * lfo);
+                            //oscilate1 = oscillator1_->doOscillate();
 
-                            oscillator1_->update();
-
-
-                            oscillator2_->update();
-
-                            oscilate2 = oscillator2_->doOscillate();
-                            oscillator2_->setPhaseMod(oscilate2 * 0.2);
-                            oscillator3_->setPhaseMod(oscilate2 * 0.5);
-                            oscilate3 = oscillator3_->doOscillate();
-                            oscillator3_->update();
+                            //oscillator1_->update();
 
 
-                            combinedosc = (oscilate * 0.2 + oscilate1 * 0.3 + oscilate3 * 0.5);
+                           // oscillator2_->update();
+
+                          //  oscilate2 = oscillator2_->doOscillate();
+                          //  oscillator2_->setPhaseMod(oscilate2 * 0.2);
+                           // oscillator3_->setPhaseMod(oscilate2 * 0.5);
+                           // oscilate3 = oscillator3_->doOscillate();
+                           // oscillator3_->update();
+
+                            combinedosc=oscilate*0.5+oscilate0*0.5;
+                           // combinedosc = (oscilate * 0.2 + oscilate1 * 0.3 + oscilate3 * 0.5);
                             oscillator_->setFoModExp(lfo * lfoc->oscfc);
                             oscillator0_->setFoModExp(lfo * lfoc->oscfc);
-                            oscillator1_->setFoModExp(lfo * lfoc->oscfc);
+                           /* oscillator1_->setFoModExp(lfo * lfoc->oscfc);
                             oscillator2_->setFoModExp(lfo * lfoc->oscfc);
                             oscillator3_->setFoModExp(lfo * lfoc->oscfc);
                             oscillator3_->update();
+                            */
                             combinedosc==softClipWaveShaper(combinedosc,randomSparkle+1);
 
                         }
@@ -711,47 +363,39 @@ public :
 
                     env->update();
                     lfoc->update();
-                    if (lfoc->checkWrapModulo()) {
-                        //  __android_log_print(ANDROID_LOG_ERROR, "tagtest","-1 %f",rand());
-
-                        if (randomlfo) {
-                            lfoc->m_dOscFo =
-                                    exp((double) ((rand() + 30) % 550 / 10) / 20) * (20 / (exp(5)));
-
-                        }
-                        if (randomovertones) {
-                            oscillator1_->m_nOctave = random() % 3 - 1;
-                            oscillator_->m_nOctave = random() % 3 - 1;
-                        }
-
-                    }
 
 
 
-                    if (currentlfoslow++ == lfoslow) {
+
+                   // if (currentlfoslow++ == lfoslow) {
                         filter->setFcMod(lfoc->filterFc * lfo);
                         filter->update();
-                        currentlfoslow = 0;
-
-                    } else if (currentlfoslow == lfoslow1) {
-                        filter2->setFcMod(lfoc->filterFc * lfo);
+                        filter2->setFcMod(lfoc->filterFc*lfo);
                         filter2->update();
+                       // currentlfoslow = 0;
+
+                    //} else if (currentlfoslow == lfoslow1) {
+                      //  filter2->setFcMod(lfoc->filterFc * lfo);
+                       // filter2->update();
                         //  __android_log_print(ANDROID_LOG_ERROR, "tagtest","filter:%s","test");
-                    }
+                   // }
                     //  __android_log_print(ANDROID_LOG_ERROR, "lfo","lfo %f",lfo);
 
 
                     filt = (filter->doFilter(en * combinedosc));
+                            //if(filterpurchase2)
                     filt2 = (filter2->doFilter(en * combinedosc));
+                           // else
+                               // filt2=filt;
 
                     if (tubeon) {
                         filt = softClipWaveShaper(
-                                softClipWaveShaper(filt, 2),
-                                2);
-
+                                filt, 2);
+if(filterpurchase2)
                         filt2 = softClipWaveShaper(
-                                softClipWaveShaper(filt2, 2),
-                                2);
+                                filt2, 2);
+                    else
+                        filt2=filt;
                     }
 
 
@@ -773,7 +417,7 @@ public :
                     filt2 = 0;
                 }
 
-                outl=filt;outr=filt2;
+                //outl=filt;outr=filt2;
 
                 delay->processAudio(&filt, &filt2, &outl, &outr);
 
@@ -783,7 +427,7 @@ public :
 //            }
                 reverb.doReverb(outl, outr, outl, outr);
                 // output=outl;
-
+                //flanger.processAudio();
                 if (channels > 1) {
                     data[i * channels] = (float) (outl);
                     data[i * channels + 1] = (float) (outr);

@@ -1,7 +1,3 @@
-//
-// Created by sufy on 25/05/20.
-//
-
 #ifndef DRONESYNTHGOOD_MASTER_REVERB_H
 #define DRONESYNTHGOOD_MASTER_REVERB_H
 
@@ -141,14 +137,14 @@ public:
 
         // comb filter bank
         // variables for each output
-        fPC_1_Out = 0;
-        fPC_2_Out = 0;
-        fPC_3_Out = 0;
-        fPC_4_Out = 0;
-        fPC_5_Out = 0;
-        fPC_6_Out = 0;
-        fPC_7_Out = 0;
-        fPC_8_Out = 0;
+        fPC_1_Out = 1;
+        fPC_2_Out = 1;
+        fPC_3_Out = 1;
+        fPC_4_Out = 1;
+        fPC_5_Out = 1;
+        fPC_6_Out = 1;
+        fPC_7_Out = 1;
+        fPC_8_Out = 1;
         fC1_Out = 0;
         fC2_Out = 0;
 
@@ -167,26 +163,26 @@ public:
         m_ParallelCF_8.processAudio(&in2f, &fPC_8_Out);
 
         // form outputs: note attenuation by 0.25 for each and alternating signs
-        fC1_Out = 0.25*fPC_1_Out -  0.25*fPC_2_Out + 0.25*fPC_3_Out - 0.25*fPC_4_Out;
-        fC2_Out = 0.25*fPC_5_Out -  0.25*fPC_6_Out + 0.25*fPC_7_Out - 0.25*fPC_8_Out;
+        fC1_Out = 0.25*fPC_1_Out+  0.25*fPC_2_Out + 0.25*fPC_3_Out + 0.25*fPC_4_Out;
+        fC2_Out = 0.25*fPC_5_Out +  0.25*fPC_6_Out + 0.25*fPC_7_Out + 0.25*fPC_8_Out;
         fC1_Out=fC1_Out*0.9+fC2_Out*0.1;
         fC2_Out=fC2_Out*0.9+fC1_Out*0.1;
 
         // fC1_Out -> fDamping_LPF_1_Out
-        float fDamping_LPF_1_Out = 0;
+        float fDamping_LPF_1_Out = 1;
         m_DampingLPF1.processAudio(&fC1_Out, &fDamping_LPF_1_Out);
 
         // fC2_Out -> fDamping_LPF_2_Out
-        float fDamping_LPF_2_Out = 0;
+        float fDamping_LPF_2_Out = 1;
         m_DampingLPF2.processAudio(&fC2_Out, &fDamping_LPF_2_Out);
 
 //        // fDamping_LPF_1_Out -> fAPF_3_Out
-//        float fAPF_3_Out = 0;
-//        m_OutputAPF_3.processAudio(&fDamping_LPF_1_Out, &fAPF_3_Out);
+    // float fAPF_3_Out = 0.1;
+    //    m_OutputAPF_3.processAudio(&fDamping_LPF_1_Out, &fAPF_3_Out);
 
 //        // fDamping_LPF_2_Out -> fAPF_4_Out
-//        float fAPF_4_Out = 0;
-//        m_OutputAPF_4.processAudio(&fDamping_LPF_2_Out, &fAPF_4_Out);
+   //    float fAPF_4_Out = 0.1;
+    //    m_OutputAPF_4.processAudio(&fDamping_LPF_2_Out, &fAPF_4_Out);
 
         // form output = (100-Wet)/100*x(n) + (Wet/100)*fAPF_3_Out
         out1=(double)((100.0 - m_fWet_pct)/100.0)*in1 +

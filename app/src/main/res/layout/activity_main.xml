@@ -18,8 +18,11 @@
         android:scaleType="fitXY"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="1.0" />
+
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/qtxt2"
         android:layout_width="wrap_content"
@@ -35,7 +38,7 @@
         app:layout_constraintStart_toStartOf="@+id/q"
         app:layout_constraintTop_toBottomOf="@+id/q" />
 
-    <it.beppi.knoblibrary.Knob
+    <SeekBar
         android:id="@+id/attack"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -47,7 +50,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <it.beppi.knoblibrary.Knob
+    <SeekBar
         android:id="@+id/decay"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -58,7 +61,7 @@
         app:layout_constraintStart_toEndOf="@+id/attack"
         app:layout_constraintTop_toTopOf="@+id/attack" />
 
-    <it.beppi.knoblibrary.Knob
+    <SeekBar
         android:id="@+id/sustain"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -69,7 +72,7 @@
         app:layout_constraintStart_toEndOf="@+id/decay"
         app:layout_constraintTop_toTopOf="@+id/attack" />
 
-    <it.beppi.knoblibrary.Knob
+    <SeekBar
         android:id="@+id/release"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -128,7 +131,7 @@
         app:layout_constraintStart_toStartOf="@id/release"
         app:layout_constraintTop_toBottomOf="@id/release" />
     <!-- delay -->
-    <it.beppi.knoblibrary.Knob
+    <SeekBar
         android:id="@+id/delaytime"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -140,7 +143,7 @@
         app:layout_constraintStart_toStartOf="@id/release"
         app:layout_constraintTop_toBottomOf="@id/guideline3" />
 
-    <it.beppi.knoblibrary.Knob
+    <SeekBar
         android:id="@+id/feedback"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -154,7 +157,7 @@
 
         />
 
-    <it.beppi.knoblibrary.Knob
+    <SeekBar
         android:id="@+id/drywet"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -165,7 +168,7 @@
         app:layout_constraintStart_toStartOf="@id/decay"
         app:layout_constraintTop_toBottomOf="@id/guideline3" />
 
-    <it.beppi.knoblibrary.Knob
+    <SeekBar
         android:id="@+id/delayratio"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -223,7 +226,7 @@
         app:layout_constraintStart_toStartOf="@id/release"
         app:layout_constraintTop_toBottomOf="@id/delaytime" />
     <!-- lfo -->
-    <it.beppi.knoblibrary.Knob
+    <SeekBar
         android:id="@+id/LFOFilter"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -235,12 +238,12 @@
         app:layout_constraintTop_toBottomOf="@id/guideline2" />
 
 
-    <it.beppi.knoblibrary.Knob
+    <SeekBar
         android:id="@+id/LFOPitch"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:kKnobDrawable="@drawable/knob3"
-        app:kNumberOfStates="30"
+        app:kNumberOfStates="50"
         app:layout_constraintBottom_toTopOf="@id/lfopitchtxt"
         app:layout_constraintEnd_toEndOf="@id/attack"
         app:layout_constraintStart_toStartOf="@id/attack"
@@ -277,7 +280,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
 
-        android:max="333"
+        android:max="50"
         android:progress="0"
         android:progressDrawable="@drawable/volume_seekbar"
         android:thumbTint="@color/green"
@@ -297,14 +300,14 @@
         android:textColor="@color/colorPrimary"
         app:layout_constraintBottom_toTopOf="@id/guideline4"
         app:layout_constraintEnd_toStartOf="@+id/aibutton"
-        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="@id/LFORate"
         app:layout_constraintTop_toBottomOf="@id/LFORate" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/asharp"
-        android:layout_width="47dp"
-        android:layout_height="50dp"
+        android:layout_width="40dp"
+        android:layout_height="47dp"
 
         android:background="#0E0D0D"
         android:text="A#"
@@ -318,8 +321,8 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/csharp"
-        android:layout_width="47dp"
-        android:layout_height="50dp"
+        android:layout_width="40dp"
+        android:layout_height="47dp"
 
 
         android:background="#0C0C0C"
@@ -333,8 +336,8 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/dsharp"
-        android:layout_width="47dp"
-        android:layout_height="50dp"
+        android:layout_width="40dp"
+        android:layout_height="47dp"
         android:background="#0E0D0D"
         android:text="D#"
         android:textColor="@color/colorPrimary"
@@ -346,8 +349,8 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/fsharp"
-        android:layout_width="47dp"
-        android:layout_height="50dp"
+        android:layout_width="40dp"
+        android:layout_height="47dp"
         android:background="#000000"
         android:text="F#"
         android:textColor="@color/colorPrimary"
@@ -359,8 +362,8 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/gsharp"
-        android:layout_width="47dp"
-        android:layout_height="50dp"
+        android:layout_width="40dp"
+        android:layout_height="47dp"
         android:background="#121010"
 
         android:text="G#"
@@ -585,8 +588,10 @@
         app:backgroundTint="#FF9800"
         app:layout_constraintBottom_toBottomOf="@id/octdown"
         app:layout_constraintEnd_toEndOf="@id/release"
+        app:layout_constraintHorizontal_bias="0.433"
         app:layout_constraintStart_toStartOf="@id/release"
-        app:layout_constraintTop_toTopOf="@+id/octdown" />
+        app:layout_constraintTop_toTopOf="@+id/octdown"
+        app:layout_constraintVertical_bias="1.0" />
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/dronetxt"
@@ -639,8 +644,6 @@
         android:textColor="@color/colorPrimaryDark"
         app:backgroundTint="#F44336"
         app:iconTint="#F44336"
-        app:layout_constraintEnd_toEndOf="@+id/randomovertones"
-        app:layout_constraintStart_toStartOf="@+id/randomovertones"
         app:layout_constraintTop_toBottomOf="@id/guideline4" />
 
     <ImageView
@@ -749,32 +752,6 @@
         app:layout_constraintTop_toBottomOf="@+id/selectWave" />
 
     <com.google.android.material.button.MaterialButton
-        android:id="@+id/randlfo"
-        android:layout_width="wrap_content"
-        android:layout_height="0dp"
-        android:layout_marginStart="2dp"
-        android:layout_marginLeft="2dp"
-        android:text="Random LFO Rate"
-        android:textSize="8sp"
-        app:backgroundTint="#9C27B0"
-        app:layout_constraintBottom_toTopOf="@+id/lforatetxt"
-        app:layout_constraintEnd_toStartOf="@+id/tube"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/lfopitchtxt" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/randomovertones"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:text="Overtones"
-        android:textSize="8sp"
-        app:backgroundTint="#4CAF50"
-        app:layout_constraintBottom_toTopOf="@+id/selectWave"
-        app:layout_constraintEnd_toEndOf="@+id/randlfo"
-        app:layout_constraintStart_toStartOf="@+id/randlfo"
-        app:layout_constraintTop_toBottomOf="@+id/randlfo" />
-
-    <com.google.android.material.button.MaterialButton
         android:id="@+id/looper"
         android:layout_width="wrap_content"
         android:layout_height="0dp"
@@ -814,6 +791,14 @@
         app:layout_constraintBottom_toTopOf="@+id/guideline"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/space" />
+
+    <Button
+        android:id="@+id/filt2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="filt2|OFF"
+        app:layout_constraintStart_toEndOf="@+id/looper"
+        app:layout_constraintTop_toBottomOf="@+id/lforatetxt" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -10,6 +10,8 @@ public:
 	CDelay(void);
 	virtual ~CDelay(void);  // base class MUST declare virtual destructor
 
+// delay in mSec, set by Parent Plug In
+float m_fDelay_ms;
 protected:
 	// member variables
 	//
@@ -32,10 +34,7 @@ protected:
 	// sample rate (needed for other function)
 	int m_nSampleRate;
 
-	// delay in mSec, set by Parent Plug In
-	float m_fDelay_ms;
-
-	// Attenuation in dB, set by Parent Plug In
+    // Attenuation in dB, set by Parent Plug In
 	float m_fOutputAttenuation_dB;
 
 	// functions for the owner plug-in to call

@@ -18,14 +18,13 @@ public:
     CDelayLine(void);
     virtual ~CDelayLine(void);  // base class MUST declare virtual destructor
 
+// --- delay in mSec, set by Parent Plug In
+double m_dDelay_ms;
 protected:
     // member variables
     //
     // --- pointer to our circular buffer
     double* m_pBuffer;
-
-    // --- delay in mSec, set by Parent Plug In
-    double m_dDelay_ms;
 
     // --- delay in samples; float supports fractional delay
     double m_dDelayInSamples;

@@ -100,8 +100,10 @@ bool CStereoDelayFX::processAudio(double* pInputL, double* pInputR,
     double dRightOut = 0.0;
 
     // --- do the delay lines
-    m_LeftDelay.processAudio(&dLeftDelayIn, &dLeftOut);
-    m_RightDelay.processAudio(&dRightDelayIn, &dRightOut);
+    m_LeftDelay.processAudio(&dLeftDelayIn,
+                            &dLeftOut);
+    m_RightDelay.processAudio(&dRightDelayIn,
+                             &dRightOut);
 
     // --- form outputs
     *pOutputL = *pInputL + m_dWetMix*dLeftOut;

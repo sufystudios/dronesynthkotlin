@@ -484,12 +484,12 @@ void AudioEngine::ChangeKnob(int knob , int val) {
     if (knobLock.try_lock()) {
         switch (knob) {
             case 0:
-                env.setAttackTime_mSec((double) val * 100);
+                env.setAttackTime_mSec((double) val * 50);
                 //  env.update();
                 break;
 
             case 1: {
-                env.setDecayTime_mSec((double) val * 100);
+                env.setDecayTime_mSec((double) val * 20);
                 // env.update();
                 break;
             }
@@ -499,7 +499,7 @@ void AudioEngine::ChangeKnob(int knob , int val) {
                 break;
             }
             case 3: {
-                env.setReleaseTime_mSec((double) val * 300);
+                env.setReleaseTime_mSec((double) val *50);
                 // env.update();
                 break;
             }
@@ -510,7 +510,7 @@ void AudioEngine::ChangeKnob(int knob , int val) {
                 filter2.m_dFcControl = pow(2, (float) (val + 2) * 3 / 10 / 12 / 1.5) * 440 - 440;
 //           if(lfo.filterFc==0) {
 //               filter.update();
-//            filter2.update();
+//            filterpurchase2.update();
 //           }
                 //    __android_log_print(ANDROID_LOG_ERROR, "tagtestosc","data:%f",(double)music.filterfc);
                 //   filter.update();
@@ -609,7 +609,7 @@ void AudioEngine::ChangeKnob(int knob , int val) {
                 oscillator1_.m_nSemitones = 0;
                 oscillator1_.m_nCents = 0;
                 oscillator0_.m_uWaveform = 0;
-                oscillator0_.m_nCents = 0;
+                oscillator0_.m_nCents = 1;
                 oscillator0_.m_nSemitones = 0;
                 oscillator0_.m_nCents = 0;
                 oscillator_.m_uWaveform = 0;
@@ -620,11 +620,11 @@ void AudioEngine::ChangeKnob(int knob , int val) {
                 if (val == 1) {
 
 
-                    oscillator_.m_uWaveform = 4;
-                    oscillator_.m_nOctave = 1;
-                    oscillator_.m_nCents = 2;
+                    oscillator_.m_uWaveform = 1;
+                    oscillator_.m_nOctave = 0;
+                    oscillator_.m_nCents = 0;
                     oscillator0_.m_uWaveform = 0;
-                    oscillator0_.m_nSemitones = 7;;
+                    oscillator0_.m_nCents=0;
                     oscillator1_.m_uWaveform = 0;
                     oscillator1_.m_nSemitones = 7;
 
@@ -646,8 +646,10 @@ void AudioEngine::ChangeKnob(int knob , int val) {
                 }
                 if (val == 0) {
                     oscillator0_.m_uWaveform = 1;
+                    oscillator0_.m_nCents=3;
                     oscillator1_.m_uWaveform = 1;
                     oscillator_.m_uWaveform = 1;
+                    oscillator_.m_nOctave=0;
                     oscillator1_.m_nCents = 5;
                     oscillator3_.m_uWaveform = 0;
                     oscillator3_.m_nCents = -5;
@@ -658,24 +660,26 @@ void AudioEngine::ChangeKnob(int knob , int val) {
                     music.fmsynth = false;
                 }
                 if (val == 2) {
-
+                    oscillator_.m_nOctave=0;
                     oscillator1_.m_uWaveform = 4;
 
                     oscillator_.m_uWaveform = 4;
                     oscillator0_.m_uWaveform = 4;
-                    oscillator_.m_nOctave = 1;
+                    oscillator_.m_nOctave = 0;
                     oscillator2_.m_uWaveform = 4;
                     oscillator2_.m_nOctave = -1;
                     oscillator1_.m_uWaveform = 1;
                     oscillator1_.m_nCents = -7;
-                    oscillator0_.m_nCents = 7;
+                    oscillator0_.m_nCents = 4;
+                    oscillator0_.m_nSemitones=7;
                     music.fmsynth = false;
                 }
                 if (val == 3) {
                     oscillator_.m_uWaveform = 5;
+                    oscillator_.m_nOctave=0;
                     oscillator0_.m_uWaveform = 5;
                     oscillator0_.m_nSemitones = 7;
-                    oscillator0_.m_nCents = 7;
+                    oscillator0_.m_nCents = 3;
 
                     oscillator1_.m_uWaveform = 4;
                     oscillator1_.m_nOctave = -1;
@@ -736,7 +740,7 @@ void AudioEngine::ChangeKnob(int knob , int val) {
                 if(val==1) {
                     m=true;
                 }
-                music.AI=m;
+                music.filterpurchase2=m;
             }
 
         }

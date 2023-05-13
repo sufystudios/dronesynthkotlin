@@ -144,7 +144,7 @@ void CDelayLine::writeDelayAndInc(double dDelayInput)
 
 // --- the normal way to use the object - this implements the delay
 //     no feedback, no wet/dry - these must be done in owning object
-bool CDelayLine::processAudio(double* pInput, double* pOutput)
+bool CDelayLine::processAudio(double* pInput,double* pOutput)
 {
     // read delayed output
     *pOutput = m_dDelayInSamples == 0 ? *pInput : readDelay();
