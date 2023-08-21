@@ -50,7 +50,7 @@ public :
     CWTOscillator *oscillator2_;
     CWTOscillator *oscillator3_;
     //Flanger flanger;
-
+    double distortion = 0.5;
     CEnvelopeGenerator *env;
     bool fmsynth = false;
     CStereoDelayFX *delay;
@@ -390,10 +390,10 @@ combinedosc=oscilate*0.5+oscilate0*0.5;
 
                     if (tubeon) {
                         filt = softClipWaveShaper(
-                                filt, 2);
+                                filt, distortion);
 if(filterpurchase2)
                         filt2 = softClipWaveShaper(
-                                filt2, 2);
+                                filt2, distortion);
                     else
                         filt2=filt;
                     }

@@ -735,12 +735,15 @@ void AudioEngine::ChangeKnob(int knob , int val) {
                 setLoop();
                 break;
             }
-            case 21: {
+            case 21: { //stereo filter
                 bool m = false;
                 if(val==1) {
                     m=true;
                 }
                 music.filterpurchase2=m;
+            }
+            case 22: {
+                music.distortion=val/20+0.5;
             }
 
         }

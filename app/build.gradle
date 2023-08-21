@@ -7,8 +7,8 @@ android {
         applicationId "xyz.sufystudios.synthguide"
         minSdkVersion 16
         targetSdkVersion 32
-        versionCode  230002
-        versionName "1.23.02"
+        versionCode  230003
+        versionName "1.23.03"
         resConfigs 'en', 'US'
         externalNativeBuild {
             cmake {

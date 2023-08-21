@@ -66,6 +66,7 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
         }
     }
 
+    var TUBE_PURCHASED = false
     var context: Context? = null
     private var bp: BillingProcessor? = null
     var aiDroneString = "ai_drone_upgrade"
@@ -90,6 +91,7 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
             if (i == aiDroneString) {
                 AI_PURHCASED = true
             }
+
         }
         if (!AI_PURHCASED) {
             if(bp!!.isConnected) {
@@ -113,6 +115,9 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
             filter2.isActivated=false
         }
     }
+
+
+
 
     private fun createStuff() {
         //aiDrone = findViewById(R.id.aibutton)
@@ -213,6 +218,21 @@ class MainActivity : AppCompatActivity(), IBillingHandler {
         })
         q.alpha=0.2.toFloat()
         q.isActivated=false
+
+        //saturation amount
+        val sat = findViewById<SeekBar>(R.id.saturation)
+        changeKnob(22, sat.progress)
+
+        sat.setOnSeekBarChangeListener(object : OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
+                changeKnob(22, progress)
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar) {}
+        })
+
+
         val drywet = findViewById<SeekBar>(R.id.drywet)
         drywet.progress=40
         changeKnob(6,25)
@@ -354,24 +374,57 @@ delayratio.setOnSeekBarChangeListener(object : OnSeekBarChangeListener {
 
         val hertz = findViewById<View>(R.id.hertz) as EditText
         val tube = findViewById<View>(R.id.tube) as ImageView
-        tube.setOnClickListener { view ->
+        tube.setColorFilter(Color.rgb(10, 200, 150), PorterDuff.Mode.SRC_ATOP)
+        tube.alpha = 0.2.toFloat()
+        native_setTube(0)
+        tubeoff = true
 
-            if (!tubeoff) {
+        tube.setOnClickListener { view ->
+            val products = bp!!.listOwnedProducts()
+
+
+            for (i in products) {
+                if (i == "tube") {
+                    TUBE_PURCHASED = true
+                }
+
+            }
+            if (!TUBE_PURCHASED) {
+                if (bp!!.isConnected) {
+                    bp!!.purchase(this, "tube")
+                }
+            }
+            if (tubeoff) {
+
+
+
+
+                if (TUBE_PURCHASED && tubeoff) {
+                    tube.setColorFilter(Color.rgb(10, 200, 150), PorterDuff.Mode.SRC_ATOP)
+                    tube.alpha = 1.toFloat()
+                    native_setTube(1)
+                    tubeoff = false
+                    tube.clearColorFilter()
+
+
+
+                }
+
+                }
+            else {
+
+                tubeoff = true
+                tube.clearColorFilter()
                 tube.setColorFilter(Color.rgb(10, 200, 150), PorterDuff.Mode.SRC_ATOP)
                 tube.alpha = 0.2.toFloat()
                 native_setTube(0)
-                tubeoff = true
-            } else {
-                tubeoff = false
-                tube.clearColorFilter()
-                tube.alpha = 1.toFloat()
-                native_setTube(1)
             }
-        }
+            }
+//
+
         //tube.setColorFilter(Color.rgb(10, 200, 150), PorterDuff.Mode.SRC_ATOP)
         //tube.alpha = 0.2.toFloat()
-        //native_setTube(0)
-       // tubeoff = true
+
         hertz.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
@@ -487,7 +540,7 @@ delayratio.setOnSeekBarChangeListener(object : OnSeekBarChangeListener {
 
     private val mDownY = 0f
     private val mSwiping = false
-    private var tubeoff = false
+    private var tubeoff = true
     private var filter: SeekBar? = null
     private val waves = arrayOf("Saw", "FM Sine", "Tri", "Square", "Noise")
     private var currentWave = 0

@@ -564,6 +564,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/Q"
         app:layout_constraintTop_toBottomOf="@+id/hertz" />
+
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/qtxt"
         android:layout_width="wrap_content"
@@ -648,8 +649,8 @@
 
     <ImageView
         android:id="@+id/tube"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_width="99dp"
+        android:layout_height="58dp"
 
 
         android:src="@drawable/tube"
@@ -658,7 +659,8 @@
         app:layout_constraintEnd_toStartOf="@+id/reverb"
         app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="@+id/lfofilttxt"
-        app:layout_constraintTop_toBottomOf="@+id/lfofilttxt" />
+        app:layout_constraintTop_toBottomOf="@+id/lfofilttxt"
+        app:layout_constraintVertical_bias="0.044" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline"
@@ -752,17 +754,6 @@
         app:layout_constraintTop_toBottomOf="@+id/selectWave" />
 
     <com.google.android.material.button.MaterialButton
-        android:id="@+id/looper"
-        android:layout_width="wrap_content"
-        android:layout_height="0dp"
-        android:text="Looper"
-        android:textSize="8sp"
-        android:visibility="invisible"
-        app:layout_constraintBottom_toTopOf="@+id/hertz"
-        app:layout_constraintStart_toEndOf="@+id/selectWave"
-        app:layout_constraintTop_toBottomOf="@+id/tube" />
-
-    <com.google.android.material.button.MaterialButton
         android:id="@+id/aibutton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -797,8 +788,41 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="filt2|OFF"
-        app:layout_constraintStart_toEndOf="@+id/looper"
+        app:layout_constraintStart_toEndOf="@+id/selectWave"
         app:layout_constraintTop_toBottomOf="@+id/lforatetxt" />
+
+    <SeekBar
+        android:id="@+id/saturation"
+        android:layout_width="95dp"
+        android:layout_height="16dp"
+        android:max="100"
+        android:progress="0"
+        android:visibility="visible"
+        app:layout_constraintBottom_toTopOf="@+id/selectWave"
+        app:layout_constraintEnd_toStartOf="@+id/tube"
+        app:layout_constraintHorizontal_bias="0.458"
+        app:layout_constraintStart_toStartOf="@+id/view"
+        app:layout_constraintTop_toBottomOf="@+id/lfopitchtxt"
+        app:layout_constraintVertical_bias="0.236" />
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Saturation"
+        app:layout_constraintBottom_toTopOf="@+id/selectWave"
+        app:layout_constraintTop_toBottomOf="@+id/saturation"
+        tools:layout_editor_absoluteX="16dp" />
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:text="Tube!"
+        app:layout_constraintEnd_toStartOf="@+id/lforatetxt"
+        app:layout_constraintStart_toEndOf="@+id/textView"
+        app:layout_constraintTop_toBottomOf="@+id/tube" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
