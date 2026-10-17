@@ -79,4 +79,6 @@ dependencies {
     implementation 'com.google.oboe:oboe:1.11.0'
 
     testImplementation 'junit:junit:4.13.2'
+    // The real org.json, for unit tests of the preset file format (android.jar only has stubs).
+    testImplementation 'org.json:json:20250517'
 }

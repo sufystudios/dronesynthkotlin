@@ -302,6 +302,28 @@ class SynthViewModel(application: Application) : AndroidViewModel(application) {
         scheduleSave()
     }
 
+    /** [list] as a preset file, for sharing or backing up. */
+    fun presetFileText(list: List<Preset>): String = PresetFile.encode(list)
+
+    /**
+     * Adds the presets in a shared or backed-up file to the library, renaming any
+     * that clash with an existing name. Returns how many were added, or null if
+     * [text] isn't a preset file.
+     */
+    fun importPresets(text: String): Int? {
+        val imported = PresetFile.decode(text) ?: return null
+        val names = presets.map { it.name.lowercase() }.toMutableSet()
+        imported.forEach { p ->
+            var name = p.name
+            var n = 2
+            while (name.lowercase() in names) name = "${p.name} (${n++})"
+            names += name.lowercase()
+            presets.add(Preset(store.newPresetId(), name, p.values))
+        }
+        persistPresets()
+        return imported.size
+    }
+
     private fun snapshot(): Map<SynthParam, Float> = SynthParam.entries.associateWith { get(it) }
 
     private fun persistPresets() {

@@ -19,10 +19,10 @@ class PatchStore(context: Context) {
     private val presetsFile = File(context.filesDir, "presets.json")
 
     fun loadCurrent(): Map<SynthParam, Float>? =
-        runCatching { decodeValues(JSONObject(currentFile.readText())) }.getOrNull()
+        runCatching { PresetFile.decodeValues(JSONObject(currentFile.readText())) }.getOrNull()
 
     fun saveCurrent(values: Map<SynthParam, Float>) {
-        writeAtomically(currentFile, encodeValues(values).toString())
+        writeAtomically(currentFile, PresetFile.encodeValues(values).toString())
     }
 
     fun loadPresets(): List<Preset> {
@@ -31,7 +31,7 @@ class PatchStore(context: Context) {
         return (0 until array.length()).mapNotNull { i ->
             runCatching {
                 val o = array.getJSONObject(i)
-                Preset(o.getString("id"), o.getString("name"), decodeValues(o.getJSONObject("values")))
+                Preset(o.getString("id"), o.getString("name"), PresetFile.decodeValues(o.getJSONObject("values")))
             }.getOrNull()
         }
     }
@@ -39,27 +39,12 @@ class PatchStore(context: Context) {
     fun savePresets(presets: List<Preset>) {
         val array = JSONArray()
         presets.forEach { p ->
-            array.put(JSONObject().put("id", p.id).put("name", p.name).put("values", encodeValues(p.values)))
+            array.put(JSONObject().put("id", p.id).put("name", p.name).put("values", PresetFile.encodeValues(p.values)))
         }
         writeAtomically(presetsFile, array.toString())
     }
 
     fun newPresetId(): String = UUID.randomUUID().toString()
-
-    private fun encodeValues(values: Map<SynthParam, Float>): JSONObject {
-        val o = JSONObject()
-        values.forEach { (param, value) -> o.put(param.key, value.toDouble()) }
-        return o
-    }
-
-    private fun decodeValues(o: JSONObject): Map<SynthParam, Float> {
-        val values = SynthParam.entries.associateWith { it.default }.toMutableMap()
-        o.keys().forEach { key ->
-            val param = SynthParam.fromKey(key) ?: return@forEach
-            values[param] = param.clamp(o.getDouble(key).toFloat())
-        }
-        return values
-    }
 
     private fun writeAtomically(file: File, text: String) {
         val tmp = File(file.parentFile, file.name + ".tmp")
