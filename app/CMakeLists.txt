@@ -7,6 +7,8 @@ add_library(dronesynth SHARED
         # Engine
         src/main/cpp/synth/SynthEngine.cpp
         src/main/cpp/synth/VintageDelay.cpp
+        src/main/cpp/synth/Looper.cpp
+        src/main/cpp/synth/Recorder.cpp
         src/main/cpp/synth/JniBridge.cpp
 
         # DSP building blocks (oscillator, Moog ladder, envelope generator)

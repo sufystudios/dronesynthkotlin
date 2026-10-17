@@ -69,11 +69,15 @@ import xyz.sufystudios.synthguide.ui.components.mainLabel
 import xyz.sufystudios.synthguide.ui.panels.DelayPanel
 import xyz.sufystudios.synthguide.ui.panels.EnvelopePanel
 import xyz.sufystudios.synthguide.ui.panels.LfoPanel
+import xyz.sufystudios.synthguide.ui.panels.LooperPanel
+import xyz.sufystudios.synthguide.ui.panels.RecorderPanel
+import xyz.sufystudios.synthguide.ui.panels.formatTime
 import xyz.sufystudios.synthguide.ui.panels.OscillatorPanel
 import xyz.sufystudios.synthguide.ui.panels.PresetsPanel
 import xyz.sufystudios.synthguide.ui.panels.ReverbPanel
 import xyz.sufystudios.synthguide.ui.theme.Neon
 import xyz.sufystudios.synthguide.ui.theme.RetroAmber
+import xyz.sufystudios.synthguide.ui.theme.RetroLed
 
 private val DrawerWidth = 230.dp
 private val KeyboardHeight = 250.dp
@@ -162,7 +166,7 @@ private fun DrawerSide(
         if (!left) DrawerSlot(vm, showing, left, maxHeight)
         Column {
             tabs.forEach { tab ->
-                RailButton(tab, selected = tab == openTab, Modifier.size(38.dp, 90.dp)) { toggleTab(tab) }
+                RailButton(vm, tab, selected = tab == openTab, Modifier.size(38.dp, 80.dp)) { toggleTab(tab) }
             }
         }
         if (left) DrawerSlot(vm, showing, left, maxHeight)
@@ -195,12 +199,18 @@ private fun DrawerContent(vm: SynthViewModel, tab: DrawerTab) {
         DrawerTab.Delay -> DelayPanel(vm, m)
         DrawerTab.Presets -> PresetsPanel(vm, m)
         DrawerTab.Reverb -> ReverbPanel(vm, m)
+        DrawerTab.Rec -> RecorderPanel(vm, m)
+        DrawerTab.Looper -> LooperPanel(vm, m)
     }
 }
 
 @Composable
-private fun RailButton(tab: DrawerTab, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
+private fun RailButton(vm: SynthViewModel, tab: DrawerTab, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
     val color = if (selected) Neon else Color.White
+    val looper = vm.looper
+    val loopProgress = if (tab == DrawerTab.Looper && looper.hasLoop && looper.lengthSeconds > 0f) {
+        looper.positionSeconds / looper.lengthSeconds
+    } else null
     Column(
         modifier
             .background(Color.Black.copy(alpha = 0.6f))
@@ -209,8 +219,12 @@ private fun RailButton(tab: DrawerTab, selected: Boolean, modifier: Modifier, on
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
     ) {
-        RailIcon(tab, color)
+        RailIcon(tab, color, loopProgress = loopProgress)
         BasicText(tab.label, style = TextStyle(color = color, fontSize = 10.sp, fontWeight = FontWeight.SemiBold), maxLines = 1)
+        // The loop's length stays visible while its drawer is closed, as on iOS.
+        if (loopProgress != null) {
+            BasicText(formatTime(looper.lengthSeconds), style = TextStyle(color = RetroLed, fontSize = 8.sp, fontWeight = FontWeight.SemiBold))
+        }
     }
 }
 
@@ -223,13 +237,13 @@ private fun LandscapeLayout(vm: SynthViewModel, openTab: DrawerTab?, toggleTab: 
     val topHeight = 220.dp
     Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).padding(10.dp)) {
         Row(Modifier.fillMaxWidth().height(topHeight)) {
-            LandscapeRail(left = true, openTab, toggleTab)
+            LandscapeRail(vm, left = true, openTab, toggleTab)
             LandscapeDrawer(vm, openTab?.takeIf { it.leftSide }, left = true)
             Spacer(Modifier.weight(1f))
             LandscapeFilterPanel(vm, Modifier.width(250.dp).fillMaxHeight())
             Spacer(Modifier.weight(1f))
             LandscapeDrawer(vm, openTab?.takeIf { !it.leftSide }, left = false)
-            LandscapeRail(left = false, openTab, toggleTab)
+            LandscapeRail(vm, left = false, openTab, toggleTab)
         }
         Spacer(Modifier.height(10.dp))
         KeyboardPanel(vm, Modifier.fillMaxWidth().weight(1f))
@@ -237,10 +251,10 @@ private fun LandscapeLayout(vm: SynthViewModel, openTab: DrawerTab?, toggleTab: 
 }
 
 @Composable
-private fun LandscapeRail(left: Boolean, openTab: DrawerTab?, toggleTab: (DrawerTab) -> Unit) {
+private fun LandscapeRail(vm: SynthViewModel, left: Boolean, openTab: DrawerTab?, toggleTab: (DrawerTab) -> Unit) {
     Column(Modifier.width(64.dp).fillMaxHeight().clip(RoundedCornerShape(10.dp))) {
         DrawerTab.entries.filter { it.leftSide == left }.forEach { tab ->
-            RailButton(tab, tab == openTab, Modifier.fillMaxWidth().weight(1f)) { toggleTab(tab) }
+            RailButton(vm, tab, tab == openTab, Modifier.fillMaxWidth().weight(1f)) { toggleTab(tab) }
         }
     }
 }

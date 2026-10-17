@@ -6,6 +6,19 @@ package xyz.sufystudios.synthguide.audio
  * Every call is cheap and safe from the main thread: parameters are atomics and
  * note events go through a lock-free queue to the audio thread.
  */
+/** The looper's transport, as shown on its drawer and rail tab. */
+data class LooperState(
+    val hasLoop: Boolean = false,
+    val recording: Boolean = false,
+    val playing: Boolean = false,
+    val overdubbing: Boolean = false,
+    val canUndo: Boolean = false,
+    val enabled: Boolean = true,
+    val lengthSeconds: Float = 0f,
+    val positionSeconds: Float = 0f,
+    val recordedSeconds: Float = 0f,
+)
+
 object NativeSynth {
     init {
         System.loadLibrary("dronesynth")
@@ -17,6 +30,10 @@ object NativeSynth {
     fun setParam(id: Int, value: Float) = nativeSetParam(id, value)
     fun noteOn(note: Int, velocity: Int = 127) = nativeNoteOn(note, velocity)
     fun noteOff(note: Int) = nativeNoteOff(note)
+
+    /** Performance controls (MIDI); never stored in presets. Ids match Params.h. */
+    fun setPitchBend(value: Float) = nativeSetParam(110, value.coerceIn(-1f, 1f))
+    fun setModWheel(value: Float) = nativeSetParam(111, value.coerceIn(0f, 1f))
     fun allNotesOff() = nativeAllNotesOff()
 
     /** Peak output level since the last call, 0..1. */
@@ -30,6 +47,45 @@ object NativeSynth {
 
     data class DelayTimes(val leftSeconds: Float, val rightSeconds: Float, val clamped: Boolean)
 
+    // MARK: - Looper
+
+    /** Commands, in the same order as the native Looper::Command enum. */
+    enum class LooperCommand { ToggleRecord, TogglePlay, ToggleOverdub, Undo, Clear, Enable, Disable }
+
+    fun looperCommand(command: LooperCommand) = nativeLooperCommand(command.ordinal)
+
+    fun looperState(): LooperState {
+        val v = nativeLooperState()
+        val rate = sampleRate().toFloat()
+        return LooperState(
+            hasLoop = v[0] and 1 != 0,
+            recording = v[0] and 2 != 0,
+            playing = v[0] and 4 != 0,
+            overdubbing = v[0] and 8 != 0,
+            canUndo = v[0] and 16 != 0,
+            enabled = v[0] and 32 != 0,
+            lengthSeconds = v[1] / rate,
+            positionSeconds = v[2] / rate,
+            recordedSeconds = v[3] / rate,
+        )
+    }
+
+    // MARK: - Recorder
+
+    /** Starts a new take, written as a WAV file at [path]. */
+    fun recorderStart(path: String): Boolean = nativeRecorderStart(path)
+
+    /** Stops and finalises the take. Blocks briefly while the file is flushed - call off the main thread. */
+    fun recorderStop() = nativeRecorderStop()
+
+    /** (recording, open, seconds recorded). A take is "open" until [recorderStop] finalises it. */
+    fun recorderState(): Triple<Boolean, Boolean, Float> {
+        val v = nativeRecorderState()
+        return Triple(v[0] != 0L, v[1] != 0L, v[2] / sampleRate().toFloat())
+    }
+
+    fun sampleRate(): Int = nativeSampleRate()
+
     private external fun nativeCreate()
     private external fun nativeStart(): Boolean
     private external fun nativeStop()
@@ -38,5 +94,11 @@ object NativeSynth {
     private external fun nativeNoteOff(note: Int)
     private external fun nativeAllNotesOff()
     private external fun nativeTakePeak(): Float
+    private external fun nativeLooperCommand(command: Int)
+    private external fun nativeLooperState(): IntArray
+    private external fun nativeRecorderStart(path: String): Boolean
+    private external fun nativeRecorderStop()
+    private external fun nativeRecorderState(): LongArray
+    private external fun nativeSampleRate(): Int
     private external fun nativeDelayTimes(timeMs: Float, subdivide: Float, timeLeft: Float, timeRight: Float, mixMode: Int): FloatArray
 }

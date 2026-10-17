@@ -19,7 +19,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import xyz.sufystudios.synthguide.BuildConfig
+import kotlinx.coroutines.isActive
+import xyz.sufystudios.synthguide.audio.LooperState
 import xyz.sufystudios.synthguide.audio.NativeSynth
+import xyz.sufystudios.synthguide.audio.NativeSynth.LooperCommand
 import xyz.sufystudios.synthguide.billing.Product
 import xyz.sufystudios.synthguide.billing.PurchaseManager
 
@@ -46,6 +49,11 @@ class SynthViewModel(application: Application) : AndroidViewModel(application) {
     var spaceSkin by mutableStateOf(uiPrefs.getBoolean("spaceSkin", false))
         private set
 
+    /** The looper's transport, refreshed ~30 times a second. */
+    var looper by mutableStateOf(LooperState())
+        private set
+    val recorder = TakeRecorder(application, viewModelScope)
+
     private var saveJob: Job? = null
     private val tapTimes = ArrayDeque<Long>()
 
@@ -57,6 +65,13 @@ class SynthViewModel(application: Application) : AndroidViewModel(application) {
         SynthParam.entries.forEach { pushToEngine(it) }
         presets.addAll(store.loadPresets())
         purchases.connect()
+        viewModelScope.launch {
+            while (isActive) {
+                looper = NativeSynth.looperState()
+                recorder.poll()
+                delay(33)
+            }
+        }
         viewModelScope.launch {
             // Re-apply purchase-gated parameters whenever ownership is (re)confirmed.
             owned.collect { gatedParams.keys.forEach { pushToEngine(it) } }
@@ -142,6 +157,18 @@ class SynthViewModel(application: Application) : AndroidViewModel(application) {
     fun stopAudio() {
         NativeSynth.allNotesOff()
         NativeSynth.stop()
+    }
+
+    // MARK: - Looper
+
+    fun looperCommand(command: LooperCommand) = NativeSynth.looperCommand(command)
+
+    fun toggleLooperEnabled() =
+        NativeSynth.looperCommand(if (looper.enabled) LooperCommand.Disable else LooperCommand.Enable)
+
+    override fun onCleared() {
+        recorder.release()
+        super.onCleared()
     }
 
     // MARK: - Keyboard

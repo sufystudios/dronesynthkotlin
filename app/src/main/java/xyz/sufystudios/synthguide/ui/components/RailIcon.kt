@@ -14,20 +14,26 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import xyz.sufystudios.synthguide.model.LfoShape
 import xyz.sufystudios.synthguide.model.OscWaveform
+import xyz.sufystudios.synthguide.ui.theme.RetroLed
 
 /** The drawer tabs, and which edge's rail each sits on (as on iOS). */
 enum class DrawerTab(val label: String, val leftSide: Boolean) {
     Osc("OSC", false),
     Lfo("LFO", false),
     Adsr("ADSR", false),
+    Rec("REC", false),
     Delay("Delay", true),
     Presets("Presets", true),
     Reverb("Reverb", true),
+    Looper("Looper", true),
 }
 
-/** Small line-art icon for a drawer tab, drawn rather than loaded so it tints freely. */
+/**
+ * Small line-art icon for a drawer tab, drawn rather than loaded so it tints freely.
+ * [loopProgress] (0..1) draws the Looper's position ring around its icon.
+ */
 @Composable
-fun RailIcon(tab: DrawerTab, color: Color, modifier: Modifier = Modifier) {
+fun RailIcon(tab: DrawerTab, color: Color, modifier: Modifier = Modifier, loopProgress: Float? = null) {
     Canvas(modifier.size(20.dp)) {
         val s = size.minDimension
         val stroke = Stroke(1.6.dp.toPx(), cap = StrokeCap.Round)
@@ -50,6 +56,21 @@ fun RailIcon(tab: DrawerTab, color: Color, modifier: Modifier = Modifier) {
             }
             DrawerTab.Reverb -> for (i in 0 until 3) {
                 drawPath(oscWavePath(OscWaveform.Sine, Size(s, s * 0.2f), cycles = 2.0).shifted(0f, s * (0.15f + i * 0.25f)), color, style = stroke)
+            }
+            DrawerTab.Rec -> {
+                drawRoundRect(color, Offset(s * 0.35f, s * 0.05f), Size(s * 0.3f, s * 0.55f), androidx.compose.ui.geometry.CornerRadius(s * 0.15f))
+                drawArc(color, 0f, 180f, false, Offset(s * 0.22f, s * 0.3f), Size(s * 0.56f, s * 0.45f), style = stroke)
+                drawLine(color, Offset(s / 2, s * 0.75f), Offset(s / 2, s * 0.95f), stroke.width, StrokeCap.Round)
+            }
+            DrawerTab.Looper -> {
+                drawCircle(Color.White.copy(alpha = 0.25f), s * 0.45f, style = Stroke(1.5.dp.toPx()))
+                if (loopProgress != null) {
+                    drawArc(RetroLed, -90f, 360f * loopProgress, false, Offset(s * 0.05f, s * 0.05f), Size(s * 0.9f, s * 0.9f),
+                        style = Stroke(1.5.dp.toPx(), cap = StrokeCap.Round))
+                }
+                // Two chasing arrows.
+                drawArc(color, 200f, 120f, false, Offset(s * 0.25f, s * 0.25f), Size(s * 0.5f, s * 0.5f), style = stroke)
+                drawArc(color, 20f, 120f, false, Offset(s * 0.25f, s * 0.25f), Size(s * 0.5f, s * 0.5f), style = stroke)
             }
         }
     }

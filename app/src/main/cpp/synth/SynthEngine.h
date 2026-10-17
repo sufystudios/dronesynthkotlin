@@ -23,9 +23,11 @@
 #include "../MoogLadderFilter.h"
 #include "../vendor/soundpipe/Soundpipe.h"
 #include "EventQueue.h"
+#include "Looper.h"
 #include "Modulators.h"
 #include "OscillatorSlot.h"
 #include "Params.h"
+#include "Recorder.h"
 #include "VintageDelay.h"
 
 namespace synth {
@@ -48,6 +50,9 @@ public:
 
     /// Peak output level since the last call (for the UI's meter/visuals), 0...1+.
     float takePeak();
+
+    Looper &looper() { return looper_; }
+    Recorder &recorder() { return recorder_; }
     double sampleRate() const { return sampleRate_; }
 
     oboe::DataCallbackResult onAudioReady(oboe::AudioStream *stream, void *audioData, int32_t numFrames) override;
@@ -81,6 +86,8 @@ private:
     // --- UI -> audio
     std::array<std::atomic<float>, kNumParams> params_;
     SpscQueue<NoteEvent, 256> events_;
+    /// Notes come from the UI and MIDI threads; producers serialise here (the audio thread never locks).
+    std::mutex eventProducerLock_;
     std::atomic<float> peak_{0.0f};
     /// stop() asks the audio thread to fade out, and waits for it to confirm.
     std::atomic<bool> fadeOutRequested_{false};
@@ -117,6 +124,8 @@ private:
     /// A 1 ms smoother on the amp envelope's output: rounds off any step in it
     /// (sustain moves, retriggers) without audibly softening the attack.
     Smoothed ampSmooth_;
+    Smoothed pitchBend_;  // cents
+    Smoothed modWheel_;   // 0...1
     float tubeDrive_ = 3.0f;
     float filterEnvLevel_ = 0.0f;
     bool syncOsc3_ = false;
@@ -132,8 +141,10 @@ private:
     double glideStep_ = 0.0;
     float glideTime_ = 0.1f;
 
-    // --- effects
+    // --- effects and capture
     VintageDelay delay_;
+    Looper looper_;
+    Recorder recorder_;
     sp_data spData_{};
     sp_zitarev *reverb_ = nullptr;
 

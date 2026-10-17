@@ -84,6 +84,10 @@ enum ParamId : int {
     kTubeEnabled = 100,
     kTubeDrive = 101,
 
+    // Performance controls (MIDI) - live state, never stored in presets.
+    kPitchBend = 110,  // -1...1, scaled to ±2 semitones
+    kModWheel = 111,   // 0...1, brightens the filter
+
     kNumParams = 128,
 };
 

@@ -191,8 +191,12 @@ void SynthEngine::prepare(double sampleRate) {
     for (auto *s : {&cutoffOctaves_, &resonanceLeft_, &resonanceRight_}) s->setTimeConstant(0.01f, sr);
     ampSmooth_.setTimeConstant(0.001f, sr);
     ampSmooth_.snap(0.0f);
+    pitchBend_.setTimeConstant(0.005f, sr);
+    modWheel_.setTimeConstant(0.01f, sr);
 
     delay_.init(sampleRate);
+    looper_.prepare(sampleRate);
+    recorder_.prepare(sampleRate);
 
     if (reverb_) sp_zitarev_destroy(&reverb_);
     spData_.sr = int(sampleRate);
@@ -228,14 +232,17 @@ float SynthEngine::getParam(int id) const {
 }
 
 void SynthEngine::noteOn(int note, int velocity) {
+    std::lock_guard<std::mutex> lock(eventProducerLock_);
     events_.push({NoteEvent::NoteOn, uint8_t(std::clamp(note, 0, 127)), uint8_t(std::clamp(velocity, 1, 127))});
 }
 
 void SynthEngine::noteOff(int note) {
+    std::lock_guard<std::mutex> lock(eventProducerLock_);
     events_.push({NoteEvent::NoteOff, uint8_t(std::clamp(note, 0, 127)), 0});
 }
 
 void SynthEngine::allNotesOff() {
+    std::lock_guard<std::mutex> lock(eventProducerLock_);
     events_.push({NoteEvent::AllNotesOff, 0, 0});
 }
 
@@ -374,6 +381,9 @@ void SynthEngine::applyParams(const Snapshot &s) {
     cutoffOctaves_.setTarget(std::log2(std::clamp(p[kCutoff], 20.0f, 20000.0f)));
     resonanceLeft_.setTarget(std::clamp(p[kLeftResonance], 0.0f, 0.99f));
     resonanceRight_.setTarget(std::clamp(p[kRightResonance], 0.0f, 0.99f));
+    // General MIDI's default bend range: ±2 semitones.
+    pitchBend_.setTarget(std::clamp(p[kPitchBend], -1.0f, 1.0f) * 200.0f);
+    modWheel_.setTarget(std::clamp(p[kModWheel], 0.0f, 1.0f));
 
     delay_.time = p[kDelayTime];
     delay_.subdivide = p[kDelaySubdivide];
@@ -434,8 +444,9 @@ void SynthEngine::controlTick(const Snapshot &s, int frames) {
         // OSC 3's LFO matches its ±700 cent Pitch knob, for wide hard-sync sweeps.
         pitchModOsc3_.setTarget(osc3Depth * 700.0f * osc3Mod);
     }
-    const float osc12Cents = pitchModOsc12_.advance(frames);
-    const float osc3Cents = pitchModOsc3_.advance(frames);
+    const float bendCents = pitchBend_.advance(frames);
+    const float osc12Cents = pitchModOsc12_.advance(frames) + bendCents;
+    const float osc3Cents = pitchModOsc3_.advance(frames) + bendCents;
 
     // Glide toward the target note in the log-frequency domain.
     if (currentLogHz_ != targetLogHz_) {
@@ -460,7 +471,9 @@ void SynthEngine::controlTick(const Snapshot &s, int frames) {
     float octaves = 0.0f;
     if (on(p[kFilterLfoShape + kLfoEnabledOffset])) octaves += p[kFilterLfoShape + kLfoDepthOffset] * 3.0f * filterMod;
     if (on(p[kFilterEnvModEnabled])) octaves += p[kFilterEnvModAmount] * 6.0f * filterEnvLevel_;
-    const float cutoff = std::clamp(std::exp2(cutoffOctaves_.advance(frames) + octaves), 20.0f, 20000.0f);
+    // The mod wheel adds up to 8 kHz on top, as on iOS (MIDI CC1).
+    const float modBoost = modWheel_.advance(frames) * 8000.0f;
+    const float cutoff = std::clamp(std::exp2(cutoffOctaves_.advance(frames) + octaves) + modBoost, 20.0f, 20000.0f);
     const float spread = std::pow(kStereoDetuneRatio, stereoAmount_.value());
     // Resonance 0...0.99 maps onto the ladder's Q control 1...10 (feedback K 0...4).
     filterLeft_.m_dQControl = 1.0 + 9.0 * resonanceLeft_.advance(frames);
@@ -530,6 +543,9 @@ oboe::DataCallbackResult SynthEngine::onAudioReady(oboe::AudioStream *, void *au
         // and resuming later would replay a stale tail and restart its smoothers.
         sp_zitarev_compute_block(reverb_, chunk, left_.data(), right_.data(), wetLeft_.data(), wetRight_.data());
 
+        // The looper records the synth's output and mixes its playback back in.
+        looper_.process(wetLeft_.data(), wetRight_.data(), wetLeft_.data(), wetRight_.data(), chunk);
+
         masterGain_.setTarget(fadeOutRequested_.load(std::memory_order_relaxed) ? 0.0f : 1.0f);
         for (int i = 0; i < chunk; ++i) {
             const float gain = masterGain_.next();
@@ -538,7 +554,11 @@ oboe::DataCallbackResult SynthEngine::onAudioReady(oboe::AudioStream *, void *au
             peak = std::max(peak, std::max(std::fabs(l), std::fabs(r)));
             out[2 * (done + i)] = l;
             out[2 * (done + i) + 1] = r;
+            left_[i] = l;
+            right_[i] = r;
         }
+        // The recorder takes the final output, loop included.
+        recorder_.write(left_.data(), right_.data(), chunk);
         done += chunk;
     }
 

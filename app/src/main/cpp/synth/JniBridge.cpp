@@ -67,4 +67,57 @@ JNIEXPORT jfloatArray JNICALL NATIVE_SYNTH(nativeDelayTimes)(JNIEnv *env, jobjec
     return result;
 }
 
+// MARK: - Looper
+
+JNIEXPORT void JNICALL NATIVE_SYNTH(nativeLooperCommand)(JNIEnv *, jobject, jint command) {
+    if (gEngine) gEngine->looper().request(synth::Looper::Command(command));
+}
+
+/// {flags, lengthFrames, positionFrames, recordedFrames}
+JNIEXPORT jintArray JNICALL NATIVE_SYNTH(nativeLooperState)(JNIEnv *env, jobject) {
+    jint values[4] = {0, 0, 0, 0};
+    if (gEngine) {
+        synth::Looper &l = gEngine->looper();
+        values[0] = l.flags();
+        values[1] = l.lengthFrames();
+        values[2] = l.positionFrames();
+        values[3] = l.recordedFrames();
+    }
+    jintArray result = env->NewIntArray(4);
+    env->SetIntArrayRegion(result, 0, 4, values);
+    return result;
+}
+
+// MARK: - Recorder
+
+JNIEXPORT jboolean JNICALL NATIVE_SYNTH(nativeRecorderStart)(JNIEnv *env, jobject, jstring path) {
+    if (!gEngine) return false;
+    const char *chars = env->GetStringUTFChars(path, nullptr);
+    const bool ok = gEngine->recorder().start(chars);
+    env->ReleaseStringUTFChars(path, chars);
+    return ok;
+}
+
+JNIEXPORT void JNICALL NATIVE_SYNTH(nativeRecorderStop)(JNIEnv *, jobject) {
+    if (gEngine) gEngine->recorder().stop();
+}
+
+/// {recording (0/1), open (0/1), recordedFrames}
+JNIEXPORT jlongArray JNICALL NATIVE_SYNTH(nativeRecorderState)(JNIEnv *env, jobject) {
+    jlong values[3] = {0, 0, 0};
+    if (gEngine) {
+        synth::Recorder &r = gEngine->recorder();
+        values[0] = r.isRecording();
+        values[1] = r.isOpen();
+        values[2] = r.recordedFrames();
+    }
+    jlongArray result = env->NewLongArray(3);
+    env->SetLongArrayRegion(result, 0, 3, values);
+    return result;
+}
+
+JNIEXPORT jint JNICALL NATIVE_SYNTH(nativeSampleRate)(JNIEnv *, jobject) {
+    return gEngine ? jint(gEngine->sampleRate()) : 48000;
+}
+
 } // extern "C"
