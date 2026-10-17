@@ -28,6 +28,8 @@ import xyz.sufystudios.synthguide.audio.NativeSynth.LooperCommand
 import xyz.sufystudios.synthguide.audio.PlaybackService
 import xyz.sufystudios.synthguide.billing.Product
 import xyz.sufystudios.synthguide.billing.PurchaseManager
+import xyz.sufystudios.synthguide.midi.BluetoothMidi
+import xyz.sufystudios.synthguide.midi.MidiDeviceEntry
 import xyz.sufystudios.synthguide.midi.MidiInput
 
 /**
@@ -60,8 +62,11 @@ class SynthViewModel(application: Application) : AndroidViewModel(application) {
 
     private val midi = MidiInput(application)
 
-    /** Names of connected MIDI keyboards. */
-    val midiDevices: StateFlow<List<String>> = midi.devices
+    /** Connected MIDI keyboards. */
+    val midiDevices: StateFlow<List<MidiDeviceEntry>> = midi.devices
+
+    /** Finds and connects Bluetooth MIDI keyboards; null on devices without MIDI support. */
+    val bluetoothMidi: BluetoothMidi? = midi.bluetooth
 
     private var saveJob: Job? = null
     private val tapTimes = ArrayDeque<Long>()

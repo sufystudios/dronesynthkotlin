@@ -70,6 +70,7 @@ import xyz.sufystudios.synthguide.ui.panels.DelayPanel
 import xyz.sufystudios.synthguide.ui.panels.EnvelopePanel
 import xyz.sufystudios.synthguide.ui.panels.LfoPanel
 import xyz.sufystudios.synthguide.ui.panels.LooperPanel
+import xyz.sufystudios.synthguide.ui.panels.MidiDialog
 import xyz.sufystudios.synthguide.ui.panels.RecorderPanel
 import xyz.sufystudios.synthguide.ui.panels.formatTime
 import xyz.sufystudios.synthguide.ui.panels.OscillatorPanel
@@ -356,16 +357,18 @@ private fun PillRow(vm: SynthViewModel, modifier: Modifier = Modifier, compact: 
             description = "Tube saturation",
         ) { activity?.let { vm.toggleGated(it, SynthParam.TubeEnabled) } }
 
-        // Lit while a MIDI keyboard is connected.
-        val midi by vm.midiDevices.collectAsStateWithLifecycle()
-        if (midi.isNotEmpty()) {
+        // Lit while a MIDI keyboard is connected; opens the MIDI window (Bluetooth pairing).
+        if (vm.bluetoothMidi != null) {
+            val midi by vm.midiDevices.collectAsStateWithLifecycle()
+            var showMidi by rememberSaveable { mutableStateOf(false) }
             Pill(
                 label = "MIDI",
-                active = true,
+                active = midi.isNotEmpty(),
                 colors = listOf(Color(0xFF5E5CE6), Color(0xFF8E8CF0)),
                 compact = compact,
-                description = "MIDI: " + midi.joinToString(),
-            ) {}
+                description = if (midi.isEmpty()) "MIDI keyboards" else "MIDI: " + midi.joinToString { it.name },
+            ) { showMidi = true }
+            if (showMidi) MidiDialog(vm) { showMidi = false }
         }
     }
 }
