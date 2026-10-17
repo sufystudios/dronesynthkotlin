@@ -80,15 +80,15 @@ SynthEngine::SynthEngine() {
         eg->m_bResetToZero = false;  // retrigger from the current level - no clicks
         eg->m_bLegatoMode = false;
     }
-    for (auto *f : {&filterLeft_, &filterRight_}) {
-        f->m_uNLP = CFilter::ON;  // tanh in the ladder's feedback path, like the real thing
-        f->m_dSaturation = 1.5;
-    }
+    sp_moogladder_create(&filterLeft_);
+    sp_moogladder_create(&filterRight_);
 }
 
 SynthEngine::~SynthEngine() {
     stop();
     if (reverb_) sp_zitarev_destroy(&reverb_);
+    sp_moogladder_destroy(&filterLeft_);
+    sp_moogladder_destroy(&filterRight_);
 }
 
 // MARK: - Stream
@@ -173,10 +173,10 @@ void SynthEngine::prepare(double sampleRate) {
         eg->setSampleRate(sampleRate);
         eg->reset();
     }
-    for (auto *f : {&filterLeft_, &filterRight_}) {
-        f->setSampleRate(sampleRate);
-        f->reset();
-    }
+    spData_.sr = int(sampleRate);
+    spData_.nchan = 2;
+    for (auto *f : {filterLeft_, filterRight_}) sp_moogladder_init(&spData_, f);
+    filterFreqLeft_ = filterFreqRight_ = 0.0f;  // the first control tick snaps to the knob
     velocity_.setTimeConstant(0.005f, sr);
     velocity_.snap(1.0f);
     stereoAmount_.setTimeConstant(0.02f, sr);
@@ -475,13 +475,19 @@ void SynthEngine::controlTick(const Snapshot &s, int frames) {
     const float modBoost = modWheel_.advance(frames) * 8000.0f;
     const float cutoff = std::clamp(std::exp2(cutoffOctaves_.advance(frames) + octaves) + modBoost, 20.0f, 20000.0f);
     const float spread = std::pow(kStereoDetuneRatio, stereoAmount_.value());
-    // Resonance 0...0.99 maps onto the ladder's Q control 1...10 (feedback K 0...4).
-    filterLeft_.m_dQControl = 1.0 + 9.0 * resonanceLeft_.advance(frames);
-    filterRight_.m_dQControl = 1.0 + 9.0 * resonanceRight_.advance(frames);
-    filterLeft_.m_dFcControl = cutoff / spread;
-    filterRight_.m_dFcControl = cutoff * spread;
-    filterLeft_.update();
-    filterRight_.update();
+    // Resonance 0...0.99 goes straight to moogladder, as iOS passes it to MoogLadder.
+    filterLeft_->res = resonanceLeft_.advance(frames);
+    filterRight_->res = resonanceRight_.advance(frames);
+    // render() ramps the cutoff across the control block a sample at a time, as
+    // AudioKit's parameter ramper does on iOS: stepping it every 8 samples clicks.
+    const float targetLeft = cutoff / spread;
+    const float targetRight = cutoff * spread;
+    if (filterFreqLeft_ <= 0.0f) {
+        filterFreqLeft_ = targetLeft;
+        filterFreqRight_ = targetRight;
+    }
+    filterStepLeft_ = (targetLeft - filterFreqLeft_) / float(frames);
+    filterStepRight_ = (targetRight - filterFreqRight_) / float(frames);
 }
 
 // MARK: - Audio
@@ -503,8 +509,11 @@ void SynthEngine::render(float *left, float *right, int frames) {
         filterEnvLevel_ = float(filterEg_.doEnvelope());
         const float x = mix * kOscMixGain * amp * velocity_.next();
 
-        const float l = float(filterLeft_.doFilter(x));
-        const float r = float(filterRight_.doFilter(x));
+        filterLeft_->freq = filterFreqLeft_ += filterStepLeft_;
+        filterRight_->freq = filterFreqRight_ += filterStepRight_;
+        float in = x, l, r;
+        sp_moogladder_compute(&spData_, filterLeft_, &in, &l);
+        sp_moogladder_compute(&spData_, filterRight_, &in, &r);
         float outL = l;
         float outR = l + stereo * (r - l);
 

@@ -20,8 +20,9 @@ add_library(dronesynth SHARED
         src/main/cpp/EnvelopeGenerator.cpp
         src/main/cpp/ModulationMatrix.cpp
 
-        # Zita reverb (Soundpipe, MIT)
+        # Zita reverb and the iOS app's Moog ladder filter (Soundpipe, MIT)
         src/main/cpp/vendor/soundpipe/zitarev.c
+        src/main/cpp/vendor/soundpipe/moogladder.c
         )
 
 target_compile_options(dronesynth PRIVATE -O3 -Wall -Wno-unused-variable -Wno-unused-function -Wno-unknown-pragmas -Wno-format -Wno-implicit-const-int-float-conversion)

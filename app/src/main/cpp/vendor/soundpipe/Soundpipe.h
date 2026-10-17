@@ -1,6 +1,7 @@
-// Minimal subset of Soundpipe's Soundpipe.h - just what zitarev.c needs.
+// Minimal subset of Soundpipe's Soundpipe.h - just what zitarev.c and moogladder.c need.
 // Soundpipe is MIT licensed (see LICENSE); zitarev.c is copied unmodified apart from
-// the block-compute entry point added at the end of that file.
+// the block-compute entry point added at the end of that file, and moogladder.c is
+// copied unmodified (the same filter AudioKit's MoogLadder runs in the iOS app).
 
 #ifndef SOUNDPIPE_H
 #define SOUNDPIPE_H
@@ -50,6 +51,24 @@ int sp_zitarev_init(sp_data *sp, sp_zitarev *p);
 int sp_zitarev_compute(sp_data *sp, sp_zitarev *p, SPFLOAT *in1, SPFLOAT *in2, SPFLOAT *out1, SPFLOAT *out2);
 /// Processes `count` frames in one call (the stock compute does one frame per call).
 int sp_zitarev_compute_block(sp_zitarev *p, int count, SPFLOAT *in1, SPFLOAT *in2, SPFLOAT *out1, SPFLOAT *out2);
+
+typedef struct {
+    SPFLOAT freq;
+    SPFLOAT res;
+    SPFLOAT istor;
+
+    SPFLOAT delay[6];
+    SPFLOAT tanhstg[3];
+    SPFLOAT oldfreq;
+    SPFLOAT oldres;
+    SPFLOAT oldacr;
+    SPFLOAT oldtune;
+} sp_moogladder;
+
+int sp_moogladder_create(sp_moogladder **t);
+int sp_moogladder_destroy(sp_moogladder **t);
+int sp_moogladder_init(sp_data *sp, sp_moogladder *p);
+int sp_moogladder_compute(sp_data *sp, sp_moogladder *p, SPFLOAT *in, SPFLOAT *out);
 
 #ifdef __cplusplus
 }

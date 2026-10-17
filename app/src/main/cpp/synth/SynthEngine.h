@@ -20,7 +20,6 @@
 #include <mutex>
 
 #include "../EnvelopeGenerator.h"
-#include "../MoogLadderFilter.h"
 #include "../vendor/soundpipe/Soundpipe.h"
 #include "EventQueue.h"
 #include "Looper.h"
@@ -101,8 +100,15 @@ private:
     DriftingLfo pitchLfoOsc3_{23};
     CEnvelopeGenerator ampEg_;
     CEnvelopeGenerator filterEg_;
-    CMoogLadderFilter filterLeft_;
-    CMoogLadderFilter filterRight_;
+    /// Soundpipe's moogladder - the filter AudioKit's MoogLadder wraps on iOS, so
+    /// the resonance sounds the same on both platforms.
+    sp_moogladder *filterLeft_ = nullptr;
+    sp_moogladder *filterRight_ = nullptr;
+    /// Each filter's cutoff in Hz and its per-sample step toward the control tick's target.
+    float filterFreqLeft_ = 0.0f;
+    float filterFreqRight_ = 0.0f;
+    float filterStepLeft_ = 0.0f;
+    float filterStepRight_ = 0.0f;
 
     Smoothed velocity_;
     Smoothed stereoAmount_;
