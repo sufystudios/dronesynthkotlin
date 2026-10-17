@@ -29,7 +29,6 @@ import com.google.android.material.slider.Slider
 import com.google.android.material.textview.MaterialTextView
 import com.suddenh4x.ratingdialog.AppRating
 import com.suddenh4x.ratingdialog.preferences.RatingThreshold
-import it.beppi.knoblibrary.Knob
 import xyz.sufystudios.synthguide.R
 
 

@@ -11,9 +11,8 @@
 #include <cmath>
 #include <math.h>
 #include <sstream>
-#include "../../../../../oboe/src/common/OboeDebug.h"
+#include "Logging.h"
 #include "Oscillator.h"
-#include "../../../../../oboe/src/common/Trace.h"
 #include <memory>
 //#i latency and protection against glitches.
 constexpr int32_t kBufferSizeInBursts = 2;
@@ -32,16 +31,6 @@ AudioEngine::onAudioReady(AudioStream *oboeStream, void *audioData, int32_t numf
 //        if (setBufferResult == oboe::Result::OK) bufferSize = setBufferResult.value();
 //    }
 
-    /**
-     * The following output can be seen by running a systrace. Tracing is preferable to logging
-     * inside the callback since tracing does not block.
-     *
-     * See https://developer.android.com/studio/profile/systrace-commandline.html
-     */
-    auto underrunCountResult = stream->getXRunCount();
-
-    Trace::beginSection("numFrames %d, Underruns %d, buffer size %d",
-                        numframes, underrunCountResult.value(), bufferSize);
     bool is16BitFormat = (stream->getFormat() == oboe::AudioFormat::I16);
     float *outputBuffer = (is16BitFormat) ? mConversionBuffer.get()
                                           : static_cast<float *>(audioData);
@@ -55,8 +44,6 @@ AudioEngine::onAudioReady(AudioStream *oboeStream, void *audioData, int32_t numf
 //    if (mIsLatencyDetectionSupported) {
 //        calculateCurrentOutputLatencyMillis( &mCurrentOutputLatencyMillis);
 //    }
-
-    Trace::endSection();
 
     return DataCallbackResult::Continue;
 }

@@ -3,15 +3,14 @@
 
 # Sets the minimum version of CMake required to build the native library.
 
-cmake_minimum_required(VERSION 3.4.1)
+cmake_minimum_required(VERSION 3.22.1)
+project(dronesynth)
 
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
 # You can define multiple libraries, and CMake builds them for you.
 # Gradle automatically packages shared libraries with your APK.
-set(OBOE_DIR /Users/sufy/oboe)
-add_subdirectory(${OBOE_DIR} ./oboe)
-include_directories(${OBOE_DIR}/include)
+find_package(oboe REQUIRED CONFIG)
 add_library( # Sets the name of the library.
         native-lib
 
@@ -65,7 +64,7 @@ target_link_libraries( # Specifies the target library.
 
 
         android
-        oboe
+        oboe::oboe
         # Links the target library to the log library
         # included in the NDK.
         ${log-lib}

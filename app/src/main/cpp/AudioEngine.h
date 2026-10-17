@@ -19,7 +19,6 @@
 #include "LFO.h"
 #include "StereoDelayFX.h"
 #include "WTOscillator.h"
-#include "../../../../../oboe/src/common/Trace.h"
 
 constexpr int32_t kBufferSizeAutomatic = 0;
 using namespace oboe;
@@ -35,7 +34,6 @@ public:
     void stop();
     void restart();
     AudioEngine() {
-        Trace::initialize();
         createPlaybackStream();
         doStuff();
     }
