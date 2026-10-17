@@ -10,12 +10,14 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import xyz.sufystudios.synthguide.BuildConfig
@@ -23,8 +25,10 @@ import kotlinx.coroutines.isActive
 import xyz.sufystudios.synthguide.audio.LooperState
 import xyz.sufystudios.synthguide.audio.NativeSynth
 import xyz.sufystudios.synthguide.audio.NativeSynth.LooperCommand
+import xyz.sufystudios.synthguide.audio.PlaybackService
 import xyz.sufystudios.synthguide.billing.Product
 import xyz.sufystudios.synthguide.billing.PurchaseManager
+import xyz.sufystudios.synthguide.midi.MidiInput
 
 /**
  * The live patch and everything the UI can do to it. Each change is written
@@ -54,6 +58,11 @@ class SynthViewModel(application: Application) : AndroidViewModel(application) {
         private set
     val recorder = TakeRecorder(application, viewModelScope)
 
+    private val midi = MidiInput(application)
+
+    /** Names of connected MIDI keyboards. */
+    val midiDevices: StateFlow<List<String>> = midi.devices
+
     private var saveJob: Job? = null
     private val tapTimes = ArrayDeque<Long>()
 
@@ -65,12 +74,27 @@ class SynthViewModel(application: Application) : AndroidViewModel(application) {
         SynthParam.entries.forEach { pushToEngine(it) }
         presets.addAll(store.loadPresets())
         purchases.connect()
+        midi.start()
         viewModelScope.launch {
             while (isActive) {
                 looper = NativeSynth.looperState()
                 recorder.poll()
                 delay(33)
             }
+        }
+        viewModelScope.launch {
+            // Background playback runs exactly while something is sounding.
+            snapshotFlow { isSustaining }.distinctUntilChanged().collect { sounding ->
+                if (sounding) {
+                    if (inForeground) PlaybackService.start(application)
+                } else {
+                    PlaybackService.stop(application)
+                    if (!inForeground) stopAudio()
+                }
+            }
+        }
+        viewModelScope.launch {
+            PlaybackService.stopRequests.collect { stopAllSound() }
         }
         viewModelScope.launch {
             // Re-apply purchase-gated parameters whenever ownership is (re)confirmed.
@@ -149,14 +173,44 @@ class SynthViewModel(application: Application) : AndroidViewModel(application) {
 
     fun refreshPurchases() = purchases.connect()
 
-    // MARK: - Audio
+    // MARK: - Audio and background playback
 
-    /** Starts output. Goes through the view model so the saved patch is applied first. */
-    fun startAudio() = NativeSynth.start()
+    private var inForeground = false
 
-    fun stopAudio() {
+    /**
+     * True while something should keep sounding with the app in the background:
+     * a held drone, the looper playing or recording, or the recorder running.
+     */
+    val isSustaining: Boolean
+        get() = isOn(SynthParam.Drone) || looper.playing || looper.recording ||
+            recorder.state.recording || recorder.state.playing
+
+    /** The app became visible: (re)start output. Goes through here so the saved patch is applied first. */
+    fun onAppForeground() {
+        inForeground = true
+        NativeSynth.start()
+    }
+
+    /** The app left the screen: keep sounding only if something is (the service then holds it). */
+    fun onAppBackground() {
+        inForeground = false
+        if (!isSustaining) stopAudio()
+    }
+
+    private fun stopAudio() {
         NativeSynth.allNotesOff()
         NativeSynth.stop()
+    }
+
+    /** The notification's Stop: silence everything that was keeping the app playing. */
+    private fun stopAllSound() {
+        set(SynthParam.Drone, 0f)
+        if (looper.recording) looperCommand(LooperCommand.ToggleRecord)
+        if (looper.playing) looperCommand(LooperCommand.TogglePlay)
+        recorder.stopTransport()
+        NativeSynth.allNotesOff()
+        // The looper's state is polled; refresh now so isSustaining reflects the stop.
+        looper = looper.copy(playing = false, recording = false, overdubbing = false)
     }
 
     // MARK: - Looper
@@ -168,6 +222,8 @@ class SynthViewModel(application: Application) : AndroidViewModel(application) {
 
     override fun onCleared() {
         recorder.release()
+        midi.stop()
+        PlaybackService.stop(getApplication())
         super.onCleared()
     }
 

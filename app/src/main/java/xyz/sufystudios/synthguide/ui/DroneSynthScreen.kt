@@ -355,6 +355,18 @@ private fun PillRow(vm: SynthViewModel, modifier: Modifier = Modifier, compact: 
             compact = compact,
             description = "Tube saturation",
         ) { activity?.let { vm.toggleGated(it, SynthParam.TubeEnabled) } }
+
+        // Lit while a MIDI keyboard is connected.
+        val midi by vm.midiDevices.collectAsStateWithLifecycle()
+        if (midi.isNotEmpty()) {
+            Pill(
+                label = "MIDI",
+                active = true,
+                colors = listOf(Color(0xFF5E5CE6), Color(0xFF8E8CF0)),
+                compact = compact,
+                description = "MIDI: " + midi.joinToString(),
+            ) {}
+        }
     }
 }
 

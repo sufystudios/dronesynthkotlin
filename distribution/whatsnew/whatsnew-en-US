@@ -1,6 +1,8 @@
 Drone Synth 2.0 - rebuilt from the ground up.
-- New sound engine: 3 oscillators with hard sync, stereo Moog-style filters, filter envelope and 3 drifting LFOs
-- Vintage tape delay with tap tempo, and a lush Room/Hall/Plate/Cathedral reverb
-- Brand-new interface with glowing knobs and slide-out panels, in portrait and landscape
-- Save your patches in the new preset library
+- New engine: 3 oscillators with sync, stereo Moog-style filters, filter envelope, 3 LFOs
+- Vintage tape delay, Room/Hall/Plate/Cathedral reverb
+- Looper with overdub, and a recorder you can share
+- Keeps droning in the background
+- Play from a USB MIDI keyboard
+- New glowing interface and preset library
 - Stereo Filters, Tube and Space skin purchases carry over
