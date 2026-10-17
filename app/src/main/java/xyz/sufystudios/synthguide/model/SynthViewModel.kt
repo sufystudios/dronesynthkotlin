@@ -28,8 +28,6 @@ import xyz.sufystudios.synthguide.audio.NativeSynth.LooperCommand
 import xyz.sufystudios.synthguide.audio.PlaybackService
 import xyz.sufystudios.synthguide.billing.Product
 import xyz.sufystudios.synthguide.billing.PurchaseManager
-import xyz.sufystudios.synthguide.midi.BluetoothMidi
-import xyz.sufystudios.synthguide.midi.MidiDeviceEntry
 import xyz.sufystudios.synthguide.midi.MidiInput
 
 /**
@@ -52,8 +50,6 @@ class SynthViewModel(application: Application) : AndroidViewModel(application) {
     /** First octave shown on the keyboard (C of that octave = MIDI 24 + 12 × octave). */
     var keyboardOctave by mutableIntStateOf(uiPrefs.getInt("keyboardOctave", 1))
         private set
-    var spaceSkin by mutableStateOf(uiPrefs.getBoolean("spaceSkin", false))
-        private set
 
     /** The looper's transport, refreshed ~30 times a second. */
     var looper by mutableStateOf(LooperState())
@@ -61,12 +57,6 @@ class SynthViewModel(application: Application) : AndroidViewModel(application) {
     val recorder = TakeRecorder(application, viewModelScope)
 
     private val midi = MidiInput(application)
-
-    /** Connected MIDI keyboards. */
-    val midiDevices: StateFlow<List<MidiDeviceEntry>> = midi.devices
-
-    /** Finds and connects Bluetooth MIDI keyboards; null on devices without MIDI support. */
-    val bluetoothMidi: BluetoothMidi? = midi.bluetooth
 
     private var saveJob: Job? = null
     private val tapTimes = ArrayDeque<Long>()
@@ -165,15 +155,6 @@ class SynthViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
         toggle(param)
-    }
-
-    fun toggleSpaceSkin(activity: Activity) {
-        if (!purchases.owns(Product.SpaceSkin)) {
-            purchases.purchase(activity, Product.SpaceSkin)
-            return
-        }
-        spaceSkin = !spaceSkin
-        uiPrefs.edit().putBoolean("spaceSkin", spaceSkin).apply()
     }
 
     fun refreshPurchases() = purchases.connect()
@@ -358,7 +339,6 @@ class SynthViewModel(application: Application) : AndroidViewModel(application) {
 
         val gatedParams = mapOf(
             SynthParam.StereoFilters to Product.StereoFilters,
-            SynthParam.TubeEnabled to Product.Tube,
         )
         val delayParams = listOf(
             SynthParam.DelayTime, SynthParam.DelaySubdivide, SynthParam.DelayTimeLeft, SynthParam.DelayTimeRight,

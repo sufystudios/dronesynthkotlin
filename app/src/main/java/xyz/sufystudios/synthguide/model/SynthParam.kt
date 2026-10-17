@@ -117,11 +117,9 @@ enum class SynthParam(
     DelayDry(73, "delayDry", 0f, 4f, 1f, Taper.Curved),
     DelayWidth(74, "delayWidth", -1f, 1f, 1f),
     DelayMixMode(75, "delayMixMode", 0f, 3f, DelayMix.PingPong.ordinal.toFloat()),
-    DelayMedium(76, "delayMedium", 0f, 2f, DelayMediumKind.Tape.ordinal.toFloat()),
+    DelayMedium(76, "delayMedium", 0f, 2f, DelayMediumKind.Tape.ordinal.toFloat());
 
-    // Android-only
-    TubeEnabled(100, "tubeEnabled", 0f, 1f, 0f),
-    TubeDrive(101, "tubeDrive", 1f, 10f, 3f);
+    // 100 and 101 were the Android-only tube stage (retired - never reuse).
 
     fun clamp(value: Float): Float = value.coerceIn(min, max)
 

@@ -30,8 +30,7 @@ import kotlinx.coroutines.launch
 enum class Product(val productId: String) {
     /** Sold as the second filter ("filt2") in earlier versions; it is the stereo filter pair. */
     StereoFilters("ai_drone_upgrade"),
-    Tube("tube"),
-    SpaceSkin("spaceskin"),
+    // "tube" and "spaceskin" were sold until 2.0, which retired both features.
 }
 
 class PurchaseManager(context: Context, private val scope: CoroutineScope, private val unlockAll: Boolean) {

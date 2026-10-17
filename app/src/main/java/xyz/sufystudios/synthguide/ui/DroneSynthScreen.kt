@@ -7,7 +7,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -46,10 +45,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -73,14 +70,12 @@ import xyz.sufystudios.synthguide.ui.panels.DelayPanel
 import xyz.sufystudios.synthguide.ui.panels.EnvelopePanel
 import xyz.sufystudios.synthguide.ui.panels.LfoPanel
 import xyz.sufystudios.synthguide.ui.panels.LooperPanel
-import xyz.sufystudios.synthguide.ui.panels.MidiDialog
 import xyz.sufystudios.synthguide.ui.panels.RecorderPanel
 import xyz.sufystudios.synthguide.ui.panels.formatTime
 import xyz.sufystudios.synthguide.ui.panels.OscillatorPanel
 import xyz.sufystudios.synthguide.ui.panels.PresetsPanel
 import xyz.sufystudios.synthguide.ui.panels.ReverbPanel
 import xyz.sufystudios.synthguide.ui.theme.Neon
-import xyz.sufystudios.synthguide.ui.theme.RetroAmber
 import xyz.sufystudios.synthguide.ui.theme.RetroLed
 
 private val DrawerWidth = 230.dp
@@ -105,7 +100,7 @@ fun DroneSynthScreen(vm: SynthViewModel) {
     BackHandler(enabled = openTab != null) { openTab = null }
 
     BoxWithConstraints(Modifier.fillMaxSize().background(Color.Black)) {
-        Backdrop(space = vm.spaceSkin && Product.SpaceSkin in owned, onTap = { openTab = null })
+        Backdrop(onTap = { openTab = null })
         val landscape = maxWidth > maxHeight
         // Tablets get the phone layout scaled up, so knobs, drawers and text keep
         // their proportions to the screen instead of floating small in the middle.
@@ -131,19 +126,12 @@ fun DroneSynthScreen(vm: SynthViewModel) {
     }
 }
 
-/** The green radial glow from the iOS app, or the purchased Space skin. Tapping it closes drawers. */
+/** The green radial glow from the iOS app. Tapping it closes drawers. */
 @Composable
-private fun Backdrop(space: Boolean, onTap: () -> Unit) {
+private fun Backdrop(onTap: () -> Unit) {
     val tap = Modifier.fillMaxSize().pointerInput(Unit) { detectTapGestures { onTap() } }
-    if (space) {
-        Box(tap) {
-            Image(painterResource(R.drawable.space), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-            Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.35f)))
-        }
-    } else {
-        val radius = with(LocalDensity.current) { 650.dp.toPx() }
-        Box(tap.background(Brush.radialGradient(listOf(Neon.copy(alpha = 0.5f), Color.Black), radius = radius)))
-    }
+    val radius = with(LocalDensity.current) { 650.dp.toPx() }
+    Box(tap.background(Brush.radialGradient(listOf(Neon.copy(alpha = 0.5f), Color.Black), radius = radius)))
 }
 
 // MARK: - Portrait
@@ -356,7 +344,6 @@ private fun CutoffKnob(vm: SynthViewModel, size: Dp) {
 private fun ResonanceRow(vm: SynthViewModel, size: Dp, modifier: Modifier = Modifier, spacing: Dp = 16.dp) {
     val owned by vm.owned.collectAsStateWithLifecycle()
     val stereo = vm.isOn(SynthParam.StereoFilters) && Product.StereoFilters in owned
-    val tube = vm.isOn(SynthParam.TubeEnabled) && Product.Tube in owned
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(spacing), verticalAlignment = Alignment.Top) {
         if (stereo) {
             ParamKnob(vm, SynthParam.LeftResonance, size, "L", labelStyle = mainLabel)
@@ -364,11 +351,10 @@ private fun ResonanceRow(vm: SynthViewModel, size: Dp, modifier: Modifier = Modi
         } else {
             ParamKnob(vm, SynthParam.LeftResonance, size, "Resonance", labelStyle = mainLabel)
         }
-        if (tube) ParamKnob(vm, SynthParam.TubeDrive, size, "Drive", labelStyle = mainLabel)
     }
 }
 
-/** The Tube and Mono/Stereo pills: both are purchases, and offer the purchase when locked. */
+/** The Mono/Stereo pill: the stereo filters are a purchase, offered when the pill is locked. */
 @Composable
 private fun PillRow(vm: SynthViewModel, modifier: Modifier = Modifier, compact: Boolean = false) {
     val activity = LocalActivity.current
@@ -383,30 +369,6 @@ private fun PillRow(vm: SynthViewModel, modifier: Modifier = Modifier, compact: 
             compact = compact,
             description = "Stereo filters",
         ) { activity?.let { vm.toggleGated(it, SynthParam.StereoFilters) } }
-
-        val tubeOwned = Product.Tube in owned
-        val tubeOn = tubeOwned && vm.isOn(SynthParam.TubeEnabled)
-        Pill(
-            label = (if (tubeOwned) "" else "🔒 ") + "TUBE",
-            active = tubeOn,
-            colors = listOf(RetroAmber, Color(0xFFE66633)),
-            compact = compact,
-            description = "Tube saturation",
-        ) { activity?.let { vm.toggleGated(it, SynthParam.TubeEnabled) } }
-
-        // Lit while a MIDI keyboard is connected; opens the MIDI window (Bluetooth pairing).
-        if (vm.bluetoothMidi != null) {
-            val midi by vm.midiDevices.collectAsStateWithLifecycle()
-            var showMidi by rememberSaveable { mutableStateOf(false) }
-            Pill(
-                label = "MIDI",
-                active = midi.isNotEmpty(),
-                colors = listOf(Color(0xFF5E5CE6), Color(0xFF8E8CF0)),
-                compact = compact,
-                description = if (midi.isEmpty()) "MIDI keyboards" else "MIDI: " + midi.joinToString { it.name },
-            ) { showMidi = true }
-            if (showMidi) MidiDialog(vm) { showMidi = false }
-        }
     }
 }
 

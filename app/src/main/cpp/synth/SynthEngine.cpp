@@ -46,11 +46,6 @@ inline void enableFlushToZero() {
 
 inline float midiToLogHz(int note) { return float(std::log2(440.0) + (note - 69) / 12.0); }
 
-/// Tube stage: the old app's atan waveshaper. Scaled for a gentle +3 dB at low levels
-/// (rather than the raw drive/atan(drive) boost, up to ~14 dB) so more drive adds
-/// saturation and compression instead of just volume.
-inline float tube(float x, float drive) { return 1.414f * std::atan(drive * x) / drive; }
-
 /// Transparent below 0.9, then a smooth knee so a hot patch can't hard-clip the DAC.
 inline float softLimit(float x) {
     const float a = std::fabs(x);
@@ -70,7 +65,6 @@ SynthEngine::SynthEngine() {
     params_[kDecay].store(0.1f);
     params_[kRelease].store(0.1f);
     params_[kDelayDry].store(1.0f);
-    params_[kTubeDrive].store(3.0f);
 
     for (auto *eg : {&ampEg_, &filterEg_}) {
         eg->m_bResetToZero = false;  // retrigger from the current level - no clicks
@@ -175,7 +169,6 @@ void SynthEngine::prepare(double sampleRate) {
     velocity_.setTimeConstant(0.005f, sr);
     velocity_.snap(1.0f);
     stereoAmount_.setTimeConstant(0.02f, sr);
-    tubeAmount_.setTimeConstant(0.02f, sr);
     pitchModOsc12_.setTimeConstant(0.01f, sr);
     pitchModOsc3_.setTimeConstant(0.01f, sr);
     for (auto &p : pitchOffset_) p.setTimeConstant(0.02f / 3.0f, sr);  // ~20 ms to settle
@@ -356,8 +349,6 @@ void SynthEngine::applyParams(const Snapshot &s) {
     }
 
     stereoAmount_.setTarget(on(p[kStereoFiltersEnabled]) ? 1.0f : 0.0f);
-    tubeAmount_.setTarget(on(p[kTubeEnabled]) ? 1.0f : 0.0f);
-    tubeDrive_ = std::clamp(p[kTubeDrive], 1.0f, 10.0f);
     cutoffOctaves_.setTarget(std::log2(std::clamp(p[kCutoff], 20.0f, 20000.0f)));
     resonanceLeft_.setTarget(std::clamp(p[kLeftResonance], 0.0f, 0.99f));
     resonanceRight_.setTarget(std::clamp(p[kRightResonance], 0.0f, 0.99f));
@@ -395,7 +386,6 @@ void SynthEngine::applyParams(const Snapshot &s) {
 
     if (firstApply_) {
         stereoAmount_.snap(stereoAmount_.target());
-        tubeAmount_.snap(tubeAmount_.target());
         for (auto *s : {&cutoffOctaves_, &resonanceLeft_, &resonanceRight_}) s->snap(s->target());
     }
     applied_ = s;
@@ -498,16 +488,8 @@ void SynthEngine::render(float *left, float *right, int frames) {
         float in = x, l, r;
         sp_moogladder_compute(&spData_, filterLeft_, &in, &l);
         sp_moogladder_compute(&spData_, filterRight_, &in, &r);
-        float outL = l;
-        float outR = l + stereo * (r - l);
-
-        const float t = tubeAmount_.next();
-        if (t > 0.0001f) {
-            outL += t * (tube(outL, tubeDrive_) - outL);
-            outR += t * (tube(outR, tubeDrive_) - outR);
-        }
-        left[i] = outL;
-        right[i] = outR;
+        left[i] = l;
+        right[i] = l + stereo * (r - l);
     }
 }
 

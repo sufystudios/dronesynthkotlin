@@ -1,10 +1,10 @@
 //
 // The Drone Synth engine: a monophonic three-oscillator synth with stereo Moog
-// ladder filters, a tube stage, the Vintage Delay and a Dragonfly-style hall reverb
-// (with a Dattorro plate), rendered through Oboe. Mirrors the iOS app's SynthClass
-// signal chain (the reverb is Android's own; iOS uses Zita):
+// ladder filters, the Vintage Delay and a Dragonfly-style hall reverb (with a
+// Dattorro plate), rendered through Oboe. Mirrors the iOS app's SynthClass signal
+// chain (the reverb is Android's own; iOS uses Zita):
 //
-//   OSC 1/2/3 ─► mix ─► amp EG × velocity ─► Moog L/R ─► tube ─► delay ─► reverb ─► out
+//   OSC 1/2/3 ─► mix ─► amp EG × velocity ─► Moog L/R ─► delay ─► reverb ─► out
 //
 // Threading: the UI thread only ever writes parameters (atomics) and pushes note
 // events (a lock-free queue). Everything else happens on the audio thread.
@@ -114,7 +114,6 @@ private:
 
     Smoothed velocity_;
     Smoothed stereoAmount_;
-    Smoothed tubeAmount_;
     Smoothed pitchModOsc12_;
     Smoothed pitchModOsc3_;
     /// Each oscillator's octave/semitone/fine offset in cents, glided like iOS's
@@ -134,7 +133,6 @@ private:
     Smoothed ampSmooth_;
     Smoothed pitchBend_;  // cents
     Smoothed modWheel_;   // 0...1
-    float tubeDrive_ = 3.0f;
     float filterEnvLevel_ = 0.0f;
     bool syncOsc3_ = false;
 

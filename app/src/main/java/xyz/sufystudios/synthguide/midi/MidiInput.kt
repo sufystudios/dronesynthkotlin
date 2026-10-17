@@ -1,6 +1,5 @@
 package xyz.sufystudios.synthguide.midi
 
-import android.bluetooth.BluetoothDevice
 import android.content.Context
 import android.content.pm.PackageManager
 import android.media.midi.MidiDevice
@@ -8,7 +7,6 @@ import android.media.midi.MidiDeviceInfo
 import android.media.midi.MidiManager
 import android.media.midi.MidiOutputPort
 import android.media.midi.MidiReceiver
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,13 +14,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import xyz.sufystudios.synthguide.audio.NativeSynth
 
-/** A connected MIDI device; [bluetoothAddress] is set for Bluetooth LE ones, which can be disconnected. */
-data class MidiDeviceEntry(val name: String, val bluetoothAddress: String? = null)
+/** A connected MIDI device. */
+data class MidiDeviceEntry(val name: String)
 
 /**
  * Plays the synth from MIDI keyboards: every connected device's output ports are
- * opened as devices come and go - USB, and Bluetooth LE keyboards connected
- * through [bluetooth]. Omni - all channels play.
+ * opened as devices come and go (USB, and any the system has connected).
+ * Omni - all channels play.
  */
 class MidiInput(context: Context) {
     private val manager: MidiManager? =
@@ -36,9 +34,6 @@ class MidiInput(context: Context) {
     /** The connected MIDI devices. */
     val devices: StateFlow<List<MidiDeviceEntry>> = _devices.asStateFlow()
 
-    /** Finds and connects Bluetooth LE MIDI keyboards; null without MIDI support. */
-    val bluetooth: BluetoothMidi? = manager?.let { BluetoothMidi(context, it, handler, onDisconnect = ::closeBluetooth) }
-
     private val callback = object : MidiManager.DeviceCallback() {
         override fun onDeviceAdded(info: MidiDeviceInfo) = openDevice(info)
         override fun onDeviceRemoved(info: MidiDeviceInfo) = closeDevice(info.id)
@@ -49,13 +44,11 @@ class MidiInput(context: Context) {
         val manager = manager ?: return
         manager.devices.forEach(::openDevice)
         manager.registerDeviceCallback(callback, handler)
-        bluetooth?.reconnectRemembered()
     }
 
     fun stop() {
         manager?.unregisterDeviceCallback(callback)
         open.keys.toList().forEach(::closeDevice)
-        bluetooth?.close()
     }
 
     private fun openDevice(info: MidiDeviceInfo) {
@@ -66,11 +59,7 @@ class MidiInput(context: Context) {
             val ports = (0 until info.outputPortCount).mapNotNull { device.openOutputPort(it) }
             ports.forEach { it.connect(MidiParser()) }
             open[info.id] = device to ports
-            val bluetoothDevice = info.properties.getParcelableCompat<BluetoothDevice>(MidiDeviceInfo.PROPERTY_BLUETOOTH_DEVICE)
-            entries[info.id] = MidiDeviceEntry(
-                info.properties.getString(MidiDeviceInfo.PROPERTY_NAME) ?: "MIDI device",
-                bluetoothDevice?.address,
-            )
+            entries[info.id] = MidiDeviceEntry(info.properties.getString(MidiDeviceInfo.PROPERTY_NAME) ?: "MIDI device")
             publish()
         }, handler)
     }
@@ -84,19 +73,10 @@ class MidiInput(context: Context) {
         publish()
     }
 
-    /** Drops this side's handles on a Bluetooth device too, so its link actually closes. */
-    private fun closeBluetooth(address: String) {
-        entries.filterValues { it.bluetoothAddress == address }.keys.toList().forEach(::closeDevice)
-    }
-
     private fun publish() {
         _devices.value = entries.values.toList()
     }
 }
-
-@Suppress("DEPRECATION")
-private inline fun <reified T : android.os.Parcelable> android.os.Bundle.getParcelableCompat(key: String): T? =
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) getParcelable(key, T::class.java) else getParcelable(key)
 
 /** Where parsed MIDI goes. The app's sink is the native synth; tests use a fake. */
 interface MidiSink {

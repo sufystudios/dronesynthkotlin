@@ -49,7 +49,6 @@ import xyz.sufystudios.synthguide.model.PresetFile
 import xyz.sufystudios.synthguide.model.SynthViewModel
 import xyz.sufystudios.synthguide.ui.components.RetroHeader
 import xyz.sufystudios.synthguide.ui.components.RetroPanelChrome
-import xyz.sufystudios.synthguide.ui.components.RetroSegmentRow
 import xyz.sufystudios.synthguide.ui.theme.RetroAmber
 import xyz.sufystudios.synthguide.ui.theme.RetroDim
 import xyz.sufystudios.synthguide.ui.theme.RetroLed
@@ -146,11 +145,6 @@ fun PresetsPanel(vm: SynthViewModel, modifier: Modifier = Modifier) {
             }
         }
 
-        Divider()
-        BasicText("BACKGROUND", style = retroLabel())
-        RetroSegmentRow(listOf("Glow", "Space"), if (vm.spaceSkin) 1 else 0) { index ->
-            if ((index == 1) != vm.spaceSkin && activity != null) vm.toggleSpaceSkin(activity)
-        }
     }
 }
 

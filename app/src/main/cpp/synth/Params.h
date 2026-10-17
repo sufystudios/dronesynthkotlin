@@ -81,8 +81,7 @@ enum ParamId : int {
     kDelayMedium = 76,
 
     // Android-only
-    kTubeEnabled = 100,
-    kTubeDrive = 101,
+    // 100, 101: the tube stage (retired - never reuse)
 
     // Performance controls (MIDI) - live state, never stored in presets.
     kPitchBend = 110,  // -1...1, scaled to ±2 semitones
