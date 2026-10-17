@@ -180,7 +180,9 @@ class SynthViewModel(application: Application) : AndroidViewModel(application) {
 
     // MARK: - Audio and background playback
 
-    private var inForeground = false
+    /** True while any of the app's screens is visible (see [visibleScreens]). */
+    private val inForeground: Boolean
+        get() = visibleScreens > 0
 
     /**
      * True while something should keep sounding with the app in the background:
@@ -192,14 +194,14 @@ class SynthViewModel(application: Application) : AndroidViewModel(application) {
 
     /** The app became visible: (re)start output. Goes through here so the saved patch is applied first. */
     fun onAppForeground() {
-        inForeground = true
+        visibleScreens++
         NativeSynth.start()
     }
 
     /** The app left the screen: keep sounding only if something is (the service then holds it). */
     fun onAppBackground() {
-        inForeground = false
-        if (!isSustaining) stopAudio()
+        visibleScreens = (visibleScreens - 1).coerceAtLeast(0)
+        if (!inForeground && !isSustaining) stopAudio()
     }
 
     private fun stopAudio() {
@@ -347,6 +349,13 @@ class SynthViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private companion object {
+        /**
+         * Started screens across the whole app (main thread only). When Android swaps
+         * one MainActivity for another, the old one's onStop can arrive after the new
+         * one's onStart, so audio stops only once the last visible screen has gone.
+         */
+        var visibleScreens = 0
+
         val gatedParams = mapOf(
             SynthParam.StereoFilters to Product.StereoFilters,
             SynthParam.TubeEnabled to Product.Tube,
