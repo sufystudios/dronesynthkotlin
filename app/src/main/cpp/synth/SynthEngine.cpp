@@ -22,10 +22,6 @@ const float kStereoDetuneRatio = std::pow(2.0f, 2.5f / 1200.0f);
 /// Oscillators are summed at this gain before the envelope and filters.
 constexpr float kOscMixGain = 0.9f;
 
-/// The reverb's fixed EQ bands, as on iOS (only the levels are exposed).
-constexpr float kReverbBodyFrequency = 250.0f;
-constexpr float kReverbShimmerFrequency = 6000.0f;
-
 /// Predelay range swept by the Pre-Dly knob, per reverb type (Room, Hall, Plate, Cathedral).
 constexpr float kPredelayRange[4][2] = {{10, 40}, {20, 80}, {10, 25}, {40, 100}};
 
@@ -86,7 +82,6 @@ SynthEngine::SynthEngine() {
 
 SynthEngine::~SynthEngine() {
     stop();
-    if (reverb_) sp_zitarev_destroy(&reverb_);
     sp_moogladder_destroy(&filterLeft_);
     sp_moogladder_destroy(&filterRight_);
 }
@@ -198,22 +193,7 @@ void SynthEngine::prepare(double sampleRate) {
     looper_.prepare(sampleRate);
     recorder_.prepare(sampleRate);
 
-    if (reverb_) sp_zitarev_destroy(&reverb_);
-    spData_.sr = int(sampleRate);
-    spData_.nchan = 2;
-    sp_zitarev_create(&reverb_);
-    sp_zitarev_init(&spData_, reverb_);
-    *reverb_->eq1_freq = kReverbBodyFrequency;
-    *reverb_->eq2_freq = kReverbShimmerFrequency;
-    *reverb_->level = 0.0f;
-    // Zita smooths its own output level up from 0, so run it on silence first:
-    // otherwise its first ~50 ms of output would dip toward silence (a pop).
-    *reverb_->mix = 0.0f;
-    std::fill(left_.begin(), left_.end(), 0.0f);
-    std::fill(right_.begin(), right_.end(), 0.0f);
-    for (int i = 0; i < 8; ++i) {
-        sp_zitarev_compute_block(reverb_, kMaxBlock, left_.data(), right_.data(), wetLeft_.data(), wetRight_.data());
-    }
+    reverb_.prepare(sampleRate);
 
     firstApply_ = true;
     prepared_ = true;
@@ -397,17 +377,21 @@ void SynthEngine::applyParams(const Snapshot &s) {
     delay_.setWidth(p[kDelayWidth]);
     if (firstApply_) delay_.snapSmoothedValues();
 
+    ReverbSettings reverb;
     const int type = std::clamp(int(std::lround(p[kReverbType])), 0, 3);
+    reverb.type = ReverbType(type);
+    reverb.size = std::clamp(p[kReverbSize], 0.0f, 1.0f);
     const float predelay = std::clamp(p[kReverbPredelay], 0.0f, 1.0f);
-    *reverb_->in_delay = kPredelayRange[type][0] + predelay * (kPredelayRange[type][1] - kPredelayRange[type][0]);
-    *reverb_->lf_x = std::clamp(p[kReverbLowCutoff], 50.0f, 1000.0f);
-    *reverb_->rt60_low = std::clamp(p[kReverbLowDecay], 1.0f, 8.0f);
-    *reverb_->rt60_mid = std::clamp(p[kReverbHighDecay], 1.0f, 8.0f);
-    *reverb_->hf_damping = std::clamp(p[kReverbDamping], 1500.0f, 20000.0f);
-    *reverb_->eq1_level = std::clamp(p[kReverbBody], -15.0f, 15.0f);
-    *reverb_->eq2_level = std::clamp(p[kReverbShimmer], -15.0f, 15.0f);
-    // Zita smooths mix itself (~20 ms), so it can be written directly.
-    *reverb_->mix = std::clamp(p[kReverbMix], 0.0f, 0.9f);
+    reverb.predelayMs = kPredelayRange[type][0] + predelay * (kPredelayRange[type][1] - kPredelayRange[type][0]);
+    reverb.crossoverHz = std::clamp(p[kReverbLowCutoff], 50.0f, 1000.0f);
+    reverb.rt60Low = std::clamp(p[kReverbLowDecay], 1.0f, 8.0f);
+    reverb.rt60Mid = std::clamp(p[kReverbHighDecay], 1.0f, 8.0f);
+    reverb.dampingHz = std::clamp(p[kReverbDamping], 1500.0f, 20000.0f);
+    reverb.bodyDb = std::clamp(p[kReverbBody], -15.0f, 15.0f);
+    reverb.shimmerDb = std::clamp(p[kReverbShimmer], -15.0f, 15.0f);
+    reverb.mix = std::clamp(p[kReverbMix], 0.0f, 0.9f);
+    // The reverb glides to new settings itself, so they can be handed over directly.
+    reverb_.set(reverb);
 
     if (firstApply_) {
         stereoAmount_.snap(stereoAmount_.target());
@@ -548,9 +532,9 @@ oboe::DataCallbackResult SynthEngine::onAudioReady(oboe::AudioStream *, void *au
 
         delay_.process(left_.data(), right_.data(), chunk);
 
-        // Zita mixes dry and wet internally. It always runs, even at mix 0: skipping it
-        // and resuming later would replay a stale tail and restart its smoothers.
-        sp_zitarev_compute_block(reverb_, chunk, left_.data(), right_.data(), wetLeft_.data(), wetRight_.data());
+        // The reverb mixes dry and wet internally. It always runs, even at mix 0: skipping
+        // it and resuming later would replay a stale tail.
+        reverb_.process(left_.data(), right_.data(), wetLeft_.data(), wetRight_.data(), chunk);
 
         // The looper records the synth's output and mixes its playback back in.
         looper_.process(wetLeft_.data(), wetRight_.data(), wetLeft_.data(), wetRight_.data(), chunk);

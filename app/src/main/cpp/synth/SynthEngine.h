@@ -1,7 +1,8 @@
 //
 // The Drone Synth engine: a monophonic three-oscillator synth with stereo Moog
-// ladder filters, a tube stage, the Vintage Delay and a Zita reverb, rendered
-// through Oboe. Mirrors the iOS app's SynthClass signal chain:
+// ladder filters, a tube stage, the Vintage Delay and a Dragonfly-style hall reverb
+// (with a Dattorro plate), rendered through Oboe. Mirrors the iOS app's SynthClass
+// signal chain (the reverb is Android's own; iOS uses Zita):
 //
 //   OSC 1/2/3 ─► mix ─► amp EG × velocity ─► Moog L/R ─► tube ─► delay ─► reverb ─► out
 //
@@ -22,6 +23,7 @@
 #include "../EnvelopeGenerator.h"
 #include "../vendor/soundpipe/Soundpipe.h"
 #include "EventQueue.h"
+#include "ReverbSection.h"
 #include "Looper.h"
 #include "Modulators.h"
 #include "OscillatorSlot.h"
@@ -152,7 +154,7 @@ private:
     Looper looper_;
     Recorder recorder_;
     sp_data spData_{};
-    sp_zitarev *reverb_ = nullptr;
+    ReverbSection reverb_;
 
     // --- scratch buffers (allocated in prepare)
     std::array<float, kMaxBlock> left_{};

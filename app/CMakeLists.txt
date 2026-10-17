@@ -10,6 +10,9 @@ add_library(dronesynth SHARED
         src/main/cpp/synth/Looper.cpp
         src/main/cpp/synth/Recorder.cpp
         src/main/cpp/synth/JniBridge.cpp
+        src/main/cpp/synth/HallReverb.cpp
+        src/main/cpp/synth/PlateReverb.cpp
+        src/main/cpp/synth/ReverbSection.cpp
 
         # DSP building blocks (oscillator, Moog ladder, envelope generator)
         src/main/cpp/Oscillator.cpp
@@ -20,8 +23,7 @@ add_library(dronesynth SHARED
         src/main/cpp/EnvelopeGenerator.cpp
         src/main/cpp/ModulationMatrix.cpp
 
-        # Zita reverb and the iOS app's Moog ladder filter (Soundpipe, MIT)
-        src/main/cpp/vendor/soundpipe/zitarev.c
+        # The iOS app's Moog ladder filter (Soundpipe, MIT)
         src/main/cpp/vendor/soundpipe/moogladder.c
         )
 
