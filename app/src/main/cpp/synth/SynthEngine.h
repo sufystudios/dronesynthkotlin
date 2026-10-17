@@ -54,7 +54,7 @@ public:
     void onErrorAfterClose(oboe::AudioStream *stream, oboe::Result error) override;
 
 private:
-    static constexpr int kControlBlock = 16;
+    static constexpr int kControlBlock = 8;
     static constexpr int kMaxBlock = 1024;
     static constexpr int kMaxHeldNotes = 16;
 
@@ -73,6 +73,8 @@ private:
     // --- stream
     std::mutex streamLock_;
     std::shared_ptr<oboe::AudioStream> stream_;
+    /// Grows the buffer whenever the stream underruns (Oboe's recommended approach).
+    std::unique_ptr<oboe::LatencyTuner> latencyTuner_;
     double sampleRate_ = 48000.0;
     bool prepared_ = false;
 
@@ -80,6 +82,9 @@ private:
     std::array<std::atomic<float>, kNumParams> params_;
     SpscQueue<NoteEvent, 256> events_;
     std::atomic<float> peak_{0.0f};
+    /// stop() asks the audio thread to fade out, and waits for it to confirm.
+    std::atomic<bool> fadeOutRequested_{false};
+    std::atomic<bool> fadedOut_{false};
 
     // --- voice
     std::array<OscillatorSlot, 3> oscillators_;
@@ -97,6 +102,21 @@ private:
     Smoothed tubeAmount_;
     Smoothed pitchModOsc12_;
     Smoothed pitchModOsc3_;
+    /// Each oscillator's octave/semitone/fine offset in cents, glided like iOS's
+    /// 20 ms knob ramp so pitch changes never kink the waveform.
+    std::array<Smoothed, 3> pitchOffset_;
+    /// Sustain level, smoothed so moving the knob mid-note doesn't step the amplitude.
+    Smoothed sustain_;
+    float appliedSustain_ = -1.0f;
+    /// Master fade, used when the stream starts and stops.
+    Smoothed masterGain_;
+    /// Cutoff (in octaves) and resonance, smoothed so fast knob moves don't step the filter.
+    Smoothed cutoffOctaves_;
+    Smoothed resonanceLeft_;
+    Smoothed resonanceRight_;
+    /// A 1 ms smoother on the amp envelope's output: rounds off any step in it
+    /// (sustain moves, retriggers) without audibly softening the attack.
+    Smoothed ampSmooth_;
     float tubeDrive_ = 3.0f;
     float filterEnvLevel_ = 0.0f;
     bool syncOsc3_ = false;
@@ -116,7 +136,6 @@ private:
     VintageDelay delay_;
     sp_data spData_{};
     sp_zitarev *reverb_ = nullptr;
-    Smoothed reverbMix_;
 
     // --- scratch buffers (allocated in prepare)
     std::array<float, kMaxBlock> left_{};

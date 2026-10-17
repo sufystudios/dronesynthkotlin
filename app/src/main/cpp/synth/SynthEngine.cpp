@@ -1,8 +1,13 @@
 #include "SynthEngine.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <cstring>
+#include <thread>
+#if defined(__x86_64__) || defined(__i386__)
+#include <xmmintrin.h>
+#endif
 
 #include "../Logging.h"
 
@@ -25,6 +30,23 @@ constexpr float kReverbShimmerFrequency = 6000.0f;
 constexpr float kPredelayRange[4][2] = {{10, 40}, {20, 80}, {10, 25}, {40, 100}};
 
 inline bool on(float v) { return v >= 0.5f; }
+
+/// Flushes denormals to zero on the calling thread. Filters, envelopes and reverb
+/// tails decaying toward silence otherwise produce denormal numbers, which are very
+/// slow on some CPUs and can make the callback miss its deadline (an audible pop).
+inline void enableFlushToZero() {
+#if defined(__aarch64__)
+    uint64_t fpcr;
+    asm volatile("mrs %0, fpcr" : "=r"(fpcr));
+    asm volatile("msr fpcr, %0" : : "r"(fpcr | (1ull << 24)));
+#elif defined(__arm__)
+    uint32_t fpscr;
+    asm volatile("vmrs %0, fpscr" : "=r"(fpscr));
+    asm volatile("vmsr fpscr, %0" : : "r"(fpscr | (1u << 24)));
+#elif defined(__x86_64__) || defined(__i386__)
+    _mm_setcsr(_mm_getcsr() | 0x8040);  // FTZ | DAZ
+#endif
+}
 
 inline float midiToLogHz(int note) { return float(std::log2(440.0) + (note - 69) / 12.0); }
 
@@ -75,6 +97,8 @@ bool SynthEngine::start() {
     std::lock_guard<std::mutex> lock(streamLock_);
     if (stream_ && stream_->getState() == oboe::StreamState::Started) return true;
     if (!stream_ && !openStream()) return false;
+    fadeOutRequested_.store(false);
+    fadedOut_.store(false);
     const oboe::Result result = stream_->requestStart();
     if (result != oboe::Result::OK) {
         LOGE("Failed to start stream: %s", oboe::convertToText(result));
@@ -86,9 +110,15 @@ bool SynthEngine::start() {
 void SynthEngine::stop() {
     std::lock_guard<std::mutex> lock(streamLock_);
     if (!stream_) return;
+    // Fade to silence before stopping, so leaving the app doesn't cut a waveform mid-cycle.
+    if (stream_->getState() == oboe::StreamState::Started) {
+        fadeOutRequested_.store(true);
+        for (int i = 0; i < 20 && !fadedOut_.load(); ++i) std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
     stream_->stop();
     stream_->close();
     stream_.reset();
+    latencyTuner_.reset();
 }
 
 bool SynthEngine::openStream() {
@@ -110,7 +140,9 @@ bool SynthEngine::openStream() {
         stream_.reset();
         return false;
     }
-    // Double buffering keeps latency low while leaving headroom against underruns.
+    // Start double-buffered; the tuner adds a burst each time an underrun happens.
+    latencyTuner_ = std::make_unique<oboe::LatencyTuner>(*stream_);
+    latencyTuner_->setMinimumBufferSize(stream_->getFramesPerBurst() * 2);
     stream_->setBufferSizeInFrames(stream_->getFramesPerBurst() * 2);
     const double rate = stream_->getSampleRate();
     if (!prepared_ || rate != sampleRate_) prepare(rate);
@@ -125,6 +157,7 @@ void SynthEngine::onErrorAfterClose(oboe::AudioStream *, oboe::Result error) {
     {
         std::lock_guard<std::mutex> lock(streamLock_);
         stream_.reset();
+        latencyTuner_.reset();
     }
     start();
 }
@@ -150,7 +183,14 @@ void SynthEngine::prepare(double sampleRate) {
     tubeAmount_.setTimeConstant(0.02f, sr);
     pitchModOsc12_.setTimeConstant(0.01f, sr);
     pitchModOsc3_.setTimeConstant(0.01f, sr);
-    reverbMix_.setTimeConstant(0.03f, sr);
+    for (auto &p : pitchOffset_) p.setTimeConstant(0.02f / 3.0f, sr);  // ~20 ms to settle
+    sustain_.setTimeConstant(0.01f, sr);
+    appliedSustain_ = -1.0f;
+    masterGain_.setTimeConstant(0.005f, sr);
+    masterGain_.snap(0.0f);
+    for (auto *s : {&cutoffOctaves_, &resonanceLeft_, &resonanceRight_}) s->setTimeConstant(0.01f, sr);
+    ampSmooth_.setTimeConstant(0.001f, sr);
+    ampSmooth_.snap(0.0f);
 
     delay_.init(sampleRate);
 
@@ -162,6 +202,14 @@ void SynthEngine::prepare(double sampleRate) {
     *reverb_->eq1_freq = kReverbBodyFrequency;
     *reverb_->eq2_freq = kReverbShimmerFrequency;
     *reverb_->level = 0.0f;
+    // Zita smooths its own output level up from 0, so run it on silence first:
+    // otherwise its first ~50 ms of output would dip toward silence (a pop).
+    *reverb_->mix = 0.0f;
+    std::fill(left_.begin(), left_.end(), 0.0f);
+    std::fill(right_.begin(), right_.end(), 0.0f);
+    for (int i = 0; i < 8; ++i) {
+        sp_zitarev_compute_block(reverb_, kMaxBlock, left_.data(), right_.data(), wetLeft_.data(), wetRight_.data());
+    }
 
     firstApply_ = true;
     prepared_ = true;
@@ -251,10 +299,11 @@ void SynthEngine::handleEvent(const NoteEvent &e) {
 void SynthEngine::triggerNote(int note, int velocity, bool retrigger) {
     velocity_.setTarget(float(velocity) / 127.0f);
     targetLogHz_ = midiToLogHz(note);
-    // Portamento: slide from wherever the pitch is now, over the glide time.
-    const double frames = std::max(1.0, double(glideTime_) * sampleRate_);
-    glideStep_ = glideTime_ > 0.0005f ? std::fabs(targetLogHz_ - currentLogHz_) / frames : 0.0;
-    if (glideStep_ == 0.0) currentLogHz_ = targetLogHz_;
+    // Portamento: slide from wherever the pitch is now, over the glide time. Even
+    // with glide at 0 the slide takes 4 ms, too short to hear as portamento but
+    // enough to avoid the click of an instant pitch jump.
+    const double glide = std::max(double(glideTime_), 0.004);
+    glideStep_ = std::fabs(targetLogHz_ - currentLogHz_) / std::max(1.0, glide * sampleRate_);
     if (!retrigger) return;
     ampEg_.startEG();
     filterEg_.startEG();
@@ -281,7 +330,13 @@ void SynthEngine::applyParams(const Snapshot &s) {
         OscillatorSlot &osc = oscillators_[k];
         osc.setWaveform(Waveform(std::clamp(int(std::lround(p[base + kOscWaveformOffset])), 0, 4)));
         osc.volume.setTarget(std::clamp(p[base + kOscVolumeOffset], 0.0f, 1.0f));
-        if (firstApply_) osc.volume.snap(osc.volume.target());
+        pitchOffset_[k].setTarget(std::round(p[base + kOscOctaveOffset]) * 1200.0f +
+                                  std::round(p[base + kOscSemitoneOffset]) * 100.0f +
+                                  p[base + kOscFineOffset]);
+        if (firstApply_) {
+            osc.volume.snap(osc.volume.target());
+            pitchOffset_[k].snap(pitchOffset_[k].target());
+        }
         DriftingLfo &vib = vibrato_[k];
         vib.rate = std::clamp(p[base + kOscVibratoRateOffset], 0.05f, 20.0f);
         vib.randomize = 0.0f;
@@ -291,11 +346,8 @@ void SynthEngine::applyParams(const Snapshot &s) {
     if (changed(kAttack)) { ampEg_.setAttackTime_mSec(envMs(p[kAttack])); filterEg_.setAttackTime_mSec(envMs(p[kAttack])); }
     if (changed(kDecay)) { ampEg_.setDecayTime_mSec(envMs(p[kDecay])); filterEg_.setDecayTime_mSec(envMs(p[kDecay])); }
     if (changed(kRelease)) { ampEg_.setReleaseTime_mSec(envMs(p[kRelease])); filterEg_.setReleaseTime_mSec(envMs(p[kRelease])); }
-    if (changed(kSustain)) {
-        const double sustain = std::clamp(double(p[kSustain]), 0.0, 1.0);
-        ampEg_.setSustainLevel(sustain);
-        filterEg_.setSustainLevel(sustain);
-    }
+    sustain_.setTarget(std::clamp(p[kSustain], 0.0f, 1.0f));
+    if (firstApply_) sustain_.snap(sustain_.target());
     glideTime_ = std::clamp(p[kGlideTime], 0.0f, 2.0f);
 
     const bool drone = on(p[kDroneMode]);
@@ -319,11 +371,9 @@ void SynthEngine::applyParams(const Snapshot &s) {
     stereoAmount_.setTarget(on(p[kStereoFiltersEnabled]) ? 1.0f : 0.0f);
     tubeAmount_.setTarget(on(p[kTubeEnabled]) ? 1.0f : 0.0f);
     tubeDrive_ = std::clamp(p[kTubeDrive], 1.0f, 10.0f);
-    for (auto [filter, res] : {std::pair{&filterLeft_, p[kLeftResonance]},
-                               std::pair{&filterRight_, p[kRightResonance]}}) {
-        // Resonance 0...0.99 maps onto the ladder's Q control 1...10 (feedback K 0...4).
-        filter->m_dQControl = 1.0 + 9.0 * std::clamp(double(res), 0.0, 0.99);
-    }
+    cutoffOctaves_.setTarget(std::log2(std::clamp(p[kCutoff], 20.0f, 20000.0f)));
+    resonanceLeft_.setTarget(std::clamp(p[kLeftResonance], 0.0f, 0.99f));
+    resonanceRight_.setTarget(std::clamp(p[kRightResonance], 0.0f, 0.99f));
 
     delay_.time = p[kDelayTime];
     delay_.subdivide = p[kDelaySubdivide];
@@ -346,12 +396,13 @@ void SynthEngine::applyParams(const Snapshot &s) {
     *reverb_->hf_damping = std::clamp(p[kReverbDamping], 1500.0f, 20000.0f);
     *reverb_->eq1_level = std::clamp(p[kReverbBody], -15.0f, 15.0f);
     *reverb_->eq2_level = std::clamp(p[kReverbShimmer], -15.0f, 15.0f);
-    reverbMix_.setTarget(std::clamp(p[kReverbMix], 0.0f, 0.9f));
+    // Zita smooths mix itself (~20 ms), so it can be written directly.
+    *reverb_->mix = std::clamp(p[kReverbMix], 0.0f, 0.9f);
 
     if (firstApply_) {
         stereoAmount_.snap(stereoAmount_.target());
         tubeAmount_.snap(tubeAmount_.target());
-        reverbMix_.snap(reverbMix_.target());
+        for (auto *s : {&cutoffOctaves_, &resonanceLeft_, &resonanceRight_}) s->snap(s->target());
     }
     applied_ = s;
     firstApply_ = false;
@@ -362,6 +413,13 @@ void SynthEngine::applyParams(const Snapshot &s) {
 void SynthEngine::controlTick(const Snapshot &s, int frames) {
     const auto &p = s.v;
     const float dt = float(frames / sampleRate_);
+
+    const float sustain = sustain_.advance(frames);
+    if (std::fabs(sustain - appliedSustain_) > 1e-5f) {
+        appliedSustain_ = sustain;
+        ampEg_.setSustainLevel(sustain);
+        filterEg_.setSustainLevel(sustain);
+    }
 
     // Every LFO keeps running even while switched off, so it stays smooth when re-enabled.
     const float filterMod = filterLfo_.tick(dt);
@@ -391,9 +449,7 @@ void SynthEngine::controlTick(const Snapshot &s, int frames) {
 
     for (int k = 0; k < 3; ++k) {
         const int base = kOsc1Waveform + k * 8;
-        float cents = std::round(p[base + kOscOctaveOffset]) * 1200.0f +
-                      std::round(p[base + kOscSemitoneOffset]) * 100.0f +
-                      p[base + kOscFineOffset];
+        float cents = pitchOffset_[k].advance(frames);
         cents += k < 2 ? osc12Cents : osc3Cents;
         const float vib = vibrato_[k].tick(dt);
         if (on(p[base + kOscVibratoEnabledOffset])) cents += p[base + kOscVibratoDepthOffset] * 700.0f * vib;
@@ -404,8 +460,11 @@ void SynthEngine::controlTick(const Snapshot &s, int frames) {
     float octaves = 0.0f;
     if (on(p[kFilterLfoShape + kLfoEnabledOffset])) octaves += p[kFilterLfoShape + kLfoDepthOffset] * 3.0f * filterMod;
     if (on(p[kFilterEnvModEnabled])) octaves += p[kFilterEnvModAmount] * 6.0f * filterEnvLevel_;
-    const float cutoff = std::clamp(p[kCutoff] * std::exp2(octaves), 20.0f, 20000.0f);
+    const float cutoff = std::clamp(std::exp2(cutoffOctaves_.advance(frames) + octaves), 20.0f, 20000.0f);
     const float spread = std::pow(kStereoDetuneRatio, stereoAmount_.value());
+    // Resonance 0...0.99 maps onto the ladder's Q control 1...10 (feedback K 0...4).
+    filterLeft_.m_dQControl = 1.0 + 9.0 * resonanceLeft_.advance(frames);
+    filterRight_.m_dQControl = 1.0 + 9.0 * resonanceRight_.advance(frames);
     filterLeft_.m_dFcControl = cutoff / spread;
     filterRight_.m_dFcControl = cutoff * spread;
     filterLeft_.update();
@@ -426,7 +485,8 @@ void SynthEngine::render(float *left, float *right, int frames) {
                           o2 * oscillators_[1].volume.next() +
                           o3 * oscillators_[2].volume.next();
 
-        const float amp = float(ampEg_.doEnvelope());
+        ampSmooth_.setTarget(float(ampEg_.doEnvelope()));
+        const float amp = ampSmooth_.next();
         filterEnvLevel_ = float(filterEg_.doEnvelope());
         const float x = mix * kOscMixGain * amp * velocity_.next();
 
@@ -446,6 +506,8 @@ void SynthEngine::render(float *left, float *right, int frames) {
 }
 
 oboe::DataCallbackResult SynthEngine::onAudioReady(oboe::AudioStream *, void *audioData, int32_t numFrames) {
+    enableFlushToZero();
+    if (latencyTuner_) latencyTuner_->tune();
     auto *out = static_cast<float *>(audioData);
     for (int i = 0; i < kNumParams; ++i) snapshot_.v[i] = params_[i].load(std::memory_order_relaxed);
     applyParams(snapshot_);
@@ -464,24 +526,24 @@ oboe::DataCallbackResult SynthEngine::onAudioReady(oboe::AudioStream *, void *au
 
         delay_.process(left_.data(), right_.data(), chunk);
 
-        // Zita mixes dry and wet internally; skip it entirely while it's silent.
-        const float mixStart = reverbMix_.value();
-        const float mixEnd = reverbMix_.advance(chunk);
-        if (mixStart > 0.0001f || mixEnd > 0.0001f) {
-            *reverb_->mix = mixEnd;
-            sp_zitarev_compute_block(reverb_, chunk, left_.data(), right_.data(), wetLeft_.data(), wetRight_.data());
-            std::memcpy(left_.data(), wetLeft_.data(), sizeof(float) * chunk);
-            std::memcpy(right_.data(), wetRight_.data(), sizeof(float) * chunk);
-        }
+        // Zita mixes dry and wet internally. It always runs, even at mix 0: skipping it
+        // and resuming later would replay a stale tail and restart its smoothers.
+        sp_zitarev_compute_block(reverb_, chunk, left_.data(), right_.data(), wetLeft_.data(), wetRight_.data());
 
+        masterGain_.setTarget(fadeOutRequested_.load(std::memory_order_relaxed) ? 0.0f : 1.0f);
         for (int i = 0; i < chunk; ++i) {
-            const float l = softLimit(left_[i]);
-            const float r = softLimit(right_[i]);
+            const float gain = masterGain_.next();
+            const float l = softLimit(wetLeft_[i]) * gain;
+            const float r = softLimit(wetRight_[i]) * gain;
             peak = std::max(peak, std::max(std::fabs(l), std::fabs(r)));
             out[2 * (done + i)] = l;
             out[2 * (done + i) + 1] = r;
         }
         done += chunk;
+    }
+
+    if (fadeOutRequested_.load(std::memory_order_relaxed) && masterGain_.value() < 1e-4f) {
+        fadedOut_.store(true, std::memory_order_relaxed);
     }
 
     float previous = peak_.load(std::memory_order_relaxed);
