@@ -76,6 +76,8 @@ dependencies {
     implementation 'androidx.core:core-ktx:1.19.1'
 
     implementation 'com.android.billingclient:billing-ktx:9.1.0'
+    // Billing's Play services pull in Fragment 1.1, whose activity-result handling is broken.
+    implementation 'androidx.fragment:fragment:1.8.9'
     implementation 'com.google.oboe:oboe:1.11.0'
 
     testImplementation 'junit:junit:4.13.2'
