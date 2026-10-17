@@ -237,8 +237,9 @@ class SynthViewModel(application: Application) : AndroidViewModel(application) {
     fun noteOn(note: Int) = NativeSynth.noteOn(note)
     fun noteOff(note: Int) = NativeSynth.noteOff(note)
 
-    fun shiftKeyboard(by: Int) {
-        keyboardOctave = (keyboardOctave + by).coerceIn(0, 5)
+    /** Moves the keyboard by octaves; [maxOctave] keeps its top key at C8 for however many octaves it shows. */
+    fun shiftKeyboard(by: Int, maxOctave: Int) {
+        keyboardOctave = (keyboardOctave.coerceAtMost(maxOctave) + by).coerceIn(0, maxOctave)
         uiPrefs.edit().putInt("keyboardOctave", keyboardOctave).apply()
     }
 

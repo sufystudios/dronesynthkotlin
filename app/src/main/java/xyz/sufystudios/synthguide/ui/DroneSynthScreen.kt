@@ -34,6 +34,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -46,6 +48,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -83,6 +86,16 @@ import xyz.sufystudios.synthguide.ui.theme.RetroLed
 private val DrawerWidth = 230.dp
 private val KeyboardHeight = 250.dp
 
+/** How many octaves the keyboard shows: two on phones, more on tablets' wider screens. */
+private val LocalKeyboardOctaves = staticCompositionLocalOf { 2 }
+
+/** The keyboard's first C, kept low enough that its top key stays at or below C8. */
+private val SynthViewModel.firstKeyboardOctave: Int
+    @Composable get() = keyboardOctave.coerceAtMost(maxKeyboardOctave)
+
+private val maxKeyboardOctave: Int
+    @Composable get() = 7 - LocalKeyboardOctaves.current
+
 @Composable
 fun DroneSynthScreen(vm: SynthViewModel) {
     val owned by vm.owned.collectAsStateWithLifecycle()
@@ -93,10 +106,27 @@ fun DroneSynthScreen(vm: SynthViewModel) {
 
     BoxWithConstraints(Modifier.fillMaxSize().background(Color.Black)) {
         Backdrop(space = vm.spaceSkin && Product.SpaceSkin in owned, onTap = { openTab = null })
-        if (maxWidth > maxHeight) {
-            LandscapeLayout(vm, openTab, toggleTab)
+        val landscape = maxWidth > maxHeight
+        // Tablets get the phone layout scaled up, so knobs, drawers and text keep
+        // their proportions to the screen instead of floating small in the middle.
+        val tablet = minOf(maxWidth, maxHeight) >= 600.dp
+        val scale = if (!tablet) 1f else if (landscape) {
+            minOf(maxWidth / 880.dp, maxHeight / 400.dp).coerceIn(1f, 1.6f)
         } else {
-            PortraitLayout(vm, openTab, toggleTab)
+            minOf(maxWidth / 411.dp, maxHeight / 860.dp).coerceIn(1f, 1.6f)
+        }
+        // As many octaves as fit with white keys at least 34dp wide (plus the top C).
+        val octaves = if (!tablet) 2 else ((maxWidth / 34.dp - 1f) / 7f).toInt().coerceIn(2, 4)
+        val density = LocalDensity.current
+        CompositionLocalProvider(
+            LocalDensity provides Density(density.density * scale, density.fontScale),
+            LocalKeyboardOctaves provides octaves,
+        ) {
+            if (landscape) {
+                LandscapeLayout(vm, openTab, toggleTab)
+            } else {
+                PortraitLayout(vm, openTab, toggleTab)
+            }
         }
     }
 }
@@ -129,11 +159,13 @@ private fun PortraitLayout(vm: SynthViewModel, openTab: DrawerTab?, toggleTab: (
             ResonanceRow(vm, 60.dp, Modifier.padding(top = 4.dp))
             Spacer(Modifier.weight(1f))
             Row(Modifier.fillMaxWidth().padding(horizontal = 50.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                OctaveButton("◂ OCT", enabled = vm.keyboardOctave > 0) { vm.shiftKeyboard(-1) }
-                Spacer(Modifier.weight(1f))
-                DronePill(vm)
-                Spacer(Modifier.weight(1f))
-                OctaveButton("OCT ▸", enabled = vm.keyboardOctave < 5) { vm.shiftKeyboard(1) }
+                OctaveButtons(vm, "◂ OCT", "OCT ▸") { lower, upper ->
+                    lower()
+                    Spacer(Modifier.weight(1f))
+                    DronePill(vm)
+                    Spacer(Modifier.weight(1f))
+                    upper()
+                }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(bottom = 6.dp)) {
                 ParamKnob(vm, SynthParam.Attack, 50.dp, "Attack", labelStyle = mainLabel)
@@ -233,21 +265,24 @@ private fun RailButton(vm: SynthViewModel, tab: DrawerTab, selected: Boolean, mo
 
 @Composable
 private fun LandscapeLayout(vm: SynthViewModel, openTab: DrawerTab?, toggleTab: (DrawerTab) -> Unit) {
-    // Phones are short in landscape, so the top row keeps a fixed height and drawers
-    // scroll within it rather than growing over the keyboard (as on iPad).
-    val topHeight = 220.dp
-    Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).padding(10.dp)) {
-        Row(Modifier.fillMaxWidth().height(topHeight)) {
-            LandscapeRail(vm, left = true, openTab, toggleTab)
-            LandscapeDrawer(vm, openTab?.takeIf { it.leftSide }, left = true)
-            Spacer(Modifier.weight(1f))
-            LandscapeFilterPanel(vm, Modifier.width(250.dp).fillMaxHeight())
-            Spacer(Modifier.weight(1f))
-            LandscapeDrawer(vm, openTab?.takeIf { !it.leftSide }, left = false)
-            LandscapeRail(vm, left = false, openTab, toggleTab)
+    BoxWithConstraints(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).padding(10.dp)) {
+        // Phones are short in landscape, so the top row keeps a fixed height and drawers
+        // scroll within it rather than growing over the keyboard (as on iPad). Taller
+        // screens (tablets, foldables) give their extra height to the drawers.
+        val topHeight = (maxHeight * 0.5f).coerceIn(220.dp, 400.dp)
+        Column(Modifier.fillMaxSize()) {
+            Row(Modifier.fillMaxWidth().height(topHeight)) {
+                LandscapeRail(vm, left = true, openTab, toggleTab)
+                LandscapeDrawer(vm, openTab?.takeIf { it.leftSide }, left = true)
+                Spacer(Modifier.weight(1f))
+                LandscapeFilterPanel(vm, Modifier.width(250.dp).fillMaxHeight())
+                Spacer(Modifier.weight(1f))
+                LandscapeDrawer(vm, openTab?.takeIf { !it.leftSide }, left = false)
+                LandscapeRail(vm, left = false, openTab, toggleTab)
+            }
+            Spacer(Modifier.height(10.dp))
+            KeyboardPanel(vm, Modifier.fillMaxWidth().weight(1f))
         }
-        Spacer(Modifier.height(10.dp))
-        KeyboardPanel(vm, Modifier.fillMaxWidth().weight(1f))
     }
 }
 
@@ -300,9 +335,11 @@ private fun LandscapeFilterPanel(vm: SynthViewModel, modifier: Modifier) {
         }
         Spacer(Modifier.weight(1f))
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            OctaveButton("◂", enabled = vm.keyboardOctave > 0) { vm.shiftKeyboard(-1) }
-            DronePill(vm)
-            OctaveButton("▸", enabled = vm.keyboardOctave < 5) { vm.shiftKeyboard(1) }
+            OctaveButtons(vm, "◂", "▸") { lower, upper ->
+                lower()
+                DronePill(vm)
+                upper()
+            }
         }
     }
 }
@@ -407,6 +444,22 @@ private fun DronePill(vm: SynthViewModel) {
     }
 }
 
+/** The octave down/up buttons, handed to [content] to place either side of something. */
+@Composable
+private fun OctaveButtons(
+    vm: SynthViewModel,
+    downLabel: String,
+    upLabel: String,
+    content: @Composable (lower: @Composable () -> Unit, upper: @Composable () -> Unit) -> Unit,
+) {
+    val first = vm.firstKeyboardOctave
+    val max = maxKeyboardOctave
+    content(
+        { OctaveButton(downLabel, enabled = first > 0) { vm.shiftKeyboard(-1, max) } },
+        { OctaveButton(upLabel, enabled = first < max) { vm.shiftKeyboard(1, max) } },
+    )
+}
+
 @Composable
 private fun OctaveButton(label: String, enabled: Boolean, onClick: () -> Unit) {
     Box(
@@ -422,13 +475,13 @@ private fun OctaveButton(label: String, enabled: Boolean, onClick: () -> Unit) {
 
 @Composable
 private fun KeyboardPanel(vm: SynthViewModel, modifier: Modifier) {
-    val first = 24 + 12 * vm.keyboardOctave
+    val first = 24 + 12 * vm.firstKeyboardOctave
     Box(
         modifier
             .clip(RoundedCornerShape(12.dp))
             .background(Color.Black.copy(alpha = 0.25f))
             .padding(10.dp)
     ) {
-        PianoKeyboard(first, first + 24, vm::noteOn, vm::noteOff, Modifier.clip(RoundedCornerShape(6.dp)))
+        PianoKeyboard(first, first + 12 * LocalKeyboardOctaves.current, vm::noteOn, vm::noteOff, Modifier.clip(RoundedCornerShape(6.dp)))
     }
 }
