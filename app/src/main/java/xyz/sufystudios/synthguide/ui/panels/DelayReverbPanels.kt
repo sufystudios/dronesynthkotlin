@@ -142,7 +142,7 @@ private fun DelayReadout(vm: SynthViewModel) {
     }
 }
 
-/** The tape reverb drawer (Zita reverb, as on iOS). */
+/** The tape reverb drawer (hall/plate reverb, as on iOS). */
 @Composable
 fun ReverbPanel(vm: SynthViewModel, modifier: Modifier = Modifier) {
     RetroPanelChrome(modifier) {
@@ -150,11 +150,11 @@ fun ReverbPanel(vm: SynthViewModel, modifier: Modifier = Modifier) {
         RetroSegmentRow(ReverbKind.entries.map { it.label }, vm.reverbKind.ordinal) {
             vm.set(SynthParam.ReverbType, it.toFloat())
         }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        // No Lo Cut / Damp knobs, as on iOS - the reverb type's own crossover and
+        // damping defaults (ReverbKind) set those.
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
             SmallKnob(vm, SynthParam.ReverbSize, "SIZE")
             SmallKnob(vm, SynthParam.ReverbPredelay, "PRE-DLY")
-            SmallKnob(vm, SynthParam.ReverbLowCutoff, "LO CUT")
-            SmallKnob(vm, SynthParam.ReverbDamping, "DAMP")
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             SmallKnob(vm, SynthParam.ReverbLowDecay, "LO DECAY")

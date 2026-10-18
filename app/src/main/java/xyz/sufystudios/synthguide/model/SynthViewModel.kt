@@ -66,6 +66,7 @@ class SynthViewModel(application: Application) : AndroidViewModel(application) {
         SynthParam.entries.forEach { p -> values[p] = restored[p] ?: p.default }
         // Never reopen stuck in a held drone.
         values[SynthParam.Drone] = 0f
+        applyReverbTypeFilters()
         SynthParam.entries.forEach { pushToEngine(it) }
         presets.addAll(store.loadPresets())
         purchases.connect()
@@ -110,9 +111,7 @@ class SynthViewModel(application: Application) : AndroidViewModel(application) {
         when (param) {
             // A reverb type sets its own starting crossover/damping, then the decays.
             SynthParam.ReverbType -> {
-                val kind = reverbKind
-                setQuietly(SynthParam.ReverbLowCutoff, kind.crossoverFrequency)
-                setQuietly(SynthParam.ReverbDamping, kind.dampingFrequency)
+                applyReverbTypeFilters()
                 updateReverbDecays()
             }
             SynthParam.ReverbSize -> updateReverbDecays()
@@ -124,6 +123,16 @@ class SynthViewModel(application: Application) : AndroidViewModel(application) {
     fun toggle(param: SynthParam) = set(param, if (isOn(param)) 0f else 1f)
 
     val reverbKind: ReverbKind get() = ReverbKind.entries[get(SynthParam.ReverbType).toInt().coerceIn(0, 3)]
+
+    // The reverb's crossover and damping have no knobs (as on iOS), so they always
+    // follow the type. Presets still save them but never restore them, so an old
+    // preset can't load a setting nobody can see or change.
+    private fun applyReverbTypeFilters() {
+        values[SynthParam.ReverbLowCutoff] = reverbKind.crossoverFrequency
+        values[SynthParam.ReverbDamping] = reverbKind.dampingFrequency
+        pushToEngine(SynthParam.ReverbLowCutoff)
+        pushToEngine(SynthParam.ReverbDamping)
+    }
 
     private fun setQuietly(param: SynthParam, value: Float) {
         values[param] = param.clamp(value)
@@ -281,10 +290,14 @@ class SynthViewModel(application: Application) : AndroidViewModel(application) {
         persistPresets()
     }
 
+    private val presetSkippedParams = setOf(
+        SynthParam.ReverbType, SynthParam.Drone, SynthParam.ReverbLowCutoff, SynthParam.ReverbDamping,
+    )
+
     fun loadPreset(preset: Preset) {
         // Type first: it derives the defaults the rest of the reverb then overrides.
         set(SynthParam.ReverbType, preset.values[SynthParam.ReverbType] ?: SynthParam.ReverbType.default)
-        SynthParam.entries.filter { it != SynthParam.ReverbType && it != SynthParam.Drone }.forEach { p ->
+        SynthParam.entries.filter { it !in presetSkippedParams }.forEach { p ->
             setQuietly(p, preset.values[p] ?: p.default)
         }
         selectedPresetId = preset.id

@@ -157,7 +157,7 @@ enum class OscWaveform(val label: String) { Sine("Sine"), Triangle("Tri"), Squar
 /** LFO shapes, in the engine's order. */
 enum class LfoShape(val label: String) { Sine("Sine"), Triangle("Tri"), Square("Square"), Random("Random") }
 
-/** Reverb types: each reshapes the Zita reverb's ranges, as on iOS. */
+/** Reverb types: each reshapes the reverb's ranges, as on iOS. */
 enum class ReverbKind(
     val label: String,
     private val releaseTimeScale: Float,
