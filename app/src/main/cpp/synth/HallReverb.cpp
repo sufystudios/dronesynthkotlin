@@ -75,6 +75,20 @@ void HallReverb::prepare(double sampleRate) {
     }
     smooth_ = 1.0f - std::exp(-float(kSubBlock) / float(0.1 * sampleRate));
     primed_ = false;
+    derivedFrom_.fill(-1.0f);
+}
+
+void HallReverb::clear() {
+    for (auto *d : {&inputLeft_, &inputRight_}) d->clear();
+    for (auto *group : {&earlySmearLeft_, &earlySmearRight_}) for (auto &a : *group) a.clear();
+    for (auto &a : diffusers_) a.clear();
+    for (int i = 0; i < kLines; ++i) {
+        lines_[i].clear();
+        lineAllpass_[i].clear();
+        decay_[i] = DecayStage{};
+        lineOut_[i] = 0.0f;
+    }
+    primed_ = false;  // the settings may have moved meanwhile: snap to them
 }
 
 void HallReverb::updateCoefficients() {
@@ -98,6 +112,12 @@ void HallReverb::updateCoefficients() {
     glide(applied_.crossoverHz, target_.crossoverHz);
     glide(applied_.dampingHz, target_.dampingHz);
     primed_ = true;
+
+    // The pow() and exp() below are costly on slow phones; skip them once the glides settle.
+    const std::array<float, 5> inputs = {dimension_, applied_.rt60Low, applied_.rt60Mid,
+                                         applied_.crossoverHz, applied_.dampingHz};
+    if (inputs == derivedFrom_) return;
+    derivedFrom_ = inputs;
 
     const float sr = float(sampleRate_);
     for (int i = 0; i < kLines; ++i) {
@@ -131,6 +151,20 @@ void HallReverb::process(const float *inLeft, const float *inRight, float *wetLe
         const float predelayStep = (predelay_ - predelay) / float(n);
         const float dimensionStep = (dimension_ - dimension) / float(n);
 
+        // Unless the size or pre-delay is gliding (the usual case), the early taps hold
+        // still, so their positions and interpolation are worked out once per sub-block.
+        const bool tapsSettled = predelayStep == 0.0f && dimensionStep == 0.0f;
+        std::array<Delay::Tap, kTaps> tapLeft, tapRight;
+        Delay::Tap lateTap;
+        if (tapsSettled) {
+            const float tapScale = msToSamples * dimension;
+            for (int t = 0; t < kTaps; ++t) {
+                tapLeft[t].set(predelay + kTapMsLeft[t] * tapScale);
+                tapRight[t].set(predelay + kTapMsRight[t] * tapScale);
+            }
+            lateTap.set(predelay + 1.0f);
+        }
+
         // Each line's delay also wanders on its own slow sine ("spin").
         const double phaseStep = double(modRate_) * n / sampleRate_;
         for (int i = 0; i < kLines; ++i) {
@@ -160,15 +194,21 @@ void HallReverb::process(const float *inLeft, const float *inRight, float *wetLe
             for (int t = 0; t < kTaps; ++t) {
                 const Delay &fromLeft = (t & 1) ? inputRight_ : inputLeft_;
                 const Delay &fromRight = (t & 1) ? inputLeft_ : inputRight_;
-                earlyLeft += tapGainLeft_[t] * fromLeft.read(predelay + kTapMsLeft[t] * tapScale);
-                earlyRight += tapGainRight_[t] * fromRight.read(predelay + kTapMsRight[t] * tapScale);
+                if (tapsSettled) {
+                    earlyLeft += tapGainLeft_[t] * fromLeft.read(tapLeft[t]);
+                    earlyRight += tapGainRight_[t] * fromRight.read(tapRight[t]);
+                } else {
+                    earlyLeft += tapGainLeft_[t] * fromLeft.read(predelay + kTapMsLeft[t] * tapScale);
+                    earlyRight += tapGainRight_[t] * fromRight.read(predelay + kTapMsRight[t] * tapScale);
+                }
             }
             for (auto &ap : earlySmearLeft_) earlyLeft = ap.process(earlyLeft, smearGain);
             for (auto &ap : earlySmearRight_) earlyRight = ap.process(earlyRight, smearGain);
 
             // The late reverb hears the pre-delayed input plus some of the early reflections.
-            float lateIn = 0.5f * (inputLeft_.read(predelay + 1.0f) + inputRight_.read(predelay + 1.0f)) +
-                           0.15f * (earlyLeft + earlyRight);
+            const float preDelayed = tapsSettled ? inputLeft_.read(lateTap) + inputRight_.read(lateTap)
+                                                 : inputLeft_.read(predelay + 1.0f) + inputRight_.read(predelay + 1.0f);
+            float lateIn = 0.5f * preDelayed + 0.15f * (earlyLeft + earlyRight);
             for (auto &ap : diffusers_) lateIn = ap.process(lateIn, diffuserGain);
 
             // Feedback delay network: read, decay (two bands + damping), mix, write back.

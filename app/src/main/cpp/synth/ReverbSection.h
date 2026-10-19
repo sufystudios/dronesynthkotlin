@@ -1,8 +1,10 @@
 //
-// The engine's reverb: the hall (Room, Hall, Cathedral) and the plate both run all
-// the time, and choosing Plate crossfades between them - each already has its own
-// tail going, so switching never cuts one off or replays a stale one. The Body and
-// Shimmer EQ and the dry/wet mix are applied here, after the crossfade.
+// The engine's reverb: the hall (Room, Hall, Cathedral) and the plate. Choosing Plate
+// crossfades between them; both run during the crossfade, so the old tail fades out
+// while the new one builds. Only the one being heard runs otherwise, and at mix 0
+// neither does. Whichever stops is cleared, so it never replays a stale tail when it
+// comes back. The Body and Shimmer EQ and the dry/wet mix are applied here, after
+// the crossfade.
 //
 
 #ifndef DRONESYNTH_REVERBSECTION_H
@@ -30,12 +32,17 @@ private:
     static constexpr int kEqStep = 32;  // samples between EQ coefficient updates
 
     void updateEq();
+    /// Runs or idles one reverb for the next chunk, clearing it as it goes idle.
+    template <class Reverb>
+    void runOrIdle(Reverb &reverb, bool run, bool &running, const float *inLeft, const float *inRight,
+                   std::vector<float> &wetLeft, std::vector<float> &wetRight, int frames);
 
     HallReverb hall_;
     PlateReverb plate_;
     double sampleRate_ = 48000.0;
     ReverbSettings settings_{};
     bool primed_ = false;
+    bool hallRunning_ = true, plateRunning_ = true;
 
     float mix_ = 0.0f, plateAmount_ = 0.0f;
     float mixSmooth_ = 0.0f, typeSmooth_ = 0.0f;

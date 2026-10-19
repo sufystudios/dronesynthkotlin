@@ -65,7 +65,7 @@ public:
     void setWidth(float v) { width_.setTarget(v); }
     void snapSmoothedValues();
 
-    /// In-place stereo processing.
+    /// In-place stereo processing. At a wet amount of 0 the delay is bypassed.
     void process(float *left, float *right, int frames);
 
 private:
@@ -90,6 +90,8 @@ private:
 
     struct Frame { float wetLeft, wetRight, feedbackLeft, feedbackRight; };
 
+    void clearState();
+    void bypass(float *left, float *right, int frames);
     TapSet makeTaps() const;
     Frame evaluate(const TapSet &set, float feedback, float amount) const;
     float read(const std::vector<float> &line, int32_t distance) const {
@@ -99,6 +101,9 @@ private:
     static constexpr uint32_t kMask = kVintageDelayBufferLength - 1;
     static constexpr double kTapCrossfadeSeconds = 0.025;
     static constexpr double kMediumGlideSeconds = 0.02;
+    // Zeroing both 2 MB lines at once could make a slow phone miss a callback,
+    // so a bypassed delay clears them this many samples per block.
+    static constexpr uint32_t kClearStep = 16384;
 
     double sampleRate_ = 48000.0;
     Smoothed feedback_, amount_, dry_, width_;
@@ -106,6 +111,8 @@ private:
     uint32_t writeIndex_ = 0;
     TapSet currentTaps_, nextTaps_;
     bool hasTaps_ = false;
+    bool bypassed_ = false;
+    uint32_t clearedUpTo_ = 0;  // while bypassed, the lines are zero below this index
     bool crossfading_ = false;
     float crossfadePosition_ = 0, crossfadeStep_ = 1;
     Biquad bandPassLeft_, bandPassRight_, lowPassLeft_, lowPassRight_;

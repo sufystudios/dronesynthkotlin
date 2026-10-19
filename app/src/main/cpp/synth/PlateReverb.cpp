@@ -49,6 +49,22 @@ void PlateReverb::prepare(double sampleRate) {
     lfoPhase_ = 0.0;
     smooth_ = 1.0f - std::exp(-float(kSubBlock) / float(0.1 * sampleRate));
     primed_ = false;
+    derivedFrom_.fill(-1.0f);
+}
+
+void PlateReverb::clear() {
+    input_.clear();
+    for (auto &a : diffusers_) a.clear();
+    for (Half *half : {&left_, &right_}) {
+        half->modAllpass.clear();
+        half->delay1.clear();
+        half->allpass.clear();
+        half->delay2.clear();
+        half->decay1 = DecayStage{};
+        half->decay2 = DecayStage{};
+        half->feedback = 0.0f;
+    }
+    primed_ = false;  // the settings may have moved meanwhile: snap to them
 }
 
 void PlateReverb::updateCoefficients() {
@@ -64,6 +80,12 @@ void PlateReverb::updateCoefficients() {
     glide(applied_.crossoverHz, target_.crossoverHz);
     glide(applied_.dampingHz, target_.dampingHz);
     primed_ = true;
+
+    // The pow() and exp() below are costly on slow phones; skip them once the glides settle.
+    const std::array<float, 5> inputs = {scale_, applied_.rt60Low, applied_.rt60Mid,
+                                         applied_.crossoverHz, applied_.dampingHz};
+    if (inputs == derivedFrom_) return;
+    derivedFrom_ = inputs;
 
     // Each half has two decay points; give each the loss for the stretch of tank
     // before it, so a full trip round the tank loses -60 dB × (trip time / RT60).

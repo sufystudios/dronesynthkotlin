@@ -112,6 +112,7 @@ class Smoothed {
 public:
     void setTimeConstant(float seconds, float sampleRate) {
         coeff_ = 1.0f - std::exp(-1.0f / std::max(1.0f, seconds * sampleRate));
+        advanceFrames_ = -1;
     }
     void snap(float v) { value_ = target_ = v; }
     void setTarget(float v) { target_ = v; }
@@ -121,8 +122,12 @@ public:
     }
     /// Advances `n` samples at once (exact for a one-pole).
     float advance(int n) {
-        const float remaining = std::pow(1.0f - coeff_, float(n));
-        value_ = target_ + (value_ - target_) * remaining;
+        // Almost always called with the same n (the control block), so keep the pow().
+        if (n != advanceFrames_) {
+            advanceFrames_ = n;
+            advanceRemaining_ = std::pow(1.0f - coeff_, float(n));
+        }
+        value_ = target_ + (value_ - target_) * advanceRemaining_;
         return value_;
     }
     float value() const { return value_; }
@@ -132,6 +137,8 @@ private:
     float value_ = 0.0f;
     float target_ = 0.0f;
     float coeff_ = 1.0f;
+    int advanceFrames_ = -1;
+    float advanceRemaining_ = 0.0f;
 };
 
 } // namespace synth

@@ -22,6 +22,8 @@ public:
     void prepare(double sampleRate);
     /// Takes new settings; they glide in over the following blocks.
     void set(const ReverbSettings &settings) { target_ = settings; }
+    /// Silences the tail, as if just prepared. Real-time safe (no allocation).
+    void clear();
     /// Writes the wet signal only (no dry, no EQ) for `frames` samples.
     void process(const float *inLeft, const float *inRight, float *wetLeft, float *wetRight, int frames);
 
@@ -63,6 +65,7 @@ private:
     std::array<float, kLines> gainLow_{};
     float crossoverCoeff_ = 0.0f;
     float dampingCoeff_ = 0.0f;
+    std::array<float, 5> derivedFrom_{};  // the glided values the above were last worked out from
 
     reverb::Delay inputLeft_, inputRight_;
     std::array<float, kTaps> tapGainLeft_{}, tapGainRight_{};

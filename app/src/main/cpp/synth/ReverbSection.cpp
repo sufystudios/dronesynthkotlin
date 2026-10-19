@@ -22,6 +22,7 @@ void ReverbSection::prepare(double sampleRate) {
     mixSmooth_ = 1.0f - std::exp(-1.0f / float(0.02 * sampleRate));   // ~20 ms
     typeSmooth_ = 1.0f - std::exp(-1.0f / float(0.08 * sampleRate));  // ~80 ms crossfade
     primed_ = false;
+    hallRunning_ = plateRunning_ = true;
 }
 
 void ReverbSection::set(const ReverbSettings &settings) {
@@ -48,6 +49,19 @@ void ReverbSection::updateEq() {
     }
 }
 
+template <class Reverb>
+void ReverbSection::runOrIdle(Reverb &reverb, bool run, bool &running, const float *inLeft, const float *inRight,
+                              std::vector<float> &wetLeft, std::vector<float> &wetRight, int frames) {
+    if (run) {
+        reverb.process(inLeft, inRight, wetLeft.data(), wetRight.data(), frames);
+    } else {
+        if (running) reverb.clear();
+        std::fill_n(wetLeft.begin(), frames, 0.0f);
+        std::fill_n(wetRight.begin(), frames, 0.0f);
+    }
+    running = run;
+}
+
 void ReverbSection::process(const float *inLeft, const float *inRight, float *outLeft, float *outRight, int frames) {
     const float plateTarget = settings_.type == ReverbType::Plate ? 1.0f : 0.0f;
     if (!primed_) {
@@ -58,8 +72,22 @@ void ReverbSection::process(const float *inLeft, const float *inRight, float *ou
     }
     for (int start = 0; start < frames; start += kChunk) {
         const int n = std::min(kChunk, frames - start);
-        hall_.process(inLeft + start, inRight + start, hallLeft_.data(), hallRight_.data(), n);
-        plate_.process(inLeft + start, inRight + start, plateLeft_.data(), plateRight_.data(), n);
+        // Settled glides snap to their target, so "off" and "fully the other type" are exact.
+        if (std::fabs(mix_ - settings_.mix) < 1e-4f) mix_ = settings_.mix;
+        if (std::fabs(plateAmount_ - plateTarget) < 1e-4f) plateAmount_ = plateTarget;
+
+        const bool silent = mix_ == 0.0f && settings_.mix <= 0.0f;
+        const bool runHall = !silent && (plateAmount_ < 1.0f || plateTarget < 1.0f);
+        const bool runPlate = !silent && (plateAmount_ > 0.0f || plateTarget > 0.0f);
+        runOrIdle(hall_, runHall, hallRunning_, inLeft + start, inRight + start, hallLeft_, hallRight_, n);
+        runOrIdle(plate_, runPlate, plateRunning_, inLeft + start, inRight + start, plateLeft_, plateRight_, n);
+        if (silent) {
+            // Bypassed: pass the dry signal straight through.
+            for (auto *eq : {&bodyLeft_, &bodyRight_, &shimmerLeft_, &shimmerRight_}) eq->clear();
+            if (outLeft != inLeft) std::copy_n(inLeft + start, n, outLeft + start);
+            if (outRight != inRight) std::copy_n(inRight + start, n, outRight + start);
+            continue;
+        }
         for (int i = 0; i < n; ++i) {
             if (i % kEqStep == 0) updateEq();
             plateAmount_ += typeSmooth_ * (plateTarget - plateAmount_);

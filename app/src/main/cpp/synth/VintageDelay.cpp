@@ -150,6 +150,11 @@ void VintageDelay::init(double sampleRate) {
 void VintageDelay::reset() {
     std::fill(lineLeft_.begin(), lineLeft_.end(), 0.0f);
     std::fill(lineRight_.begin(), lineRight_.end(), 0.0f);
+    bypassed_ = false;
+    clearState();
+}
+
+void VintageDelay::clearState() {
     writeIndex_ = 0;
     hasTaps_ = false;
     crossfading_ = false;
@@ -220,8 +225,43 @@ VintageDelay::Frame VintageDelay::evaluate(const TapSet &set, float feedback, fl
 
 // MARK: - Processing
 
+void VintageDelay::bypass(float *left, float *right, int frames) {
+    if (!bypassed_) {
+        bypassed_ = true;
+        clearedUpTo_ = 0;
+    }
+    if (clearedUpTo_ < uint32_t(kVintageDelayBufferLength)) {
+        const uint32_t n = std::min(kClearStep, uint32_t(kVintageDelayBufferLength) - clearedUpTo_);
+        std::fill_n(lineLeft_.begin() + clearedUpTo_, n, 0.0f);
+        std::fill_n(lineRight_.begin() + clearedUpTo_, n, 0.0f);
+        clearedUpTo_ += n;
+    }
+    amount_.snap(0.0f);
+    feedback_.advance(frames);
+    width_.advance(frames);
+    for (int i = 0; i < frames; ++i) {
+        const float dry = std::clamp(dry_.next(), 0.0f, 4.0f);
+        left[i] = sanitize(dry * left[i]);
+        right[i] = sanitize(dry * right[i]);
+    }
+}
+
 void VintageDelay::process(float *left, float *right, int frames) {
     if (lineLeft_.empty() || lineRight_.empty()) return;
+
+    // At wet 0 nothing recorded is heard, so skip the whole delay. -100 dB counts as 0:
+    // the smoothed amount only approaches it.
+    if (amount_.target() <= 0.0f && amount_.value() < 1e-5f) {
+        bypass(left, right, frames);
+        return;
+    }
+    if (bypassed_) {
+        // Coming back: start from silence, finishing the clear if it hasn't caught up.
+        std::fill(lineLeft_.begin() + clearedUpTo_, lineLeft_.end(), 0.0f);
+        std::fill(lineRight_.begin() + clearedUpTo_, lineRight_.end(), 0.0f);
+        bypassed_ = false;
+        clearState();
+    }
 
     // Stepped controls are read once per block; any change is applied through
     // the tap crossfade below rather than as a jump.

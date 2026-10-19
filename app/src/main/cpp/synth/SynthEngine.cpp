@@ -105,6 +105,9 @@ void SynthEngine::stop() {
         for (int i = 0; i < 20 && !fadedOut_.load(); ++i) std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
     stream_->stop();
+    // Underruns are the usual cause of pops on slow phones; log them for diagnosis.
+    const auto xruns = stream_->getXRunCount();
+    if (xruns) LOGI("Stream stopped: %d underruns, buffer %d", xruns.value(), stream_->getBufferSizeInFrames());
     stream_->close();
     stream_.reset();
     latencyTuner_.reset();
@@ -119,6 +122,9 @@ bool SynthEngine::openStream() {
         ->setFormatConversionAllowed(true)
         ->setChannelCount(oboe::ChannelCount::Stereo)
         ->setChannelConversionAllowed(true)
+        // Room for the latency tuner to grow into. Without it a low-latency stream can
+        // get a buffer of just two bursts, and a slow phone then underruns constantly.
+        ->setBufferCapacityInFrames(kBufferCapacity)
         ->setUsage(oboe::Usage::Media)
         ->setContentType(oboe::ContentType::Music)
         ->setDataCallback(this)
@@ -129,13 +135,20 @@ bool SynthEngine::openStream() {
         stream_.reset();
         return false;
     }
-    // Start double-buffered; the tuner adds a burst each time an underrun happens.
-    latencyTuner_ = std::make_unique<oboe::LatencyTuner>(*stream_);
-    latencyTuner_->setMinimumBufferSize(stream_->getFramesPerBurst() * 2);
-    stream_->setBufferSizeInFrames(stream_->getFramesPerBurst() * 2);
+    // Lets Android raise the CPU clock when the callback runs close to its deadline
+    // (ADPF, Android 13+). Budget phones otherwise park it on a slow core and glitch.
+    stream_->setPerformanceHintEnabled(true);
+    // Keep at least ~10 ms buffered (two bursts minimum): a drone doesn't need less, and
+    // budget phones underrun at two short bursts. The tuner adds a burst per underrun.
     const double rate = stream_->getSampleRate();
+    const int32_t burst = stream_->getFramesPerBurst();
+    const int32_t minBursts = std::max<int32_t>(2, int32_t(std::ceil(0.010 * rate / burst)));
+    latencyTuner_ = std::make_unique<oboe::LatencyTuner>(*stream_);
+    latencyTuner_->setMinimumBufferSize(burst * minBursts);
+    stream_->setBufferSizeInFrames(burst * minBursts);
     if (!prepared_ || rate != sampleRate_) prepare(rate);
-    LOGI("Stream open: %.0f Hz, burst %d", rate, stream_->getFramesPerBurst());
+    LOGI("Stream open: %.0f Hz, burst %d, buffer %d of %d, %s", rate, burst, stream_->getBufferSizeInFrames(),
+         stream_->getBufferCapacityInFrames(), stream_->usesAAudio() ? "AAudio" : "OpenSL ES");
     return true;
 }
 
@@ -433,12 +446,20 @@ void SynthEngine::controlTick(const Snapshot &s, int frames) {
     }
 
     for (int k = 0; k < 3; ++k) {
+        Smoothed &volume = oscillators_[k].volume;
+        if (volume.target() <= 0.0f && volume.value() < 1e-5f) volume.snap(0.0f);  // -100 dB
+        oscActive_[k] = volume.target() > 0.0f || volume.value() > 0.0f;
+    }
+    // Hard sync needs OSC 1's cycle starts even when OSC 1 itself is silent.
+    if (syncOsc3_ && oscActive_[2]) oscActive_[0] = true;
+
+    for (int k = 0; k < 3; ++k) {
         const int base = kOsc1Waveform + k * 8;
         float cents = pitchOffset_[k].advance(frames);
         cents += k < 2 ? osc12Cents : osc3Cents;
         const float vib = vibrato_[k].tick(dt);
         if (on(p[base + kOscVibratoEnabledOffset])) cents += p[base + kOscVibratoDepthOffset] * 700.0f * vib;
-        oscillators_[k].setFrequency(std::exp2(currentLogHz_ + cents / 1200.0));
+        if (oscActive_[k]) oscillators_[k].setFrequency(std::exp2(currentLogHz_ + cents / 1200.0));
     }
 
     // Filter cutoff: knob × filter LFO (±3 octaves) × filter envelope (up to +6 octaves).
@@ -467,16 +488,26 @@ void SynthEngine::controlTick(const Snapshot &s, int frames) {
 // MARK: - Audio
 
 void SynthEngine::render(float *left, float *right, int frames) {
-    const float stereo = stereoAmount_.advance(frames);
+    float stereo = stereoAmount_.advance(frames);
+    if (stereoAmount_.target() <= 0.0f && stereo < 1e-5f) stereoAmount_.snap(stereo = 0.0f);
+    const bool rightOn = stereo > 0.0f || stereoAmount_.target() > 0.0f;
+    if (rightOn && !rightFilterActive_) {
+        // Wake the right filter in the left one's state, so it joins in step, not from silence.
+        const float res = filterRight_->res;
+        *filterRight_ = *filterLeft_;
+        filterRight_->res = res;
+    }
+    rightFilterActive_ = rightOn;
+
+    const bool sync = syncOsc3_ && oscActive_[0] && oscActive_[2];
     for (int i = 0; i < frames; ++i) {
-        const float o1 = oscillators_[0].render();
-        const float o2 = oscillators_[1].render();
-        // Hard sync: OSC 3 restarts its cycle whenever OSC 1 starts a new one.
-        if (syncOsc3_ && oscillators_[0].wrapped()) oscillators_[2].hardSync(oscillators_[0].samplesSinceWrap());
-        const float o3 = oscillators_[2].render();
-        const float mix = o1 * oscillators_[0].volume.next() +
-                          o2 * oscillators_[1].volume.next() +
-                          o3 * oscillators_[2].volume.next();
+        float mix = 0.0f;
+        for (int k = 0; k < 3; ++k) {
+            if (!oscActive_[k]) continue;
+            // Hard sync: OSC 3 restarts its cycle whenever OSC 1 starts a new one.
+            if (k == 2 && sync && oscillators_[0].wrapped()) oscillators_[2].hardSync(oscillators_[0].samplesSinceWrap());
+            mix += oscillators_[k].render() * oscillators_[k].volume.next();
+        }
 
         ampSmooth_.setTarget(float(ampEg_.doEnvelope()));
         const float amp = ampSmooth_.next();
@@ -487,9 +518,13 @@ void SynthEngine::render(float *left, float *right, int frames) {
         filterRight_->freq = filterFreqRight_ += filterStepRight_;
         float in = x, l, r;
         sp_moogladder_compute(&spData_, filterLeft_, &in, &l);
-        sp_moogladder_compute(&spData_, filterRight_, &in, &r);
         left[i] = l;
-        right[i] = l + stereo * (r - l);
+        if (rightFilterActive_) {
+            sp_moogladder_compute(&spData_, filterRight_, &in, &r);
+            right[i] = l + stereo * (r - l);
+        } else {
+            right[i] = l;
+        }
     }
 }
 

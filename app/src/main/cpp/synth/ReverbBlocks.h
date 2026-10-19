@@ -32,6 +32,7 @@ struct Delay {
         mask = size - 1;
         write = 0;
     }
+    void clear() { std::fill(buffer.begin(), buffer.end(), 0.0f); write = 0; }
     void push(float x) { buffer[write] = x; write = (write + 1) & mask; }
     /// The sample pushed `delay` pushes before the most recent one.
     float readInt(int delay) const { return buffer[(write - 1 - delay) & mask]; }
@@ -46,6 +47,29 @@ struct Delay {
         const float c3 = 0.5f * (x2 - xm1) + 1.5f * (x0 - x1);
         return ((c3 * f + c2) * f + c1) * f + x0;
     }
+
+    /// read() with its position and interpolation weights worked out in advance,
+    /// for a delay that holds still across many samples.
+    struct Tap {
+        int delay = 1;
+        float w[4] = {0.0f, 1.0f, 0.0f, 0.0f};  // for the samples at delay - 1 ... delay + 2
+
+        void set(float samples) {
+            samples = std::max(samples, 1.0f);
+            delay = int(samples);
+            const float f = samples - float(delay), f2 = f * f, f3 = f2 * f;
+            // The Hermite polynomial of read(), regrouped per sample.
+            w[0] = -0.5f * f + f2 - 0.5f * f3;
+            w[1] = 1.0f - 2.5f * f2 + 1.5f * f3;
+            w[2] = 0.5f * f + 2.0f * f2 - 1.5f * f3;
+            w[3] = -0.5f * f2 + 0.5f * f3;
+        }
+    };
+    float read(const Tap &tap) const {
+        const int base = write - 1 - tap.delay;
+        return tap.w[0] * buffer[(base + 1) & mask] + tap.w[1] * buffer[base & mask] +
+               tap.w[2] * buffer[(base - 1) & mask] + tap.w[3] * buffer[(base - 2) & mask];
+    }
 };
 
 /// Schroeder allpass. `process` uses a fixed length; `processAt` a fractional,
@@ -58,6 +82,7 @@ struct Allpass {
         length = std::max(1, len);
         delay.allocate(std::max(length, maximum));
     }
+    void clear() { delay.clear(); }
     float process(float x, float g) { return run(x, g, delay.readInt(length - 1)); }
     float processAt(float x, float g, float len) { return run(x, g, delay.read(len - 1.0f)); }
 
@@ -90,6 +115,7 @@ struct Biquad {
         a1 = -2.0f * cosw / a0;
         a2 = (1.0f - alpha / a) / a0;
     }
+    void clear() { z1 = z2 = 0.0f; }
     float process(float x) {
         const float y = b0 * x + z1;
         z1 = b1 * x - a1 * y + z2;

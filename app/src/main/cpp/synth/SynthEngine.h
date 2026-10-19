@@ -63,6 +63,8 @@ private:
     static constexpr int kControlBlock = 8;
     static constexpr int kMaxBlock = 1024;
     static constexpr int kMaxHeldNotes = 16;
+    /// ~85 ms at 48 kHz; the buffer starts far smaller and only grows if the phone underruns.
+    static constexpr int kBufferCapacity = 4096;
 
     /// A snapshot of every parameter, taken once per render callback.
     struct Snapshot { std::array<float, kNumParams> v; };
@@ -135,6 +137,10 @@ private:
     Smoothed modWheel_;   // 0...1
     float filterEnvLevel_ = 0.0f;
     bool syncOsc3_ = false;
+    /// Oscillators at volume 0 aren't rendered (they hold their phase until turned up).
+    std::array<bool, 3> oscActive_{true, true, true};
+    /// Without Stereo Filters both sides use the left filter, so the right one sleeps.
+    bool rightFilterActive_ = true;
 
     // --- notes
     std::array<uint8_t, kMaxHeldNotes> heldNotes_{};
