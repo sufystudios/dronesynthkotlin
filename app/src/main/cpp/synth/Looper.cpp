@@ -84,6 +84,10 @@ void Looper::handle(Command command) {
             break;
         case Disable:
             enabled_ = false;
+            // Switching the looper off also stops it, as Play/Stop does: a muted loop that
+            // kept running would keep the position ring turning and the app "sounding".
+            playing_ = false;
+            stopOverdub();
             break;
     }
 }
@@ -136,6 +140,9 @@ void Looper::process(const float *inL, const float *inR, float *outL, float *out
     }
 
     playGain_.setTarget(playing_ && enabled_ ? 1.0f : 0.0f);
+    // End a finished fade-out exactly. With denormals flushed and no fused multiply-add
+    // (32-bit ARM), the fade otherwise stalls just above zero and the loop never parks.
+    if (playGain_.target() == 0.0f && playGain_.value() < 1e-5f) playGain_.snap(0.0f);
     for (int i = 0; i < frames; ++i) {
         const float l = inL[i];
         const float r = inR[i];
