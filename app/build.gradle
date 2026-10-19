@@ -49,6 +49,10 @@ android {
         }
     }
     buildTypes {
+        debug {
+            // Installs alongside the Play version, which can't be replaced by a locally signed build.
+            applicationIdSuffix ".dev"
+        }
         release {
             if (keystorePropertiesFile.exists()) signingConfig signingConfigs.upload
             minifyEnabled true
