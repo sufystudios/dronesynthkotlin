@@ -198,6 +198,7 @@ void SynthEngine::prepare(double sampleRate) {
     delay_.init(sampleRate);
     looper_.prepare(sampleRate);
     recorder_.prepare(sampleRate);
+    sequencer_.prepare(sampleRate);
 
     reverb_.prepare(sampleRate);
 
@@ -260,7 +261,10 @@ void SynthEngine::handleEvent(const NoteEvent &e) {
             heldNotes_[heldCount_] = e.note;
             heldVelocities_[heldCount_] = e.velocity;
             ++heldCount_;
-            triggerNote(e.note, e.velocity, true);
+            // Every key goes to the sequencer too, so a chord held before PLAY starts
+            // the arpeggio the moment PLAY is pressed.
+            sequencer_.sequencer().noteOn(e.note, e.velocity);
+            if (!seqEngaged_) triggerNote(e.note, e.velocity, true);
             break;
         }
         case NoteEvent::NoteOff: {
@@ -274,7 +278,8 @@ void SynthEngine::handleEvent(const NoteEvent &e) {
             }
             const bool removed = w != heldCount_;
             heldCount_ = w;
-            if (!removed) break;
+            sequencer_.sequencer().noteOff(e.note);
+            if (!removed || seqEngaged_) break;
             if (heldCount_ == 0) {
                 releaseNote();
             } else {
@@ -283,8 +288,9 @@ void SynthEngine::handleEvent(const NoteEvent &e) {
             break;
         }
         case NoteEvent::AllNotesOff:
+            for (int i = 0; i < heldCount_; ++i) sequencer_.sequencer().noteOff(heldNotes_[i]);
             heldCount_ = 0;
-            releaseNote();
+            if (!seqEngaged_) releaseNote();
             break;
     }
 }
@@ -305,10 +311,44 @@ void SynthEngine::triggerNote(int note, int velocity, bool retrigger) {
 
 void SynthEngine::releaseNote() {
     // In drone mode the gate stays open after the keys are lifted.
-    if (droneMode_ || !gateOpen_) return;
+    if (!droneMode_) closeGate();
+}
+
+void SynthEngine::closeGate() {
+    if (!gateOpen_) return;
     ampEg_.noteOff();
     filterEg_.noteOff();
     gateOpen_ = false;
+}
+
+// MARK: - ARP/SEQ (audio thread)
+
+void SynthEngine::updateSequencerEngagement() {
+    const SequencerSettings &s = sequencer_.settings();
+    // SEQ on an empty pattern has nothing to play, so the keys play as usual.
+    const bool engaged = s.mode == SequencerMode::Rec ||
+                         (s.playing && (s.mode == SequencerMode::Arp || sequencer_.sequencer().patternLength(s.pattern) > 0));
+    if (engaged == seqEngaged_) return;
+    seqEngaged_ = engaged;
+    if (engaged) {
+        // Whatever the keys (or drone mode) had sounding ends; the first step opens the gate itself.
+        closeGate();
+    } else if (heldCount_ > 0) {
+        // Back to the keys: one still down plays, as it would have if pressed now.
+        triggerNote(heldNotes_[heldCount_ - 1], heldVelocities_[heldCount_ - 1], true);
+    }
+}
+
+void SynthEngine::playSequencerEvent(const SequencerEvent &e) {
+    // The filter envelope opens and closes with every step, as the amp's does: the
+    // Grandmother's GATE OUT patched to the filter, built in.
+    if (e.type == SequencerEvent::NoteOn) {
+        if (seqEngaged_) triggerNote(e.note, e.velocity, true);
+    } else if (seqEngaged_ || heldCount_ == 0) {
+        // The last note-off can arrive just after the sequencer hands the voice back;
+        // it ends the note only if no key has taken over.
+        closeGate();
+    }
 }
 
 // MARK: - Parameters (audio thread)
@@ -349,7 +389,7 @@ void SynthEngine::applyParams(const Snapshot &s) {
         // Switching drone off behaves exactly like lifting every key.
         if (!drone) {
             heldCount_ = 0;
-            releaseNote();
+            if (!seqEngaged_) releaseNote();
         }
     }
 
@@ -534,6 +574,8 @@ oboe::DataCallbackResult SynthEngine::onAudioReady(oboe::AudioStream *, void *au
     auto *out = static_cast<float *>(audioData);
     for (int i = 0; i < kNumParams; ++i) snapshot_.v[i] = params_[i].load(std::memory_order_relaxed);
     applyParams(snapshot_);
+    sequencer_.drain();
+    updateSequencerEngagement();
     NoteEvent event{};
     while (events_.pop(event)) handleEvent(event);
 
@@ -541,8 +583,13 @@ oboe::DataCallbackResult SynthEngine::onAudioReady(oboe::AudioStream *, void *au
     int done = 0;
     while (done < numFrames) {
         const int chunk = std::min(numFrames - done, kMaxBlock);
+        const int seqCount = sequencer_.advance(chunk, seqEvents_.data(), int(seqEvents_.size()));
+        int nextSeqEvent = 0;
         for (int offset = 0; offset < chunk; offset += kControlBlock) {
             const int n = std::min(kControlBlock, chunk - offset);
+            while (nextSeqEvent < seqCount && seqEvents_[nextSeqEvent].offset < offset + n) {
+                playSequencerEvent(seqEvents_[nextSeqEvent++]);
+            }
             controlTick(snapshot_, n);
             render(left_.data() + offset, right_.data() + offset, n);
         }

@@ -160,7 +160,7 @@ fun ReverbPanel(vm: SynthViewModel, modifier: Modifier = Modifier) {
             SmallKnob(vm, SynthParam.ReverbLowDecay, "LO DECAY")
             SmallKnob(vm, SynthParam.ReverbHighDecay, "HI DECAY")
             SmallKnob(vm, SynthParam.ReverbBody, "BODY")
-            SmallKnob(vm, SynthParam.ReverbShimmer, "SHIMMER")
+            SmallKnob(vm, SynthParam.ReverbShimmer, "AIR")
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
             BasicText("MIX", style = retroLabel(9.sp))

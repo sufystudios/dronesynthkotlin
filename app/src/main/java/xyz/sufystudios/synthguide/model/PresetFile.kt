@@ -4,7 +4,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /** A preset read from a shared file: no id yet, it gets one when it joins the library. */
-data class ImportedPreset(val name: String, val values: Map<SynthParam, Float>)
+data class ImportedPreset(val name: String, val values: Map<SynthParam, Float>, val sequencer: SequencerPreset)
 
 /**
  * The file format for sharing and backing up presets: one JSON object naming the
@@ -17,7 +17,9 @@ object PresetFile {
 
     fun encode(presets: List<Preset>): String {
         val list = JSONArray()
-        presets.forEach { p -> list.put(JSONObject().put("name", p.name).put("values", encodeValues(p.values))) }
+        presets.forEach { p ->
+            list.put(JSONObject().put("name", p.name).put("values", encodeValues(p.values)).put("sequencer", p.sequencer.toJson()))
+        }
         return JSONObject().put("app", APP).put("format", FORMAT).put("presets", list).toString(2)
     }
 
@@ -34,7 +36,11 @@ object PresetFile {
         val presets = (0 until list.length()).mapNotNull { i ->
             runCatching {
                 val o = list.getJSONObject(i)
-                ImportedPreset(o.getString("name").trim().take(MAX_NAME).ifEmpty { "Imported" }, decodeValues(o.getJSONObject("values")))
+                ImportedPreset(
+                    o.getString("name").trim().take(MAX_NAME).ifEmpty { "Imported" },
+                    decodeValues(o.getJSONObject("values")),
+                    SequencerPreset.fromJson(o.optJSONObject("sequencer")),
+                )
             }.getOrNull()
         }
         return presets.takeIf { it.isNotEmpty() }

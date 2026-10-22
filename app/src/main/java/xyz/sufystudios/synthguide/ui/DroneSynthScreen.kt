@@ -66,6 +66,7 @@ import xyz.sufystudios.synthguide.ui.components.ParamKnob
 import xyz.sufystudios.synthguide.ui.components.PianoKeyboard
 import xyz.sufystudios.synthguide.ui.components.RailIcon
 import xyz.sufystudios.synthguide.ui.components.mainLabel
+import xyz.sufystudios.synthguide.ui.panels.ArpSeqPanel
 import xyz.sufystudios.synthguide.ui.panels.DelayPanel
 import xyz.sufystudios.synthguide.ui.panels.EnvelopePanel
 import xyz.sufystudios.synthguide.ui.panels.LfoPanel
@@ -75,6 +76,7 @@ import xyz.sufystudios.synthguide.ui.panels.formatTime
 import xyz.sufystudios.synthguide.ui.panels.OscillatorPanel
 import xyz.sufystudios.synthguide.ui.panels.PresetsPanel
 import xyz.sufystudios.synthguide.ui.panels.ReverbPanel
+import xyz.sufystudios.synthguide.ui.panels.SequencerClockLed
 import xyz.sufystudios.synthguide.ui.theme.Neon
 import xyz.sufystudios.synthguide.ui.theme.RetroLed
 
@@ -186,8 +188,11 @@ private fun DrawerSide(
     Row(modifier.clip(RoundedCornerShape(10.dp)), verticalAlignment = Alignment.Bottom) {
         if (!left) DrawerSlot(vm, showing, left, maxHeight)
         Column {
+            // The left rail's five tabs take the height of the right rail's four, so
+            // the rails stay level and clear the keyboard on short phones.
+            val tabHeight = 320.dp / tabs.size
             tabs.forEach { tab ->
-                RailButton(vm, tab, selected = tab == openTab, Modifier.size(38.dp, 80.dp)) { toggleTab(tab) }
+                RailButton(vm, tab, selected = tab == openTab, Modifier.size(38.dp, tabHeight)) { toggleTab(tab) }
             }
         }
         if (left) DrawerSlot(vm, showing, left, maxHeight)
@@ -222,6 +227,7 @@ private fun DrawerContent(vm: SynthViewModel, tab: DrawerTab) {
         DrawerTab.Reverb -> ReverbPanel(vm, m)
         DrawerTab.Rec -> RecorderPanel(vm, m)
         DrawerTab.Looper -> LooperPanel(vm, m)
+        DrawerTab.Arp -> ArpSeqPanel(vm, m)
     }
 }
 
@@ -241,7 +247,18 @@ private fun RailButton(vm: SynthViewModel, tab: DrawerTab, selected: Boolean, mo
         verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
     ) {
         RailIcon(tab, color, loopProgress = loopProgress)
-        BasicText(tab.label, style = TextStyle(color = color, fontSize = 10.sp, fontWeight = FontWeight.SemiBold), maxLines = 1)
+        val label = @Composable {
+            BasicText(tab.label, style = TextStyle(color = color, fontSize = 10.sp, fontWeight = FontWeight.SemiBold), maxLines = 1)
+        }
+        if (tab == DrawerTab.Arp) {
+            // The RATE LED beside the label keeps the clock showing while the drawer is closed.
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                SequencerClockLed(vm.sequencerState.clockTicks)
+                label()
+            }
+        } else {
+            label()
+        }
         // The loop's length stays visible while its drawer is closed, as on iOS.
         if (loopProgress != null) {
             BasicText(formatTime(looper.lengthSeconds), style = TextStyle(color = RetroLed, fontSize = 8.sp, fontWeight = FontWeight.SemiBold))

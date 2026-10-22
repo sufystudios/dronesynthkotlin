@@ -5,6 +5,8 @@
 
 #include <jni.h>
 
+#include <algorithm>
+#include <array>
 #include <memory>
 
 #include "SynthEngine.h"
@@ -113,6 +115,72 @@ JNIEXPORT jlongArray JNICALL NATIVE_SYNTH(nativeRecorderState)(JNIEnv *env, jobj
     }
     jlongArray result = env->NewLongArray(3);
     env->SetLongArrayRegion(result, 0, 3, values);
+    return result;
+}
+
+// MARK: - ARP/SEQ
+
+// Steps cross JNI packed into one int each: kind | note << 8 | velocity << 16.
+
+JNIEXPORT void JNICALL NATIVE_SYNTH(nativeSequencerSettings)(JNIEnv *, jobject, jint mode, jboolean playing, jboolean hold,
+                                                             jdouble bpm, jint division, jfloat gate, jint order,
+                                                             jint extraOctaves, jint pattern) {
+    if (!gEngine) return;
+    synth::SequencerSettings s;
+    s.mode = synth::SequencerMode(mode);
+    s.playing = playing;
+    s.hold = hold;
+    s.bpm = bpm;
+    s.division = synth::StepDivision(division);
+    s.gate = gate;
+    s.order = synth::ArpOrder(order);
+    s.extraOctaves = extraOctaves;
+    s.pattern = pattern;
+    gEngine->sequencer().postSettings(s);
+}
+
+JNIEXPORT void JNICALL NATIVE_SYNTH(nativeSequencerRestOrTie)(JNIEnv *, jobject) {
+    if (gEngine) gEngine->sequencer().postRestOrTie();
+}
+
+JNIEXPORT void JNICALL NATIVE_SYNTH(nativeSequencerClearPattern)(JNIEnv *, jobject, jint pattern) {
+    if (gEngine) gEngine->sequencer().postClearPattern(pattern);
+}
+
+JNIEXPORT void JNICALL NATIVE_SYNTH(nativeSequencerSetPattern)(JNIEnv *env, jobject, jint pattern, jintArray packed) {
+    if (!gEngine) return;
+    std::array<synth::SequencerStep, synth::SequencerBridge::kMaxSteps> steps{};
+    const int length = std::min<int>(env->GetArrayLength(packed), synth::SequencerBridge::kMaxSteps);
+    std::array<jint, synth::SequencerBridge::kMaxSteps> values{};
+    env->GetIntArrayRegion(packed, 0, length, values.data());
+    for (int i = 0; i < length; ++i) {
+        steps[i] = {synth::SequencerStep::Kind(std::min(values[i] & 0xFF, 2)), uint8_t((values[i] >> 8) & 0x7F),
+                    uint8_t((values[i] >> 16) & 0x7F)};
+    }
+    gEngine->sequencer().postPattern(pattern, steps.data(), length);
+}
+
+JNIEXPORT jintArray JNICALL NATIVE_SYNTH(nativeSequencerPattern)(JNIEnv *env, jobject, jint pattern) {
+    std::array<synth::SequencerStep, synth::SequencerBridge::kMaxSteps> steps{};
+    std::array<jint, synth::SequencerBridge::kMaxSteps> values{};
+    const int length = gEngine ? gEngine->sequencer().readPattern(pattern, steps.data(), int(steps.size())) : 0;
+    for (int i = 0; i < length; ++i) values[i] = steps[i].kind | steps[i].note << 8 | steps[i].velocity << 16;
+    jintArray result = env->NewIntArray(length);
+    env->SetIntArrayRegion(result, 0, length, values.data());
+    return result;
+}
+
+/// {currentStep, running (0/1), clockTicks}
+JNIEXPORT jintArray JNICALL NATIVE_SYNTH(nativeSequencerState)(JNIEnv *env, jobject) {
+    jint values[3] = {-1, 0, 0};
+    if (gEngine) {
+        synth::SequencerBridge &s = gEngine->sequencer();
+        values[0] = s.currentStep();
+        values[1] = s.isRunning();
+        values[2] = jint(s.clockTicks());
+    }
+    jintArray result = env->NewIntArray(3);
+    env->SetIntArrayRegion(result, 0, 3, values);
     return result;
 }
 

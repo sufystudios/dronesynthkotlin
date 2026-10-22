@@ -58,8 +58,17 @@ class SynthViewModel(application: Application) : AndroidViewModel(application) {
 
     private val midi = MidiInput(application)
 
+    /** The ARP/SEQ module's settings; its patterns live in the engine (see [sequencerPreset]). */
+    var sequencer by mutableStateOf(SequencerSettings())
+        private set
+
+    /** What the sequencer is doing, refreshed with the looper's state. */
+    var sequencerState by mutableStateOf(SequencerState())
+        private set
+
     private var saveJob: Job? = null
-    private val tapTimes = ArrayDeque<Long>()
+    private val delayTaps = TapTempo()
+    private val sequencerTaps = TapTempo()
 
     init {
         val restored = store.loadCurrent() ?: emptyMap()
@@ -68,6 +77,7 @@ class SynthViewModel(application: Application) : AndroidViewModel(application) {
         values[SynthParam.Drone] = 0f
         applyReverbTypeFilters()
         SynthParam.entries.forEach { pushToEngine(it) }
+        applySequencerPreset(store.loadCurrentSequencer() ?: SequencerPreset())
         presets.addAll(store.loadPresets())
         purchases.connect()
         midi.start()
@@ -75,6 +85,10 @@ class SynthViewModel(application: Application) : AndroidViewModel(application) {
             while (isActive) {
                 looper = NativeSynth.looperState()
                 recorder.poll()
+                val previous = sequencerState
+                sequencerState = NativeSynth.sequencerState(sequencer.pattern.takeIf { sequencer.mode != SequencerMode.Arp })
+                // Steps recorded in REC are part of the patch too.
+                if (sequencer.mode == SequencerMode.Rec && sequencerState.pattern != previous.pattern) scheduleSave()
                 delay(33)
             }
         }
@@ -176,11 +190,12 @@ class SynthViewModel(application: Application) : AndroidViewModel(application) {
 
     /**
      * True while something should keep sounding with the app in the background:
-     * a held drone, the looper playing or recording, or the recorder running.
+     * a held drone, the looper playing or recording, the recorder running, or the
+     * sequencer playing on HOLD.
      */
     val isSustaining: Boolean
         get() = isOn(SynthParam.Drone) || looper.playing || looper.recording ||
-            recorder.state.recording || recorder.state.playing
+            recorder.state.recording || recorder.state.playing || sequencerState.running
 
     /** The app became visible: (re)start output. Goes through here so the saved patch is applied first. */
     fun onAppForeground() {
@@ -202,12 +217,14 @@ class SynthViewModel(application: Application) : AndroidViewModel(application) {
     /** The notification's Stop: silence everything that was keeping the app playing. */
     private fun stopAllSound() {
         set(SynthParam.Drone, 0f)
+        updateSequencer { it.copy(playing = false) }
         if (looper.recording) looperCommand(LooperCommand.ToggleRecord)
         if (looper.playing) looperCommand(LooperCommand.TogglePlay)
         recorder.stopTransport()
         NativeSynth.allNotesOff()
         // The looper's state is polled; refresh now so isSustaining reflects the stop.
         looper = looper.copy(playing = false, recording = false, overdubbing = false)
+        sequencerState = sequencerState.copy(running = false)
     }
 
     // MARK: - Looper
@@ -244,13 +261,8 @@ class SynthViewModel(application: Application) : AndroidViewModel(application) {
 
     /** Averages the last few taps into the delay's master time (one beat). */
     fun tapTempo() {
-        val now = SystemClock.elapsedRealtime()
-        if (tapTimes.isNotEmpty() && now - tapTimes.last() > 2_000) tapTimes.clear()
-        tapTimes.addLast(now)
-        while (tapTimes.size > 5) tapTimes.removeFirst()
-        if (tapTimes.size < 2) return
-        val intervals = tapTimes.zipWithNext { a, b -> b - a }
-        set(SynthParam.DelayTime, intervals.average().toFloat())
+        val interval = delayTaps.tap() ?: return
+        set(SynthParam.DelayTime, interval.toFloat())
     }
 
     fun resetDelay() = delayParams.forEach { set(it, it.default) }
@@ -261,10 +273,45 @@ class SynthViewModel(application: Application) : AndroidViewModel(application) {
             .forEach { set(it, it.default) }
     }
 
+    // MARK: - ARP/SEQ
+
+    fun updateSequencer(change: (SequencerSettings) -> SequencerSettings) {
+        val next = change(sequencer).clamped()
+        if (next == sequencer) return
+        sequencer = next
+        NativeSynth.sequencerSettings(next)
+        scheduleSave()
+    }
+
+    /** The sequencer's own TAP (the delay keeps its own): sets its tempo from the last few taps. */
+    fun sequencerTapTempo() {
+        val interval = sequencerTaps.tap() ?: return
+        if (interval > 0) updateSequencer { it.copy(bpm = 60_000.0 / interval) }
+    }
+
+    /** REC's REST/TIE button: a rest, or a tie while a key is held. */
+    fun sequencerRestOrTie() = NativeSynth.sequencerRestOrTie()
+
+    fun clearSequencerPattern() {
+        NativeSynth.sequencerClearPattern(sequencer.pattern)
+        scheduleSave()
+    }
+
+    /** The module as it stands, recorded steps included, for saving. */
+    private fun sequencerPreset() =
+        SequencerPreset(sequencer, (0 until Sequencer.PATTERNS).map(NativeSynth::sequencerPattern))
+
+    /** Patterns first, so a SEQ that starts playing on load starts with the right steps. */
+    private fun applySequencerPreset(preset: SequencerPreset) {
+        preset.patterns.forEachIndexed(NativeSynth::sequencerSetPattern)
+        sequencer = preset.settings.clamped()
+        NativeSynth.sequencerSettings(sequencer)
+    }
+
     // MARK: - Presets
 
     fun savePreset(name: String) {
-        val preset = Preset(store.newPresetId(), name.trim().ifEmpty { "Tape ${presets.size + 1}" }, snapshot())
+        val preset = Preset(store.newPresetId(), name.trim().ifEmpty { "Tape ${presets.size + 1}" }, snapshot(), sequencerPreset())
         presets.add(preset)
         selectedPresetId = preset.id
         persistPresets()
@@ -273,7 +320,7 @@ class SynthViewModel(application: Application) : AndroidViewModel(application) {
     fun updatePreset(preset: Preset) {
         val i = presets.indexOfFirst { it.id == preset.id }
         if (i < 0) return
-        presets[i] = preset.copy(values = snapshot())
+        presets[i] = preset.copy(values = snapshot(), sequencer = sequencerPreset())
         persistPresets()
     }
 
@@ -300,6 +347,7 @@ class SynthViewModel(application: Application) : AndroidViewModel(application) {
         SynthParam.entries.filter { it !in presetSkippedParams }.forEach { p ->
             setQuietly(p, preset.values[p] ?: p.default)
         }
+        applySequencerPreset(preset.sequencer)
         selectedPresetId = preset.id
         scheduleSave()
     }
@@ -320,7 +368,7 @@ class SynthViewModel(application: Application) : AndroidViewModel(application) {
             var n = 2
             while (name.lowercase() in names) name = "${p.name} (${n++})"
             names += name.lowercase()
-            presets.add(Preset(store.newPresetId(), name, p.values))
+            presets.add(Preset(store.newPresetId(), name, p.values, p.sequencer))
         }
         persistPresets()
         return imported.size
@@ -338,7 +386,11 @@ class SynthViewModel(application: Application) : AndroidViewModel(application) {
         saveJob = viewModelScope.launch {
             delay(500)
             val copy = snapshot()
-            withContext(Dispatchers.IO) { store.saveCurrent(copy) }
+            val sequencerCopy = sequencerPreset()
+            withContext(Dispatchers.IO) {
+                store.saveCurrent(copy)
+                store.saveCurrentSequencer(sequencerCopy)
+            }
         }
     }
 
@@ -358,5 +410,24 @@ class SynthViewModel(application: Application) : AndroidViewModel(application) {
             SynthParam.DelayFeedback, SynthParam.DelayWet, SynthParam.DelayDry, SynthParam.DelayWidth,
             SynthParam.DelayMixMode, SynthParam.DelayMedium,
         )
+    }
+}
+
+/**
+ * Tap-tempo history, shared by the delay's TAP and the sequencer's. Reset whenever a
+ * tap comes in too long after the previous one, so an old rhythm doesn't bleed into
+ * a new one.
+ */
+private class TapTempo {
+    private val times = ArrayDeque<Long>()
+
+    /** Records a tap; returns the average of the last few intervals in ms, once there are two taps. */
+    fun tap(): Double? {
+        val now = SystemClock.elapsedRealtime()
+        if (times.isNotEmpty() && now - times.last() > 2_000) times.clear()
+        times.addLast(now)
+        while (times.size > 5) times.removeFirst()
+        if (times.size < 2) return null
+        return times.zipWithNext { a, b -> b - a }.average()
     }
 }

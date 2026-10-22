@@ -95,7 +95,7 @@ fun LooperPanel(vm: SynthViewModel, modifier: Modifier = Modifier) {
 
 /** Metal-bezel push button with a coloured cap, like a hardware stomp switch. */
 @Composable
-private fun LooperCapButton(
+internal fun LooperCapButton(
     label: String,
     cap: Color,
     active: Boolean = false,

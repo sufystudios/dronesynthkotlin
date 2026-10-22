@@ -6,8 +6,16 @@ import org.json.JSONObject
 import java.io.File
 import java.util.UUID
 
-/** A saved patch: a name plus every parameter's value, keyed by [SynthParam.key]. */
-data class Preset(val id: String, val name: String, val values: Map<SynthParam, Float>)
+/**
+ * A saved patch: a name plus every parameter's value, keyed by [SynthParam.key],
+ * and the ARP/SEQ module (a preset saved before it had one loads it fresh).
+ */
+data class Preset(
+    val id: String,
+    val name: String,
+    val values: Map<SynthParam, Float>,
+    val sequencer: SequencerPreset = SequencerPreset(),
+)
 
 /**
  * Persists the live patch (restored on next launch) and the preset library, as
@@ -17,6 +25,7 @@ data class Preset(val id: String, val name: String, val values: Map<SynthParam, 
 class PatchStore(context: Context) {
     private val currentFile = File(context.filesDir, "current_patch.json")
     private val presetsFile = File(context.filesDir, "presets.json")
+    private val currentSequencerFile = File(context.filesDir, "current_sequencer.json")
 
     fun loadCurrent(): Map<SynthParam, Float>? =
         runCatching { PresetFile.decodeValues(JSONObject(currentFile.readText())) }.getOrNull()
@@ -25,13 +34,23 @@ class PatchStore(context: Context) {
         writeAtomically(currentFile, PresetFile.encodeValues(values).toString())
     }
 
+    fun loadCurrentSequencer(): SequencerPreset? =
+        runCatching { SequencerPreset.fromJson(JSONObject(currentSequencerFile.readText())) }.getOrNull()
+
+    fun saveCurrentSequencer(sequencer: SequencerPreset) {
+        writeAtomically(currentSequencerFile, sequencer.toJson().toString())
+    }
+
     fun loadPresets(): List<Preset> {
         val array = runCatching { JSONArray(presetsFile.readText()) }.getOrNull() ?: return emptyList()
         // One bad entry only drops itself, not the whole library.
         return (0 until array.length()).mapNotNull { i ->
             runCatching {
                 val o = array.getJSONObject(i)
-                Preset(o.getString("id"), o.getString("name"), PresetFile.decodeValues(o.getJSONObject("values")))
+                Preset(
+                    o.getString("id"), o.getString("name"), PresetFile.decodeValues(o.getJSONObject("values")),
+                    SequencerPreset.fromJson(o.optJSONObject("sequencer")),
+                )
             }.getOrNull()
         }
     }
@@ -39,7 +58,10 @@ class PatchStore(context: Context) {
     fun savePresets(presets: List<Preset>) {
         val array = JSONArray()
         presets.forEach { p ->
-            array.put(JSONObject().put("id", p.id).put("name", p.name).put("values", PresetFile.encodeValues(p.values)))
+            array.put(
+                JSONObject().put("id", p.id).put("name", p.name).put("values", PresetFile.encodeValues(p.values))
+                    .put("sequencer", p.sequencer.toJson())
+            )
         }
         writeAtomically(presetsFile, array.toString())
     }

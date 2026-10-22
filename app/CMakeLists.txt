@@ -13,6 +13,8 @@ add_library(dronesynth SHARED
         src/main/cpp/synth/HallReverb.cpp
         src/main/cpp/synth/PlateReverb.cpp
         src/main/cpp/synth/ReverbSection.cpp
+        src/main/cpp/synth/StepSequencer.cpp
+        src/main/cpp/synth/SequencerBridge.cpp
 
         # DSP building blocks (oscillator, Moog ladder, envelope generator)
         src/main/cpp/Oscillator.cpp

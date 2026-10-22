@@ -9,6 +9,10 @@
 // Threading: the UI thread only ever writes parameters (atomics) and pushes note
 // events (a lock-free queue). Everything else happens on the audio thread.
 //
+// The ARP/SEQ module (StepSequencer, shared with iOS) runs on the audio thread too:
+// every key reaches it, and while it's engaged it plays the voice instead of the
+// keys, each step landing within a control block of its exact frame.
+//
 
 #ifndef DRONESYNTH_SYNTHENGINE_H
 #define DRONESYNTH_SYNTHENGINE_H
@@ -24,6 +28,7 @@
 #include "../vendor/soundpipe/Soundpipe.h"
 #include "EventQueue.h"
 #include "ReverbSection.h"
+#include "SequencerBridge.h"
 #include "Looper.h"
 #include "Modulators.h"
 #include "OscillatorSlot.h"
@@ -54,6 +59,7 @@ public:
 
     Looper &looper() { return looper_; }
     Recorder &recorder() { return recorder_; }
+    SequencerBridge &sequencer() { return sequencer_; }
     double sampleRate() const { return sampleRate_; }
 
     oboe::DataCallbackResult onAudioReady(oboe::AudioStream *stream, void *audioData, int32_t numFrames) override;
@@ -75,6 +81,11 @@ private:
     void handleEvent(const NoteEvent &e);
     void triggerNote(int note, int velocity, bool retrigger);
     void releaseNote();
+    /// Ends the note sounding, drone or not.
+    void closeGate();
+    /// Hands the voice to the sequencer, or back to the keys, when that changes.
+    void updateSequencerEngagement();
+    void playSequencerEvent(const SequencerEvent &e);
     void controlTick(const Snapshot &p, int frames);
     void render(float *left, float *right, int frames);
 
@@ -152,6 +163,13 @@ private:
     double targetLogHz_ = std::log2(110.0);
     double glideStep_ = 0.0;
     float glideTime_ = 0.1f;
+
+    // --- ARP/SEQ
+    SequencerBridge sequencer_;
+    /// While PLAY is on (ARP, or SEQ with a pattern to play) or in REC, keys feed
+    /// the sequencer rather than playing notes themselves.
+    bool seqEngaged_ = false;
+    std::array<SequencerEvent, 256> seqEvents_{};
 
     // --- effects and capture
     VintageDelay delay_;

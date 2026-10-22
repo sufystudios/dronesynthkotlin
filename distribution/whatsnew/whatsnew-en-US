@@ -1,8 +1,10 @@
-Drone Synth 2.0 - rebuilt from the ground up.
-- New engine: 3 oscillators with sync, stereo Moog-style filters, filter envelope, 3 LFOs
-- Vintage tape delay, Room/Hall/Plate/Cathedral reverb
-- Looper with overdub, and a recorder you can share
-- Keeps droning in the background
-- Play from a USB MIDI keyboard
-- New glowing interface, tablet layouts, shareable presets
-- Your Stereo Filters purchase carries over
+NEW: ARP / SEQ, an arpeggiator and step sequencer inspired by classic analog hardware, next to the Looper.
+- ARP: hold a chord and it plays the notes in turn (as played, up/down or shuffled) over up to 2 extra octaves
+- SEQ: record up to 256 steps with rests and ties into 3 patterns, then play them from any key
+- HOLD, TAP tempo, triplets, GATE knob
+- Saved with your presets
+
+ALSO
+- Smoother on older phones
+- Looper stops properly when switched off
+- Reverb SHIMMER is now AIR

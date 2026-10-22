@@ -26,6 +26,7 @@ enum class DrawerTab(val label: String, val leftSide: Boolean) {
     Presets("Presets", true),
     Reverb("Reverb", true),
     Looper("Looper", true),
+    Arp("ARP", true),
 }
 
 /**
@@ -71,6 +72,15 @@ fun RailIcon(tab: DrawerTab, color: Color, modifier: Modifier = Modifier, loopPr
                 // Two chasing arrows.
                 drawArc(color, 200f, 120f, false, Offset(s * 0.25f, s * 0.25f), Size(s * 0.5f, s * 0.5f), style = stroke)
                 drawArc(color, 20f, 120f, false, Offset(s * 0.25f, s * 0.25f), Size(s * 0.5f, s * 0.5f), style = stroke)
+            }
+            DrawerTab.Arp -> {
+                // Piano keys: four white keys with three black ones between them.
+                drawRoundRectOutline(color, s, stroke)
+                for (i in 1..3) {
+                    val x = s * (0.1f + 0.2f * i)
+                    drawLine(color, Offset(x, s * 0.55f), Offset(x, s * 0.85f), stroke.width * 0.8f)
+                    drawRect(color, Offset(x - s * 0.05f, s * 0.15f), Size(s * 0.1f, s * 0.4f))
+                }
             }
         }
     }

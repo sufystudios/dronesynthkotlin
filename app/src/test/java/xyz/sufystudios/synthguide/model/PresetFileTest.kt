@@ -50,6 +50,26 @@ class PresetFileTest {
     }
 
     @Test
+    fun roundTripsTheSequencer() {
+        val settings = SequencerSettings(SequencerMode.Seq, playing = true, hold = true, bpm = 96.0,
+            division = StepDivision.EighthTriplet, gate = 0.8f, order = ArpOrder.Random, extraOctaves = 2, pattern = 1)
+        val steps = listOf(SequencerStep(SequencerStep.Kind.Note, 60, 100), SequencerStep(SequencerStep.Kind.Tie), SequencerStep(SequencerStep.Kind.Rest))
+        val sequencer = SequencerPreset(settings, listOf(emptyList(), steps, emptyList()))
+        val values = SynthParam.entries.associateWith { it.default }
+        val decoded = PresetFile.decode(PresetFile.encode(listOf(Preset("id", "Seq", values, sequencer))))!!.single()
+        assertEquals(sequencer, decoded.sequencer)
+    }
+
+    @Test
+    fun sequencerNeverLoadsInRecAndIsFreshWhenMissing() {
+        val text = """{"presets":[{"name":"Old","values":{}},{"name":"Rec","values":{},"sequencer":{"mode":2,"bpm":999}}]}"""
+        val (old, rec) = PresetFile.decode(text)!!
+        assertEquals(SequencerPreset(), old.sequencer)
+        assertEquals(SequencerMode.Seq, rec.sequencer.settings.mode)
+        assertEquals(SequencerSettings.MAX_BPM, rec.sequencer.settings.bpm, 0.0)
+    }
+
+    @Test
     fun fileNamesAreSafe() {
         assertEquals("Drone Synth - Dark_Light 2.json", PresetFile.fileName("Dark/Light 2"))
         assertEquals("Drone Synth - Preset.json", PresetFile.fileName("   "))

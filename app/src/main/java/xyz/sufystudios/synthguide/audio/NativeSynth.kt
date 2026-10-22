@@ -1,5 +1,9 @@
 package xyz.sufystudios.synthguide.audio
 
+import xyz.sufystudios.synthguide.model.SequencerSettings
+import xyz.sufystudios.synthguide.model.SequencerState
+import xyz.sufystudios.synthguide.model.SequencerStep
+
 /**
  * The native engine (app/src/main/cpp/synth). One instance per process.
  *
@@ -84,6 +88,27 @@ object NativeSynth {
         return Triple(v[0] != 0L, v[1] != 0L, v[2] / sampleRate().toFloat())
     }
 
+    // MARK: - ARP/SEQ
+
+    fun sequencerSettings(s: SequencerSettings) = nativeSequencerSettings(
+        s.mode.ordinal, s.playing, s.hold, s.bpm, s.division.ordinal, s.gate, s.order.ordinal, s.extraOctaves, s.pattern,
+    )
+
+    /** REC's REST/TIE button: a rest, or a tie while a key is held. */
+    fun sequencerRestOrTie() = nativeSequencerRestOrTie()
+    fun sequencerClearPattern(pattern: Int) = nativeSequencerClearPattern(pattern)
+    fun sequencerSetPattern(pattern: Int, steps: List<SequencerStep>) =
+        nativeSequencerSetPattern(pattern, IntArray(steps.size) { steps[it].packed() })
+
+    /** A pattern as it stands, steps recorded in REC included. */
+    fun sequencerPattern(pattern: Int): List<SequencerStep> = nativeSequencerPattern(pattern).map(SequencerStep::unpacked)
+
+    /** The playing state, plus [pattern]'s steps if it's given. */
+    fun sequencerState(pattern: Int?): SequencerState {
+        val v = nativeSequencerState()
+        return SequencerState(v[0], v[1] != 0, v[2], pattern?.let(::sequencerPattern) ?: emptyList())
+    }
+
     fun sampleRate(): Int = nativeSampleRate()
 
     private external fun nativeCreate()
@@ -100,5 +125,13 @@ object NativeSynth {
     private external fun nativeRecorderStop()
     private external fun nativeRecorderState(): LongArray
     private external fun nativeSampleRate(): Int
+    private external fun nativeSequencerSettings(
+        mode: Int, playing: Boolean, hold: Boolean, bpm: Double, division: Int, gate: Float, order: Int, extraOctaves: Int, pattern: Int,
+    )
+    private external fun nativeSequencerRestOrTie()
+    private external fun nativeSequencerClearPattern(pattern: Int)
+    private external fun nativeSequencerSetPattern(pattern: Int, packed: IntArray)
+    private external fun nativeSequencerPattern(pattern: Int): IntArray
+    private external fun nativeSequencerState(): IntArray
     private external fun nativeDelayTimes(timeMs: Float, subdivide: Float, timeLeft: Float, timeRight: Float, mixMode: Int): FloatArray
 }
