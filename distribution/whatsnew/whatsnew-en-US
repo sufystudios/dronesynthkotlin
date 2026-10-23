@@ -2,4 +2,5 @@ NEW: MASTER TUNING
 A TUNE drawer retunes the whole synth up to 100 cents either way from standard pitch, showing A4 to a tenth of a hertz - 440.0 Hz by default, or 432.0 Hz and anything in between.
 - Turn the knob, or step a cent at a time with − and +
 - Double-tap the knob to return to 440
+- Or jump straight to 432, 442, 444 Hz and other popular pitches under PITCHES
 - Each preset remembers its own tuning

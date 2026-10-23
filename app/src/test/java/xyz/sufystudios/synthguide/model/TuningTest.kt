@@ -3,6 +3,8 @@ package xyz.sufystudios.synthguide.model
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import xyz.sufystudios.synthguide.ui.panels.a4Frequency
+import xyz.sufystudios.synthguide.ui.panels.centsForA4
+import xyz.sufystudios.synthguide.ui.panels.standardPitches
 
 /** Master tuning: cents from A4 = 440 Hz, saved with each preset (as iOS's TuningTests). */
 class TuningTest {
@@ -34,5 +36,15 @@ class TuningTest {
     fun usesTheIosKeyAndAddress() {
         assertEquals("masterTune", SynthParam.MasterTune.key)
         assertEquals(87, SynthParam.MasterTune.id)
+    }
+
+    @Test
+    fun everyStandardPitchFitsAndReadsAsItsWholeNumber() {
+        standardPitches.forEach { pitch ->
+            val cents = centsForA4(pitch.hertz.toDouble())
+            assertEquals(cents, SynthParam.MasterTune.clamp(cents))
+            // The readout shows a tenth of a hertz: it must say exactly "432.0", not 431.9.
+            assertEquals("%.1f".format(pitch.hertz.toDouble()), "%.1f".format(a4Frequency(cents)))
+        }
     }
 }
