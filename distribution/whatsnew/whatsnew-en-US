@@ -1,10 +1,5 @@
-NEW: ARP / SEQ, an arpeggiator and step sequencer inspired by classic analog hardware, next to the Looper.
-- ARP: hold a chord and it plays the notes in turn (as played, up/down or shuffled) over up to 2 extra octaves
-- SEQ: record up to 256 steps with rests and ties into 3 patterns, then play them from any key
-- HOLD, TAP tempo, triplets, GATE knob
-- Saved with your presets
-
-ALSO
-- Smoother on older phones
-- Looper stops properly when switched off
-- Reverb SHIMMER is now AIR
+NEW: MASTER TUNING
+A TUNE drawer retunes the whole synth up to 100 cents either way from standard pitch, showing A4 to a tenth of a hertz - 440.0 Hz by default, or 432.0 Hz and anything in between.
+- Turn the knob, or step a cent at a time with − and +
+- Double-tap the knob to return to 440
+- Each preset remembers its own tuning

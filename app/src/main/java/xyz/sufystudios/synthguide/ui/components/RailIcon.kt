@@ -22,6 +22,7 @@ enum class DrawerTab(val label: String, val leftSide: Boolean) {
     Lfo("LFO", false),
     Adsr("ADSR", false),
     Rec("REC", false),
+    Tune("TUNE", false),
     Delay("Delay", true),
     Presets("Presets", true),
     Reverb("Reverb", true),
@@ -62,6 +63,15 @@ fun RailIcon(tab: DrawerTab, color: Color, modifier: Modifier = Modifier, loopPr
                 drawRoundRect(color, Offset(s * 0.35f, s * 0.05f), Size(s * 0.3f, s * 0.55f), androidx.compose.ui.geometry.CornerRadius(s * 0.15f))
                 drawArc(color, 0f, 180f, false, Offset(s * 0.22f, s * 0.3f), Size(s * 0.56f, s * 0.45f), style = stroke)
                 drawLine(color, Offset(s / 2, s * 0.75f), Offset(s / 2, s * 0.95f), stroke.width, StrokeCap.Round)
+            }
+            DrawerTab.Tune -> {
+                // A dial: its pointer straight up, with ticks either side.
+                drawCircle(color, s * 0.32f, Offset(s / 2, s * 0.58f), style = stroke)
+                drawLine(color, Offset(s / 2, s * 0.58f), Offset(s / 2, s * 0.36f), stroke.width, StrokeCap.Round)
+                for (i in -1..1 step 2) {
+                    drawLine(color, Offset(s * (0.5f + 0.32f * i), s * 0.12f), Offset(s * (0.5f + 0.24f * i), s * 0.2f), stroke.width * 0.8f, StrokeCap.Round)
+                }
+                drawLine(color, Offset(s / 2, s * 0.02f), Offset(s / 2, s * 0.12f), stroke.width * 0.8f, StrokeCap.Round)
             }
             DrawerTab.Looper -> {
                 drawCircle(Color.White.copy(alpha = 0.25f), s * 0.45f, style = Stroke(1.5.dp.toPx()))

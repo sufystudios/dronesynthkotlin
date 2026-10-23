@@ -77,6 +77,7 @@ import xyz.sufystudios.synthguide.ui.panels.OscillatorPanel
 import xyz.sufystudios.synthguide.ui.panels.PresetsPanel
 import xyz.sufystudios.synthguide.ui.panels.ReverbPanel
 import xyz.sufystudios.synthguide.ui.panels.SequencerClockLed
+import xyz.sufystudios.synthguide.ui.panels.TuningPanel
 import xyz.sufystudios.synthguide.ui.theme.Neon
 import xyz.sufystudios.synthguide.ui.theme.RetroLed
 
@@ -188,8 +189,8 @@ private fun DrawerSide(
     Row(modifier.clip(RoundedCornerShape(10.dp)), verticalAlignment = Alignment.Bottom) {
         if (!left) DrawerSlot(vm, showing, left, maxHeight)
         Column {
-            // The left rail's five tabs take the height of the right rail's four, so
-            // the rails stay level and clear the keyboard on short phones.
+            // Five tabs a rail, in the height four used to take, so the rails stay
+            // level and clear the keyboard on short phones.
             val tabHeight = 320.dp / tabs.size
             tabs.forEach { tab ->
                 RailButton(vm, tab, selected = tab == openTab, Modifier.size(38.dp, tabHeight)) { toggleTab(tab) }
@@ -226,6 +227,7 @@ private fun DrawerContent(vm: SynthViewModel, tab: DrawerTab) {
         DrawerTab.Presets -> PresetsPanel(vm, m)
         DrawerTab.Reverb -> ReverbPanel(vm, m)
         DrawerTab.Rec -> RecorderPanel(vm, m)
+        DrawerTab.Tune -> TuningPanel(vm, m)
         DrawerTab.Looper -> LooperPanel(vm, m)
         DrawerTab.Arp -> ArpSeqPanel(vm, m)
     }

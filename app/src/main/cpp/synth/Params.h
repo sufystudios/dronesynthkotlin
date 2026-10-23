@@ -80,6 +80,9 @@ enum ParamId : int {
     kDelayMixMode = 75,
     kDelayMedium = 76,
 
+    // Tuning (77...86 are iOS's ARP/SEQ host parameters)
+    kMasterTune = 87,  // cents from A4 = 440 Hz, -100...100
+
     // Android-only
     // 100, 101: the tube stage (retired - never reuse)
 

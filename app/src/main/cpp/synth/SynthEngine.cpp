@@ -358,6 +358,8 @@ void SynthEngine::applyParams(const Snapshot &s) {
     auto changed = [&](int id) { return firstApply_ || p[id] != applied_.v[id]; };
     auto envMs = [](float seconds) { return std::max(2.0, double(seconds) * 1000.0); };
 
+    // Master tuning moves every oscillator together, on top of its own knobs.
+    const float masterTune = std::clamp(p[kMasterTune], -100.0f, 100.0f);
     for (int k = 0; k < 3; ++k) {
         const int base = kOsc1Waveform + k * 8;
         OscillatorSlot &osc = oscillators_[k];
@@ -365,7 +367,7 @@ void SynthEngine::applyParams(const Snapshot &s) {
         osc.volume.setTarget(std::clamp(p[base + kOscVolumeOffset], 0.0f, 1.0f));
         pitchOffset_[k].setTarget(std::round(p[base + kOscOctaveOffset]) * 1200.0f +
                                   std::round(p[base + kOscSemitoneOffset]) * 100.0f +
-                                  p[base + kOscFineOffset]);
+                                  p[base + kOscFineOffset] + masterTune);
         if (firstApply_) {
             osc.volume.snap(osc.volume.target());
             pitchOffset_[k].snap(pitchOffset_[k].target());
