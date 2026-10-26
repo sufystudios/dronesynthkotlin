@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -40,7 +41,6 @@ import xyz.sufystudios.synthguide.model.SynthParam
 import xyz.sufystudios.synthguide.model.SynthViewModel
 import xyz.sufystudios.synthguide.ui.components.LedToggle
 import xyz.sufystudios.synthguide.ui.components.ParamKnob
-import xyz.sufystudios.synthguide.ui.components.RetroHeader
 import xyz.sufystudios.synthguide.ui.components.RetroPanelChrome
 import xyz.sufystudios.synthguide.ui.components.RetroTabBar
 import xyz.sufystudios.synthguide.ui.components.WholeStepStepper
@@ -58,7 +58,6 @@ fun OscillatorPanel(vm: SynthViewModel, modifier: Modifier = Modifier) {
     val slot = OscSlotParams.all[selected]
     val isOsc3 = selected == 2
     RetroPanelChrome(modifier) {
-        RetroHeader(slot.label, reels = true)
         RetroTabBar(OscSlotParams.all.map { it.label }, selected, { selected = it })
 
         val waveform = OscWaveform.entries[vm[slot.waveform].roundToInt().coerceIn(0, 4)]
@@ -88,30 +87,31 @@ fun OscillatorPanel(vm: SynthViewModel, modifier: Modifier = Modifier) {
 
         Divider()
 
-        ParamKnob(vm, slot.volume, 54.dp, "VOL")
+        // Volume and detune side by side, to keep the drawer short enough for a phone in landscape.
+        Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                ParamKnob(vm, slot.volume, 44.dp, "VOL", Modifier.padding(top = 6.dp))
+                // OSC 3 hard-syncs to OSC 1.
+                if (isOsc3) LedToggle("Sync", vm.isOn(SynthParam.Osc3SyncToOsc1)) { vm.toggle(SynthParam.Osc3SyncToOsc1) }
+            }
+
+            // Continuous detune; OSC 3's is a wide ±700 cent "Pitch" knob for sync sweeps.
+            val fine = vm[slot.fine]
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    BasicText("${slot.fine.min.toInt()}", style = retroLabel(8.sp, Color.White.copy(alpha = 0.5f)))
+                    ParamKnob(vm, slot.fine, if (isOsc3) 64.dp else 56.dp)
+                    BasicText("+${slot.fine.max.toInt()}", style = retroLabel(8.sp, Color.White.copy(alpha = 0.5f)))
+                }
+                val cents = fine.roundToInt()
+                BasicText(
+                    (if (cents > 0) "+" else if (cents < 0) "-" else "") + "${abs(cents)}¢ " + if (isOsc3) "PITCH" else "FINE",
+                    style = retroLabel(10.sp, if (abs(fine) < 0.5f) RetroLed else Color.White),
+                )
+            }
+        }
         WholeStepStepper(vm[slot.octave].roundToInt(), -3..3, "Octave") { vm.set(slot.octave, it.toFloat()) }
         WholeStepStepper(vm[slot.semitone].roundToInt(), -12..12, "Semitone") { vm.set(slot.semitone, it.toFloat()) }
-
-        // Continuous detune; OSC 3's is a wide ±700 cent "Pitch" knob for sync sweeps.
-        val fine = vm[slot.fine]
-        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                BasicText("${slot.fine.min.toInt()}", style = retroLabel(8.sp, Color.White.copy(alpha = 0.5f)))
-                ParamKnob(vm, slot.fine, if (isOsc3) 96.dp else 70.dp)
-                BasicText("+${slot.fine.max.toInt()}", style = retroLabel(8.sp, Color.White.copy(alpha = 0.5f)))
-            }
-            val cents = fine.roundToInt()
-            BasicText(
-                (if (cents > 0) "+" else if (cents < 0) "-" else "") + "${abs(cents)}¢",
-                style = retroLabel(11.sp, if (abs(fine) < 0.5f) RetroLed else Color.White),
-            )
-            BasicText(if (isOsc3) "PITCH" else "FINE", style = retroLabel())
-        }
-
-        if (isOsc3) {
-            Divider()
-            LedToggle("Sync to OSC 1", vm.isOn(SynthParam.Osc3SyncToOsc1)) { vm.toggle(SynthParam.Osc3SyncToOsc1) }
-        }
     }
 }
 
@@ -124,12 +124,12 @@ private fun WaveformScope(waveform: OscWaveform) {
     Box(
         Modifier
             .fillMaxWidth()
-            .height(70.dp)
+            .height(44.dp)
             .clip(RoundedCornerShape(8.dp))
             .background(Color.Black.copy(alpha = 0.35f))
-            .padding(8.dp)
+            .padding(6.dp)
     ) {
-        Canvas(Modifier.fillMaxWidth().height(54.dp)) {
+        Canvas(Modifier.fillMaxSize()) {
             val seed = if (waveform == OscWaveform.Pink) noise.toDouble() else 0.0
             drawPath(oscWavePath(waveform, size, noiseSeed = seed), RetroLed, style = Stroke(2.dp.toPx()))
         }

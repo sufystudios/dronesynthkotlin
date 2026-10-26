@@ -25,7 +25,6 @@ import androidx.compose.ui.unit.sp
 import xyz.sufystudios.synthguide.model.SynthParam
 import xyz.sufystudios.synthguide.model.SynthViewModel
 import xyz.sufystudios.synthguide.ui.components.ParamKnob
-import xyz.sufystudios.synthguide.ui.components.RetroHeader
 import xyz.sufystudios.synthguide.ui.components.RetroPanelChrome
 import xyz.sufystudios.synthguide.ui.components.RetroPowerSwitch
 import xyz.sufystudios.synthguide.ui.components.adsrPath
@@ -37,14 +36,23 @@ import xyz.sufystudios.synthguide.ui.theme.retroLabel
 @Composable
 fun EnvelopePanel(vm: SynthViewModel, modifier: Modifier = Modifier) {
     RetroPanelChrome(modifier) {
-        RetroHeader("ENVELOPE", ledLit = true)
+        // EG -> VCF: the same envelope patched to the filter cutoff, like patching a
+        // 911 to a filter on a modular rig. Short times make plucky cutoff "thwacks".
+        // Its switch shares the title row, and its amount the second knob row, to keep
+        // the drawer short enough for a phone in landscape.
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            BasicText("ENVELOPE", style = retroLabel(11.sp), maxLines = 1)
+            Spacer(Modifier.weight(1f))
+            BasicText("FILTER EG", style = retroLabel(9.sp), maxLines = 1)
+            RetroPowerSwitch(vm.isOn(SynthParam.FilterEnvEnabled), { vm.toggle(SynthParam.FilterEnvEnabled) }, "Filter envelope")
+        }
         Box(
             Modifier
                 .fillMaxWidth()
-                .height(90.dp)
+                .height(56.dp)
                 .clip(RoundedCornerShape(8.dp))
                 .background(Color(0xFF051408))
-                .padding(8.dp)
+                .padding(6.dp)
         ) {
             Canvas(Modifier.fillMaxSize()) {
                 val grid = Neon.copy(alpha = 0.25f)
@@ -63,34 +71,24 @@ fun EnvelopePanel(vm: SynthViewModel, modifier: Modifier = Modifier) {
         }
 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.Top) {
-            ParamKnob(vm, SynthParam.Glide, 52.dp, "GLIDE")
+            ParamKnob(vm, SynthParam.Glide, KnobSize, "GLIDE", labelStyle = retroLabel(9.sp))
             StageKnob(vm, SynthParam.Attack, "T1", "ATTACK")
             StageKnob(vm, SynthParam.Decay, "T2", "DECAY")
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.Top) {
             StageKnob(vm, SynthParam.Sustain, "ESUS", "SUSTAIN")
             StageKnob(vm, SynthParam.Release, "T3", "RELEASE")
-        }
-
-        Divider()
-
-        // EG -> VCF: the same envelope patched to the filter cutoff, like patching a
-        // 911 to a filter on a modular rig. Short times make plucky cutoff "thwacks".
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                BasicText("FILTER EG", style = retroLabel())
-                RetroPowerSwitch(vm.isOn(SynthParam.FilterEnvEnabled), { vm.toggle(SynthParam.FilterEnvEnabled) }, "Filter envelope")
-            }
-            ParamKnob(vm, SynthParam.FilterEnvAmount, 52.dp, "EG AMOUNT")
-            Spacer(Modifier.weight(1f))
+            ParamKnob(vm, SynthParam.FilterEnvAmount, KnobSize, "EG AMT", labelStyle = retroLabel(9.sp))
         }
     }
 }
 
+private val KnobSize = 44.dp
+
 @Composable
 private fun StageKnob(vm: SynthViewModel, param: SynthParam, code: String, name: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        ParamKnob(vm, param, 52.dp, code, labelStyle = retroLabel(9.sp))
+        ParamKnob(vm, param, KnobSize, code, labelStyle = retroLabel(9.sp))
         BasicText(name, style = retroLabel(7.sp, RetroAmber.copy(alpha = 0.7f), androidx.compose.ui.text.font.FontWeight.SemiBold))
     }
 }

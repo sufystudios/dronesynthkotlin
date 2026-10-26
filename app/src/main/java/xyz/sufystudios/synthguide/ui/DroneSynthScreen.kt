@@ -1,6 +1,7 @@
 package xyz.sufystudios.synthguide.ui
 
 import androidx.activity.compose.BackHandler
+import android.view.View
 import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -16,17 +17,13 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -34,6 +31,8 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,6 +45,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalView
+import androidx.core.graphics.Insets
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -101,6 +104,8 @@ fun DroneSynthScreen(vm: SynthViewModel) {
     val toggleTab: (DrawerTab) -> Unit = { tab -> openTab = if (openTab == tab) null else tab }
     // Back closes an open drawer before it leaves the app.
     BackHandler(enabled = openTab != null) { openTab = null }
+    var keyboardShown by rememberSaveable { mutableStateOf(true) }
+    val keys = KeyboardToggle(keyboardShown) { keyboardShown = !keyboardShown }
 
     BoxWithConstraints(Modifier.fillMaxSize().background(Color.Black)) {
         Backdrop(onTap = { openTab = null })
@@ -121,11 +126,41 @@ fun DroneSynthScreen(vm: SynthViewModel) {
             LocalKeyboardOctaves provides octaves,
         ) {
             if (landscape) {
-                LandscapeLayout(vm, openTab, toggleTab)
+                LandscapeLayout(vm, openTab, toggleTab, keys)
             } else {
-                PortraitLayout(vm, openTab, toggleTab)
+                PortraitLayout(vm, openTab, toggleTab, keys)
             }
         }
+    }
+}
+
+/** Whether the keyboard shows; hiding it gives the other controls its room. */
+private class KeyboardToggle(val shown: Boolean, val toggle: () -> Unit)
+
+/**
+ * Keeps clear of the status and navigation bars, display cutout and on-screen keyboard.
+ * Reads the window's insets afresh on every layout rather than using Compose's
+ * WindowInsets: the activity handles rotation itself, and on Android 10 those kept
+ * the old orientation's insets, leaving the landscape rail under the navigation buttons.
+ */
+@Composable
+private fun Modifier.safeAreaPadding(): Modifier {
+    val view = LocalView.current
+    var insets by remember { mutableStateOf(Insets.NONE) }
+    DisposableEffect(view) {
+        val root = view.rootView
+        fun read() {
+            val types = WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout() or WindowInsetsCompat.Type.ime()
+            ViewCompat.getRootWindowInsets(root)?.getInsets(types)?.let { if (it != insets) insets = it }
+        }
+        val listener = View.OnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> read() }
+        // Insets reach the window before the layout that follows them, rotation included.
+        root.addOnLayoutChangeListener(listener)
+        read()
+        onDispose { root.removeOnLayoutChangeListener(listener) }
+    }
+    return with(LocalDensity.current) {
+        padding(insets.left.toDp(), insets.top.toDp(), insets.right.toDp(), insets.bottom.toDp())
     }
 }
 
@@ -140,10 +175,11 @@ private fun Backdrop(onTap: () -> Unit) {
 // MARK: - Portrait
 
 @Composable
-private fun PortraitLayout(vm: SynthViewModel, openTab: DrawerTab?, toggleTab: (DrawerTab) -> Unit) {
-    BoxWithConstraints(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
+private fun PortraitLayout(vm: SynthViewModel, openTab: DrawerTab?, toggleTab: (DrawerTab) -> Unit, keys: KeyboardToggle) {
+    BoxWithConstraints(Modifier.fillMaxSize().safeAreaPadding()) {
         // Drawers open upward from just above the keyboard and scroll if they're taller than the room above it.
-        val drawerMaxHeight = maxHeight - KeyboardHeight - 16.dp
+        val keyboardHeight = if (keys.shown) KeyboardHeight else 0.dp
+        val drawerMaxHeight = maxHeight - keyboardHeight - 16.dp
         Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
             PillRow(vm, Modifier.padding(top = 6.dp, bottom = 4.dp))
             CutoffKnob(vm, 150.dp)
@@ -154,6 +190,8 @@ private fun PortraitLayout(vm: SynthViewModel, openTab: DrawerTab?, toggleTab: (
                     lower()
                     Spacer(Modifier.weight(1f))
                     DronePill(vm)
+                    Spacer(Modifier.width(8.dp))
+                    KeysPill(keys)
                     Spacer(Modifier.weight(1f))
                     upper()
                 }
@@ -164,13 +202,13 @@ private fun PortraitLayout(vm: SynthViewModel, openTab: DrawerTab?, toggleTab: (
                 ParamKnob(vm, SynthParam.Sustain, 50.dp, "Sustain", labelStyle = mainLabel)
                 ParamKnob(vm, SynthParam.Release, 50.dp, "Release", labelStyle = mainLabel)
             }
-            KeyboardPanel(vm, Modifier.fillMaxWidth().height(KeyboardHeight))
+            if (keys.shown) KeyboardPanel(vm, Modifier.fillMaxWidth().height(KeyboardHeight))
         }
 
         DrawerSide(vm, left = false, openTab, toggleTab, drawerMaxHeight,
-            Modifier.align(Alignment.BottomEnd).padding(bottom = KeyboardHeight + 10.dp))
+            Modifier.align(Alignment.BottomEnd).padding(bottom = keyboardHeight + 10.dp))
         DrawerSide(vm, left = true, openTab, toggleTab, drawerMaxHeight,
-            Modifier.align(Alignment.BottomStart).padding(bottom = KeyboardHeight + 10.dp))
+            Modifier.align(Alignment.BottomStart).padding(bottom = keyboardHeight + 10.dp))
     }
 }
 
@@ -271,31 +309,32 @@ private fun RailButton(vm: SynthViewModel, tab: DrawerTab, selected: Boolean, mo
 // MARK: - Landscape
 
 @Composable
-private fun LandscapeLayout(vm: SynthViewModel, openTab: DrawerTab?, toggleTab: (DrawerTab) -> Unit) {
-    BoxWithConstraints(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).padding(10.dp)) {
-        // Phones are short in landscape, so the top row keeps a fixed height and drawers
-        // scroll within it rather than growing over the keyboard (as on iPad). Taller
-        // screens (tablets, foldables) give their extra height to the drawers.
-        val topHeight = (maxHeight * 0.5f).coerceIn(220.dp, 400.dp)
-        Column(Modifier.fillMaxSize()) {
-            Row(Modifier.fillMaxWidth().height(topHeight)) {
-                LandscapeRail(vm, left = true, openTab, toggleTab)
-                LandscapeDrawer(vm, openTab?.takeIf { it.leftSide }, left = true)
-                Spacer(Modifier.weight(1f))
-                LandscapeFilterPanel(vm, Modifier.width(250.dp).fillMaxHeight())
-                Spacer(Modifier.weight(1f))
-                LandscapeDrawer(vm, openTab?.takeIf { !it.leftSide }, left = false)
-                LandscapeRail(vm, left = false, openTab, toggleTab)
-            }
-            Spacer(Modifier.height(10.dp))
-            KeyboardPanel(vm, Modifier.fillMaxWidth().weight(1f))
+private fun LandscapeLayout(vm: SynthViewModel, openTab: DrawerTab?, toggleTab: (DrawerTab) -> Unit, keys: KeyboardToggle) {
+    BoxWithConstraints(Modifier.fillMaxSize().safeAreaPadding().padding(10.dp)) {
+        // Phones are short in landscape, so the rails and filter panel keep a fixed height
+        // above the keyboard, and open drawers hang down over the keyboard (as on iPad),
+        // using the whole height before they scroll. Hiding the keyboard gives the rails it all.
+        val topHeight = if (keys.shown) (maxHeight * 0.5f).coerceIn(220.dp, 400.dp) else maxHeight
+        if (keys.shown) {
+            KeyboardPanel(vm, Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                .height((maxHeight - topHeight - 10.dp).coerceAtLeast(0.dp)))
+        }
+        // Laid over the keyboard; touches outside the rails, panel and drawers still reach it.
+        Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.Top) {
+            LandscapeRail(vm, left = true, openTab, toggleTab, Modifier.height(topHeight))
+            LandscapeDrawer(vm, openTab?.takeIf { it.leftSide }, left = true)
+            Spacer(Modifier.weight(1f))
+            LandscapeFilterPanel(vm, keys, Modifier.width(250.dp).height(topHeight))
+            Spacer(Modifier.weight(1f))
+            LandscapeDrawer(vm, openTab?.takeIf { !it.leftSide }, left = false)
+            LandscapeRail(vm, left = false, openTab, toggleTab, Modifier.height(topHeight))
         }
     }
 }
 
 @Composable
-private fun LandscapeRail(vm: SynthViewModel, left: Boolean, openTab: DrawerTab?, toggleTab: (DrawerTab) -> Unit) {
-    Column(Modifier.width(64.dp).fillMaxHeight().clip(RoundedCornerShape(10.dp))) {
+private fun LandscapeRail(vm: SynthViewModel, left: Boolean, openTab: DrawerTab?, toggleTab: (DrawerTab) -> Unit, modifier: Modifier) {
+    Column(modifier.width(64.dp).clip(RoundedCornerShape(10.dp))) {
         DrawerTab.entries.filter { it.leftSide == left }.forEach { tab ->
             RailButton(vm, tab, tab == openTab, Modifier.fillMaxWidth().weight(1f)) { toggleTab(tab) }
         }
@@ -315,7 +354,6 @@ private fun LandscapeDrawer(vm: SynthViewModel, tab: DrawerTab?, left: Boolean) 
             Modifier
                 .padding(horizontal = 8.dp)
                 .width(DrawerWidth)
-                .fillMaxHeight()
                 .clip(RoundedCornerShape(10.dp))
                 .verticalScroll(rememberScrollState())
         ) {
@@ -325,7 +363,7 @@ private fun LandscapeDrawer(vm: SynthViewModel, tab: DrawerTab?, left: Boolean) 
 }
 
 @Composable
-private fun LandscapeFilterPanel(vm: SynthViewModel, modifier: Modifier) {
+private fun LandscapeFilterPanel(vm: SynthViewModel, keys: KeyboardToggle, modifier: Modifier) {
     Column(
         modifier
             .clip(RoundedCornerShape(10.dp))
@@ -334,7 +372,10 @@ private fun LandscapeFilterPanel(vm: SynthViewModel, modifier: Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        PillRow(vm, compact = true)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            PillRow(vm, compact = true)
+            KeysPill(keys)
+        }
         // Side by side rather than stacked, to fit a phone's short landscape height.
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             CutoffKnob(vm, 90.dp)
@@ -422,6 +463,21 @@ private fun DronePill(vm: SynthViewModel) {
         val color = if (on) Neon else Color.White
         BasicText(if (on) "●" else "○", style = TextStyle(color = color, fontSize = 12.sp))
         BasicText("Drone", style = TextStyle(color = color, fontSize = 13.sp))
+    }
+}
+
+/** Hides or shows the keyboard. */
+@Composable
+private fun KeysPill(keys: KeyboardToggle) {
+    Box(
+        Modifier
+            .clip(CircleShape)
+            .background(Color.Black.copy(alpha = 0.4f))
+            .semantics { contentDescription = "Keyboard"; stateDescription = if (keys.shown) "Shown" else "Hidden" }
+            .clickable(role = Role.Switch, onClick = keys.toggle)
+            .padding(horizontal = 12.dp, vertical = 7.dp),
+    ) {
+        BasicText(if (keys.shown) "▾ Keys" else "▴ Keys", style = TextStyle(color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.SemiBold))
     }
 }
 

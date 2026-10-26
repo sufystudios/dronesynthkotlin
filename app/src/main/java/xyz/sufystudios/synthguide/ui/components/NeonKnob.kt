@@ -1,8 +1,10 @@
 package xyz.sufystudios.synthguide.ui.components
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
@@ -18,6 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.progressBarRangeInfo
@@ -61,12 +64,18 @@ fun NeonKnob(
                 setProgress { onChange(it.coerceIn(0f, 1f)); true }
             }
             .pointerInput(Unit) {
-                var dragged = current
-                detectDragGestures(onDragStart = { dragged = current }) { change, amount ->
-                    change.consume()
-                    // Full sweep takes about 2.5 knob-widths of travel, horizontal or vertical.
-                    dragged = (dragged + (amount.x - amount.y) / (size.width * 2.5f)).coerceIn(0f, 1f)
-                    onChange(dragged)
+                // The knob takes the touch as it lands, with no slop to cross first, so it
+                // follows the finger from the first pixel and a drawer's scroll can't steal it.
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    var dragged = current
+                    drag(down.id) { change ->
+                        val amount = change.positionChange()
+                        change.consume()
+                        // Full sweep takes about 2.5 knob-widths of travel, horizontal or vertical.
+                        dragged = (dragged + (amount.x - amount.y) / (size.width * 2.5f)).coerceIn(0f, 1f)
+                        onChange(dragged)
+                    }
                 }
             }
             .pointerInput(onDoubleTap) {

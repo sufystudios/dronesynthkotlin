@@ -23,11 +23,11 @@ data class SequencerSettings(
     val playing: Boolean = false,
     val hold: Boolean = false,
     /** 20..300. */
-    val bpm: Double = 120.0,
-    val division: StepDivision = StepDivision.Sixteenth,
+    val bpm: Double = 80.0,
+    val division: StepDivision = StepDivision.Quarter,
     /** Share of each step a note sounds, 0.05..1. */
     val gate: Float = 0.5f,
-    val order: ArpOrder = ArpOrder.Played,
+    val order: ArpOrder = ArpOrder.Random,
     /** Octaves played above the held keys, 0..2. */
     val extraOctaves: Int = 0,
     /** 0 until [Sequencer.PATTERNS]. */
