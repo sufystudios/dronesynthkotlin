@@ -72,7 +72,8 @@ private val CapBlue = Color(0xFF0A84FF)
 fun ArpSeqPanel(vm: SynthViewModel, modifier: Modifier = Modifier) {
     val s = vm.sequencer
     val state = vm.sequencerState
-    RetroPanelChrome(modifier) {
+    // Tight spacing, caps and knobs keep the drawer short enough for a phone in landscape.
+    RetroPanelChrome(modifier, spacing = 6.dp) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             StatusLed(s.playing)
             Spacer(Modifier.width(6.dp))
@@ -88,13 +89,13 @@ fun ArpSeqPanel(vm: SynthViewModel, modifier: Modifier = Modifier) {
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.Top) {
-            LooperCapButton("Play", Neon, active = s.playing, size = 40.dp, enabled = s.mode != SequencerMode.Rec) {
+            LooperCapButton("Play", Neon, active = s.playing, size = 36.dp, enabled = s.mode != SequencerMode.Rec) {
                 vm.updateSequencer { it.copy(playing = !it.playing) }
             }
             if (s.mode == SequencerMode.Rec) {
-                LooperCapButton("Rest/Tie", CapBlue, size = 40.dp, onClick = vm::sequencerRestOrTie)
+                LooperCapButton("Rest/Tie", CapBlue, size = 36.dp, onClick = vm::sequencerRestOrTie)
             } else {
-                LooperCapButton("Hold", CapBlue, active = s.hold, size = 40.dp) { vm.updateSequencer { it.copy(hold = !it.hold) } }
+                LooperCapButton("Hold", CapBlue, active = s.hold, size = 36.dp) { vm.updateSequencer { it.copy(hold = !it.hold) } }
             }
             TempoTapButton(vm::sequencerTapTempo)
         }
@@ -105,7 +106,7 @@ fun ArpSeqPanel(vm: SynthViewModel, modifier: Modifier = Modifier) {
                 NeonKnob(
                     position = bpmPosition(s.bpm),
                     onPositionChange = { p -> vm.updateSequencer { it.copy(bpm = bpmAt(p)) } },
-                    modifier = Modifier.size(46.dp),
+                    modifier = Modifier.size(40.dp),
                     description = "Rate",
                     onDoubleTap = { vm.updateSequencer { it.copy(bpm = SequencerSettings().bpm) } },
                 )
@@ -119,7 +120,7 @@ fun ArpSeqPanel(vm: SynthViewModel, modifier: Modifier = Modifier) {
                 NeonKnob(
                     position = (s.gate - min) / (1f - min),
                     onPositionChange = { p -> vm.updateSequencer { it.copy(gate = min + p * (1f - min)) } },
-                    modifier = Modifier.size(46.dp),
+                    modifier = Modifier.size(40.dp),
                     description = "Gate",
                     onDoubleTap = { vm.updateSequencer { it.copy(gate = SequencerSettings().gate) } },
                 )
@@ -127,7 +128,7 @@ fun ArpSeqPanel(vm: SynthViewModel, modifier: Modifier = Modifier) {
             }
         }
 
-        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
             BasicText("DIVISION", style = retroLabel(color = RetroAmber.copy(alpha = 0.85f)))
             RetroTabBar(StepDivision.entries.map { it.label }, s.division.ordinal, { i ->
                 vm.updateSequencer { it.copy(division = StepDivision.entries[i]) }
@@ -177,7 +178,7 @@ private fun ThreeWaySwitch(title: String, labels: List<String>, selected: Int, m
     Column(
         modifier.semantics { contentDescription = title; stateDescription = labels[selected.coerceIn(labels.indices)] },
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(3.dp),
     ) {
         BasicText(title, style = retroLabel(color = RetroAmber.copy(alpha = 0.85f)))
         Row(Modifier.fillMaxWidth()) {
@@ -249,7 +250,7 @@ private fun ArpSeqReadout(s: SequencerSettings, state: SequencerState) {
             .fillMaxWidth()
             .background(Color.Black.copy(alpha = 0.6f))
             .border(1.dp, RetroAmber.copy(alpha = 0.3f), RoundedCornerShape(3.dp))
-            .padding(8.dp),
+            .padding(6.dp),
     ) {
         val style = retroLabel(10.sp, RetroLed, androidx.compose.ui.text.font.FontWeight.SemiBold)
         BasicText("${s.bpm.roundToInt()} BPM ${s.division.label}", style = style, maxLines = 1)

@@ -1,7 +1,6 @@
-MORE ROOM TO PLAY
-- Hide the keyboard with the new Keys button for more space for the controls
-- In landscape, drawers now open over the keyboard, so they rarely need scrolling
-- Slimmer ADSR and OSC drawers
-- Knobs respond the moment you touch them, and no longer scroll the drawer by mistake
-- The arpeggiator now starts at a relaxed 80 BPM, in quarter notes, in random order
-- Fixed: after rotating, the side tabs could sit under the Android navigation buttons
+TIGHTER DRAWERS
+- The filter cutoff now starts with its knob at 12 o'clock (about 894 Hz), and you can double-tap it to reset
+- The Modulation, Delay, Tune and ARP/SEQ drawers are shorter, so they fit on a phone in landscape
+- Delay: Reset now sits in the title bar, and the labels are next to their controls
+- Modulation: the on/off switch is in the title bar, and Depth is next to Rate and Random
+- Tune: the −/+ cent buttons are on either side of the knob

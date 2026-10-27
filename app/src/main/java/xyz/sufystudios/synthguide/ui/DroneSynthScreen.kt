@@ -396,7 +396,7 @@ private fun LandscapeFilterPanel(vm: SynthViewModel, keys: KeyboardToggle, modif
 
 @Composable
 private fun CutoffKnob(vm: SynthViewModel, size: Dp) {
-    ParamKnob(vm, SynthParam.Cutoff, size, resettable = false)
+    ParamKnob(vm, SynthParam.Cutoff, size)
 }
 
 /** One resonance knob in mono; separate L and R knobs once the stereo filters are on. */

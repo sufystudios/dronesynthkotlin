@@ -115,29 +115,27 @@ fun TuningPanel(vm: SynthViewModel, modifier: Modifier = Modifier) {
             return@RetroPanelChrome
         }
 
-        // The knob, 0 straight up, with its scale around it; double-tap resets.
-        Box(Modifier.size(130.dp), contentAlignment = Alignment.Center) {
-            KnobScale()
-            NeonKnob(
-                position = param.toPosition(cents),
-                onPositionChange = { vm.set(param, param.fromPosition(it)) },
-                modifier = Modifier
-                    .size(92.dp)
-                    .semantics { stateDescription = "%+d cents".format(roundedCents) },
-                description = "Master tune",
-                onDoubleTap = { vm.set(param, param.default) },
-            )
-        }
-
-        // One cent at a time, for landing exactly on a pitch like 432 Hz.
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp)) {
+        // The knob, 0 straight up, with its scale around it; double-tap resets. Either
+        // side, one cent at a time, for landing exactly on a pitch like 432 Hz.
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             // Steps to the next whole cent, so a dragged in-between value lands on one.
             NudgeButton("−", "Down one cent") { vm.set(param, (cents - 1f).roundToInt().toFloat()) }
-            BasicText("1 CENT", style = retroLabel(color = RetroAmber.copy(alpha = 0.7f)))
+            Box(Modifier.size(120.dp), contentAlignment = Alignment.Center) {
+                KnobScale()
+                NeonKnob(
+                    position = param.toPosition(cents),
+                    onPositionChange = { vm.set(param, param.fromPosition(it)) },
+                    modifier = Modifier
+                        .size(86.dp)
+                        .semantics { stateDescription = "%+d cents".format(roundedCents) },
+                    description = "Master tune",
+                    onDoubleTap = { vm.set(param, param.default) },
+                )
+            }
             NudgeButton("+", "Up one cent") { vm.set(param, (cents + 1f).roundToInt().toFloat()) }
         }
 
-        BasicText("DOUBLE-TAP KNOB TO RESET", style = retroLabel(color = RetroAmber.copy(alpha = 0.6f)))
+        BasicText("±1 CENT · DOUBLE-TAP TO RESET", style = retroLabel(color = RetroAmber.copy(alpha = 0.6f)))
     }
 }
 
@@ -145,7 +143,7 @@ fun TuningPanel(vm: SynthViewModel, modifier: Modifier = Modifier) {
 @Composable
 private fun StandardPitches(cents: Float, onSelect: (Float) -> Unit) {
     val (standard, others) = standardPitches.partition { it.hertz == 440 }
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(5.dp)) {
         standard.forEach { PitchButton(it, cents, onSelect, Modifier.fillMaxWidth()) }
         others.chunked(2).forEach { row ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -167,7 +165,7 @@ private fun PitchButton(pitch: StandardPitch, cents: Float, onSelect: (Float) ->
             .border(1.dp, if (selected) RetroLed else RetroAmber.copy(alpha = 0.3f), RoundedCornerShape(3.dp))
             .semantics { this.selected = selected }
             .clickable(role = Role.RadioButton) { onSelect(target) }
-            .padding(vertical = 6.dp),
+            .padding(vertical = 5.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         BasicText("${pitch.hertz} Hz", style = retroLabel(13.sp, if (selected) RetroLed else Color.White, FontWeight.SemiBold))
@@ -210,9 +208,9 @@ private fun KnobScale() {
                 )
             }
         }
-        ScaleLabel("-100", 0.2 * PI, 75)
-        ScaleLabel("0", PI, 73)
-        ScaleLabel("+100", 1.8 * PI, 75)
+        ScaleLabel("-100", 0.2 * PI, 69)
+        ScaleLabel("0", PI, 67)
+        ScaleLabel("+100", 1.8 * PI, 69)
     }
 }
 

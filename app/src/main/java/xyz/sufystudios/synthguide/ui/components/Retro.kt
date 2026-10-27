@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
@@ -49,6 +50,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import xyz.sufystudios.synthguide.ui.theme.RetroAmber
@@ -60,22 +62,22 @@ import kotlin.math.roundToInt
 
 /** Shared chrome for every drawer: dark brown panel, thin amber border. */
 @Composable
-fun RetroPanelChrome(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+fun RetroPanelChrome(modifier: Modifier = Modifier, spacing: Dp = 10.dp, content: @Composable ColumnScope.() -> Unit) {
     Column(
         modifier
             .clip(RoundedCornerShape(6.dp))
             .background(RetroPanel)
             .border(1.dp, RetroAmber.copy(alpha = 0.4f), RoundedCornerShape(6.dp))
             .padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(spacing),
         horizontalAlignment = Alignment.CenterHorizontally,
         content = content,
     )
 }
 
-/** Panel title row: optional reels either side, a title and a status LED. */
+/** Panel title row: optional reels either side, a title, a status LED and a control after it. */
 @Composable
-fun RetroHeader(title: String, ledLit: Boolean? = null, reels: Boolean = false) {
+fun RetroHeader(title: String, ledLit: Boolean? = null, reels: Boolean = false, trailing: (@Composable () -> Unit)? = null) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         if (reels) {
             RetroReel()
@@ -84,6 +86,7 @@ fun RetroHeader(title: String, ledLit: Boolean? = null, reels: Boolean = false) 
         BasicText(title, style = retroLabel(11.sp), maxLines = 1)
         Spacer(Modifier.weight(1f))
         if (ledLit != null) StatusLed(ledLit)
+        trailing?.invoke()
         if (reels) {
             Spacer(Modifier.width(6.dp))
             RetroReel()
@@ -176,21 +179,23 @@ fun LedToggle(label: String, lit: Boolean, onToggle: () -> Unit) {
 
 /** A row of tappable segments bound to an index. */
 @Composable
-fun RetroSegmentRow(labels: List<String>, selected: Int, onSelect: (Int) -> Unit) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+fun RetroSegmentRow(labels: List<String>, selected: Int, modifier: Modifier = Modifier, onSelect: (Int) -> Unit) {
+    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
         labels.forEachIndexed { i, label ->
             Box(
                 Modifier
                     .weight(1f)
                     .background(Color.Black.copy(alpha = 0.5f))
                     .clickable(role = Role.RadioButton) { onSelect(i) }
-                    .padding(vertical = 6.dp),
+                    .padding(vertical = 5.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 BasicText(
                     label.uppercase(),
                     style = retroLabel(8.sp, if (i == selected) RetroLed else RetroDim).copy(textAlign = TextAlign.Center),
                     maxLines = 1,
+                    // Shrinks a long label (PING-PONG) to fit a narrow row rather than cutting it off.
+                    autoSize = TextAutoSize.StepBased(minFontSize = 5.sp, maxFontSize = 8.sp),
                 )
             }
         }
@@ -240,7 +245,7 @@ fun RetroFader(label: String, value: Float, range: ClosedFloatingPointRange<Floa
         BoxWithConstraints(
             Modifier
                 .weight(1f)
-                .height(34.dp)
+                .height(30.dp)
                 .semantics { contentDescription = label; stateDescription = "${value.roundToInt()}" }
         ) {
             val density = LocalDensity.current
@@ -262,7 +267,7 @@ fun RetroFader(label: String, value: Float, range: ClosedFloatingPointRange<Floa
                         detectDragGestures { change, _ -> change.consume(); onValue(valueAt(change.position.x)) }
                     }
                     .drawBehind {
-                        val y = size.height / 2f + 6.dp.toPx()
+                        val y = size.height / 2f + 5.dp.toPx()
                         drawLine(Color.Black.copy(alpha = 0.75f), Offset(capPx / 2f, y), Offset(size.width - capPx / 2f, y), 3.dp.toPx())
                         for (x in listOf(4.dp.toPx(), size.width - 4.dp.toPx())) {
                             drawCircle(Color(0xFF1A1A1A), 4.dp.toPx(), Offset(x, y))
@@ -277,7 +282,7 @@ fun RetroFader(label: String, value: Float, range: ClosedFloatingPointRange<Floa
                 BasicText("${value.roundToInt()}", style = retroLabel(9.sp, RetroAmber, androidx.compose.ui.text.font.FontWeight.SemiBold))
                 Box(
                     Modifier
-                        .size(capWidth, 18.dp)
+                        .size(capWidth, 16.dp)
                         .clip(RoundedCornerShape(3.dp))
                         .background(Brush.verticalGradient(listOf(Color(0xFF474747), Color(0xFF141414)))),
                     contentAlignment = Alignment.Center,
@@ -315,7 +320,7 @@ fun LedBarSlider(position: Float, onChange: (Float) -> Unit, segments: Int = 10,
     }
 }
 
-/** The plain "Reset" button at the bottom of the Delay and Reverb drawers. */
+/** The plain "Reset" button at the bottom of the Reverb drawer. */
 @Composable
 fun ResetButton(onClick: () -> Unit) {
     Box(
@@ -328,5 +333,19 @@ fun ResetButton(onClick: () -> Unit) {
         contentAlignment = Alignment.Center,
     ) {
         BasicText("Reset", style = retroLabel(11.sp, Color.White, androidx.compose.ui.text.font.FontWeight.SemiBold))
+    }
+}
+
+/** Reset as a small button for a title row, where a drawer has no room for a full-width one. */
+@Composable
+fun CompactResetButton(onClick: () -> Unit) {
+    Box(
+        Modifier
+            .clip(RoundedCornerShape(4.dp))
+            .background(Color.Black.copy(alpha = 0.4f))
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+    ) {
+        BasicText("RESET", style = retroLabel(8.sp, Color.White))
     }
 }

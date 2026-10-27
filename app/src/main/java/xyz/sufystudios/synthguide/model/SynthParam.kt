@@ -1,6 +1,7 @@
 package xyz.sufystudios.synthguide.model
 
 import kotlin.math.pow
+import kotlin.math.sqrt
 
 /** How a knob's 0..1 position maps onto a parameter's range. */
 enum class Taper {
@@ -27,8 +28,9 @@ enum class SynthParam(
     val default: Float,
     val taper: Taper = Taper.Linear,
 ) {
-    // Filter
-    Cutoff(0, "cutoff", 40f, 20_000f, 200f, Taper.Log),
+    // Filter. The cutoff starts, and double-tap resets, with its knob at 12 o'clock:
+    // halfway along its log sweep, about 894 Hz.
+    Cutoff(0, "cutoff", 40f, 20_000f, 40f * sqrt(20_000f / 40f), Taper.Log),
     LeftResonance(1, "leftResonance", 0f, 0.99f, 0.5f),
     RightResonance(2, "rightResonance", 0f, 0.99f, 0.5f),
     StereoFilters(3, "stereoFiltersEnabled", 0f, 1f, 0f),

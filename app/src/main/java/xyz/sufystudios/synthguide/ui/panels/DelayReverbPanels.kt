@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
@@ -31,6 +33,7 @@ import xyz.sufystudios.synthguide.model.DelayMix
 import xyz.sufystudios.synthguide.model.ReverbKind
 import xyz.sufystudios.synthguide.model.SynthParam
 import xyz.sufystudios.synthguide.model.SynthViewModel
+import xyz.sufystudios.synthguide.ui.components.CompactResetButton
 import xyz.sufystudios.synthguide.ui.components.LedBarSlider
 import xyz.sufystudios.synthguide.ui.components.ParamKnob
 import xyz.sufystudios.synthguide.ui.components.ResetButton
@@ -50,8 +53,13 @@ import kotlin.math.roundToInt
  */
 @Composable
 fun DelayPanel(vm: SynthViewModel, modifier: Modifier = Modifier) {
-    RetroPanelChrome(modifier) {
-        RetroHeader("VINTAGE DELAY", ledLit = vm[SynthParam.DelayWet] > 0f, reels = true)
+    // Names sit beside their controls rather than under them, and Reset in the title
+    // row, to keep the drawer short enough for a phone in landscape.
+    RetroPanelChrome(modifier, spacing = 6.dp) {
+        RetroHeader("VINTAGE DELAY", ledLit = vm[SynthParam.DelayWet] > 0f) {
+            Spacer(Modifier.width(6.dp))
+            CompactResetButton(vm::resetDelay)
+        }
         DelayReadout(vm)
 
         Column(
@@ -59,26 +67,26 @@ fun DelayPanel(vm: SynthViewModel, modifier: Modifier = Modifier) {
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(4.dp))
                 .background(Color.Black.copy(alpha = 0.3f))
-                .padding(horizontal = 8.dp, vertical = 6.dp),
+                .padding(horizontal = 8.dp, vertical = 4.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(24.dp), verticalAlignment = Alignment.Top) {
-                ParamKnob(vm, SynthParam.DelayTime, 54.dp, "TIME", resettable = false)
-                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Box(
-                        Modifier
-                            .size(48.dp)
-                            .clip(CircleShape)
-                            .background(Brush.radialGradient(listOf(RetroLed, Color(0xFF801A0D))))
-                            .semantics { contentDescription = "Tap tempo" }
-                            .clickable(role = Role.Button) { vm.tapTempo() },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        BasicText("TAP", style = retroLabel(9.sp, Color.White))
-                    }
-                    BasicText("SETS TIME", style = retroLabel(8.sp, RetroAmber.copy(alpha = 0.7f)))
+            Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                ParamKnob(vm, SynthParam.DelayTime, 42.dp, resettable = false)
+                BasicText("TIME", style = retroLabel(), modifier = Modifier.padding(start = 6.dp))
+                Spacer(Modifier.weight(1f).widthIn(min = 8.dp))
+                Box(
+                    Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(Brush.radialGradient(listOf(RetroLed, Color(0xFF801A0D))))
+                        .semantics { contentDescription = "Tap tempo" }
+                        .clickable(role = Role.Button) { vm.tapTempo() },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    BasicText("TAP", style = retroLabel(9.sp, Color.White))
                 }
+                BasicText("SETS\nTIME", style = retroLabel(8.sp, RetroAmber.copy(alpha = 0.7f)), modifier = Modifier.padding(start = 6.dp))
             }
             for ((label, param) in listOf(
                 "SUBDIVIDE" to SynthParam.DelaySubdivide,
@@ -90,23 +98,24 @@ fun DelayPanel(vm: SynthViewModel, modifier: Modifier = Modifier) {
         }
 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            SmallKnob(vm, SynthParam.DelayFeedback, "FEEDBACK")
-            SmallKnob(vm, SynthParam.DelayWidth, "WIDTH")
-            SmallKnob(vm, SynthParam.DelayWet, "AMOUNT")
-            SmallKnob(vm, SynthParam.DelayDry, "DRY")
+            SmallKnob(vm, SynthParam.DelayFeedback, "FEEDBACK", 40.dp)
+            SmallKnob(vm, SynthParam.DelayWidth, "WIDTH", 40.dp)
+            SmallKnob(vm, SynthParam.DelayWet, "AMOUNT", 40.dp)
+            SmallKnob(vm, SynthParam.DelayDry, "DRY", 40.dp)
         }
 
-        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            BasicText("MIX MODE", style = retroLabel())
-            RetroSegmentRow(DelayMix.entries.map { it.label }, vm[SynthParam.DelayMixMode].roundToInt()) {
-                vm.set(SynthParam.DelayMixMode, it.toFloat())
-            }
-            BasicText("MEDIUM", style = retroLabel(), modifier = Modifier.padding(top = 2.dp))
-            RetroSegmentRow(DelayMediumKind.entries.map { it.label }, vm[SynthParam.DelayMedium].roundToInt()) {
-                vm.set(SynthParam.DelayMedium, it.toFloat())
+        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            for ((label, row) in listOf(
+                "MIX" to Pair(SynthParam.DelayMixMode, DelayMix.entries.map { it.label }),
+                "MEDIUM" to Pair(SynthParam.DelayMedium, DelayMediumKind.entries.map { it.label }),
+            )) {
+                val (param, labels) = row
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    BasicText(label, style = retroLabel(), modifier = Modifier.width(44.dp))
+                    RetroSegmentRow(labels, vm[param].roundToInt(), Modifier.weight(1f)) { vm.set(param, it.toFloat()) }
+                }
             }
         }
-        ResetButton(vm::resetDelay)
     }
 }
 
@@ -122,7 +131,7 @@ private fun DelayReadout(vm: SynthViewModel) {
             .fillMaxWidth()
             .background(Color.Black.copy(alpha = 0.6f))
             .border(1.dp, RetroAmber.copy(alpha = 0.3f), RoundedCornerShape(3.dp))
-            .padding(8.dp),
+            .padding(6.dp),
         verticalAlignment = Alignment.Top,
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {

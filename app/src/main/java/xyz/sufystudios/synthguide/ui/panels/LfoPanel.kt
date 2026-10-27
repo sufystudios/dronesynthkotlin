@@ -7,7 +7,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,7 +21,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
@@ -52,13 +50,15 @@ fun LfoPanel(vm: SynthViewModel, modifier: Modifier = Modifier) {
     val enabled = vm.isOn(lfo.enabled)
     val shape = LfoShape.entries[vm[lfo.shape].roundToInt().coerceIn(0, 3)]
     RetroPanelChrome(modifier) {
-        RetroHeader("MODULATION", ledLit = enabled)
+        // The on/off shares the title row, and DEPTH the knob row, to keep the drawer
+        // short enough for a phone in landscape.
+        RetroHeader("MODULATION") { LedToggle(lfo.label, enabled) { vm.toggle(lfo.enabled) } }
         RetroTabBar(LfoParams.all.map { it.label }, selected, { selected = it })
 
         Box(
             Modifier
                 .fillMaxWidth()
-                .height(80.dp)
+                .height(60.dp)
                 .clip(RoundedCornerShape(8.dp))
                 .background(Color.Black.copy(alpha = 0.35f))
         ) {
@@ -86,15 +86,8 @@ fun LfoPanel(vm: SynthViewModel, modifier: Modifier = Modifier) {
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-            ParamKnob(vm, lfo.rate, 54.dp, "RATE")
-            ParamKnob(vm, lfo.randomize, 54.dp, "RANDOM")
-        }
-
-        Divider()
-
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            LedToggle(lfo.label, enabled) { vm.toggle(lfo.enabled) }
-            Spacer(Modifier.weight(1f))
+            ParamKnob(vm, lfo.rate, 50.dp, "RATE")
+            ParamKnob(vm, lfo.randomize, 50.dp, "RANDOM")
             ParamKnob(vm, lfo.depth, 50.dp, "DEPTH", enabled = enabled)
         }
     }
