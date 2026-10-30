@@ -87,7 +87,8 @@ fun LfoPanel(vm: SynthViewModel, modifier: Modifier = Modifier) {
 
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
             ParamKnob(vm, lfo.rate, 50.dp, "RATE")
-            ParamKnob(vm, lfo.randomize, 50.dp, "RANDOM")
+            // RANDOM only affects the Random shape, so only it shows the knob.
+            if (shape == LfoShape.Random) ParamKnob(vm, lfo.randomize, 50.dp, "RANDOM")
             ParamKnob(vm, lfo.depth, 50.dp, "DEPTH", enabled = enabled)
         }
     }

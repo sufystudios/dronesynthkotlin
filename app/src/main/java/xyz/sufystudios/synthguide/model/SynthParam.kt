@@ -77,7 +77,7 @@ enum class SynthParam(
     Osc3SyncToOsc1(36, "osc3SyncToOsc1", 0f, 1f, 0f),
 
     // LFO: Filter
-    FilterLfoShape(37, "filterLFOShape", 0f, 3f, 0f),
+    FilterLfoShape(37, "filterLFOShape", 0f, 3f, 3f),  // Random
     FilterLfoRate(38, "filterLFORate", 0.05f, 20f, 2f, Taper.Log),
     FilterLfoRandomize(39, "filterLFORandomize", 0f, 1f, 0.3f),
     FilterLfoEnabled(40, "filterLFOEnabled", 0f, 1f, 0f),

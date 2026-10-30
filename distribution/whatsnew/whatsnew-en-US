@@ -1,6 +1,4 @@
-TIGHTER DRAWERS
-- The filter cutoff now starts with its knob at 12 o'clock (about 894 Hz), and you can double-tap it to reset
-- The Modulation, Delay, Tune and ARP/SEQ drawers are shorter, so they fit on a phone in landscape
-- Delay: Reset now sits in the title bar, and the labels are next to their controls
-- Modulation: the on/off switch is in the title bar, and Depth is next to Rate and Random
-- Tune: the −/+ cent buttons are on either side of the knob
+EASIER TO STOP
+- While a drone plays in the background, Drone Synth now shows as a media player in your notification shade and on the lock screen: tap Pause or Stop to silence it without opening the app
+- Modulation: the Random knob now only appears on the Random shape, and Sine, Triangle and Square are steady again
+- The filter LFO starts on the Random shape

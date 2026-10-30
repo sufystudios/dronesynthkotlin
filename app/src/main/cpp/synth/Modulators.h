@@ -35,8 +35,9 @@ private:
 /// Shapes, in the same order as the iOS LFOShape enum.
 enum class LfoShape : int { Sine = 0, Triangle = 1, Square = 2, Random = 3 };
 
-/// The iOS app's LFOEngine: a free-running LFO whose rate and amplitude wander
-/// slightly (scaled by `randomize`) so it never repeats with mechanical perfection.
+/// The iOS app's LFOEngine: a free-running LFO. On the Random shape its rate and
+/// amplitude also wander slightly (scaled by `randomize`) so it never repeats with
+/// mechanical perfection.
 class DriftingLfo {
 public:
     explicit DriftingLfo(uint32_t seed) : random_(seed) {}
@@ -50,12 +51,14 @@ public:
         if (random_.next() < dt / 0.5f) wanderTarget_ = random_.nextBipolar();
         wander_ += (wanderTarget_ - wander_) * 0.05f;
 
-        const float rateJitter = 1.0f + wander_ * 0.4f * randomize;
+        // Only the Random shape wanders; Sine, Triangle and Square stay steady.
+        const float drift = shape == LfoShape::Random ? randomize : 0.0f;
+        const float rateJitter = 1.0f + wander_ * 0.4f * drift;
         const float effectiveRate = std::max(0.01f, rate * rateJitter);
         phase_ += double(effectiveRate) * dt;
         if (phase_ > 1.0e6) phase_ = std::fmod(phase_, 1.0);
 
-        const float ampJitter = 1.0f + wander_ * 0.15f * randomize;
+        const float ampJitter = 1.0f + wander_ * 0.15f * drift;
         return waveValue() * ampJitter;
     }
 
