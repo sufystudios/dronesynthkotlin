@@ -1,4 +1,4 @@
-EASIER TO STOP
-- While a drone plays in the background, Drone Synth now shows as a media player in your notification shade and on the lock screen: tap Pause or Stop to silence it without opening the app
-- Modulation: the Random knob now only appears on the Random shape, and Sine, Triangle and Square are steady again
-- The filter LFO starts on the Random shape
+STEADIER WHEN YOU SWITCH OUTPUTS
+- Your loop and the arpeggiator now carry on if headphones or a USB interface change the audio rate. A recording under way stops cleanly and is kept
+- Sharing a recording now works at high sample rates
+- Now and then, Drone Synth may ask you to rate it on Google Play. It's rare, and never while you're recording

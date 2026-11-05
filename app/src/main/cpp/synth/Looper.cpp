@@ -7,18 +7,87 @@
 
 namespace synth {
 
+namespace {
+
+constexpr int kKernelZeroCrossings = 12;
+constexpr int kKernelResolution = 256;
+
+/// Half of a Blackman-windowed sinc, sampled kKernelResolution times per zero crossing.
+std::vector<float> makeKernel() {
+    std::vector<float> kernel(size_t(kKernelZeroCrossings * kKernelResolution) + 2, 0.0f);
+    for (int i = 0; i <= kKernelZeroCrossings * kKernelResolution; ++i) {
+        const double x = double(i) / kKernelResolution;
+        const double t = x / kKernelZeroCrossings;
+        const double sinc = i == 0 ? 1.0 : std::sin(M_PI * x) / (M_PI * x);
+        kernel[size_t(i)] = float(sinc * (0.42 + 0.5 * std::cos(M_PI * t) + 0.08 * std::cos(2.0 * M_PI * t)));
+    }
+    return kernel;
+}
+
+/// Resamples a stereo loop to `dstLength` frames. Reading wraps around the loop's ends,
+/// so its wrap stays seamless. Not real-time safe.
+void resampleLoop(const float *src, int32_t srcLength, float *dst, int32_t dstLength) {
+    static const std::vector<float> kernel = makeKernel();
+    const double step = double(srcLength) / double(dstLength);
+    // Going down in rate, stay under the new Nyquist; going up, nothing needs removing.
+    const double cutoff = std::min(1.0, double(dstLength) / double(srcLength)) * 0.97;
+    const int width = int(std::ceil(kKernelZeroCrossings / cutoff));
+    const float gain = float(cutoff);
+    for (int32_t i = 0; i < dstLength; ++i) {
+        const double position = double(i) * step;
+        const int32_t centre = int32_t(position);
+        const double fraction = position - double(centre);
+        float left = 0.0f, right = 0.0f;
+        for (int k = 1 - width; k <= width; ++k) {
+            const double scaled = std::fabs((double(k) - fraction) * cutoff) * kKernelResolution;
+            const int index = int(scaled);
+            if (index >= kKernelZeroCrossings * kKernelResolution) continue;
+            const float blend = float(scaled - double(index));
+            const float h = kernel[size_t(index)] + blend * (kernel[size_t(index) + 1] - kernel[size_t(index)]);
+            int32_t frame = (centre + k) % srcLength;
+            if (frame < 0) frame += srcLength;
+            left += h * src[2 * frame];
+            right += h * src[2 * frame + 1];
+        }
+        dst[2 * i] = left * gain;
+        dst[2 * i + 1] = right * gain;
+    }
+}
+
+} // namespace
+
 void Looper::prepare(double sampleRate) {
-    capacity_ = int32_t(kMaxSeconds * sampleRate);
-    bufferA_.assign(size_t(capacity_) * 2, 0.0f);
-    bufferB_.assign(size_t(capacity_) * 2, 0.0f);
+    if (sampleRate == sampleRate_) return;
+    // A new output at another rate: anything being captured ends here, and what's
+    // already there is converted, so the loop plays on at the same pitch and speed.
+    if (recording_) {
+        const int32_t end = finishing_ ? loopEnd_ : recorded_a_ - crossfadeFrames_;
+        loopEnd_ = std::min(end, recorded_a_ - crossfadeFrames_);
+        finishRecording();
+    }
+    stopOverdub();
+
+    const int32_t capacity = int32_t(kMaxSeconds * sampleRate);
+    std::vector<float> bufferA(size_t(capacity) * 2, 0.0f);
+    std::vector<float> bufferB(size_t(capacity) * 2, 0.0f);
+    if (length_a_ > 0) {
+        const double ratio = sampleRate / sampleRate_;
+        const int32_t length = std::clamp(int32_t(std::lround(double(length_a_) * ratio)), 1, capacity);
+        resampleLoop(current_, length_a_, bufferA.data(), length);
+        if (canUndo_) resampleLoop(undo_, length_a_, bufferB.data(), length);
+        position_a_ = std::min(int32_t(double(position_a_) * ratio), length - 1);
+        length_a_ = length;
+    }
+    bufferA_.swap(bufferA);
+    bufferB_.swap(bufferB);
     current_ = bufferA_.data();
     undo_ = bufferB_.data();
+    sampleRate_ = sampleRate;
+    capacity_ = capacity;
+    recorded_a_ = 0;
     crossfadeFrames_ = std::max(1, int32_t(0.02 * sampleRate));
     playGain_.setTimeConstant(0.01f, float(sampleRate));
     playGain_.snap(0.0f);
-    length_a_ = position_a_ = recorded_a_ = 0;
-    recording_ = finishing_ = playing_ = overdubbing_ = snapshotting_ = canUndo_ = false;
-    enabled_ = true;
     publish();
 }
 

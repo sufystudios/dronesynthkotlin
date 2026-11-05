@@ -4,6 +4,8 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.media.MediaPlayer
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -43,7 +45,7 @@ class TakeRecorder(private val context: Context, private val scope: CoroutineSco
     /** Called a few times a second to follow the native recorder. */
     fun poll() {
         val (recording, open, seconds) = NativeSynth.recorderState()
-        // The take stops itself at 3:00; finalise the file once it has.
+        // The take stops itself at 3:00 or when the output's rate changes; finalise the file once it has.
         if (open && !recording && !finalizing) finishRecording()
         if (recording) state = state.copy(recording = true, elapsedSeconds = seconds)
     }
@@ -89,10 +91,13 @@ class TakeRecorder(private val context: Context, private val scope: CoroutineSco
                     dir.listFiles()?.forEach { it.delete() }
                     val name = "Drone Synth " + SimpleDateFormat("yyyy-MM-dd HHmm", Locale.US).format(Date()) + ".m4a"
                     File(dir, name).also { AacExporter.export(takeFile, it) }
-                }.getOrNull()
+                }.onFailure { Log.w("DroneSynth", "Couldn't export the take", it) }.getOrNull()
             }
             state = state.copy(preparingShare = false)
-            if (file == null) return@launch
+            if (file == null) {
+                Toast.makeText(activity, "Couldn't prepare the recording to share", Toast.LENGTH_SHORT).show()
+                return@launch
+            }
             val uri = FileProvider.getUriForFile(activity, "${activity.packageName}.files", file)
             val send = Intent(Intent.ACTION_SEND).apply {
                 type = "audio/mp4"

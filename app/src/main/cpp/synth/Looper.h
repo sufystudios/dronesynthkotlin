@@ -38,7 +38,8 @@ public:
         kEnabled = 1 << 5,
     };
 
-    /// Allocates the loop buffers. Not real-time safe; call before audio starts.
+    /// Allocates the loop buffers, converting any loop already there to the new rate.
+    /// Not real-time safe; call while the audio thread isn't running.
     void prepare(double sampleRate);
 
     /// UI thread. Queues a command for the audio thread.
@@ -66,6 +67,7 @@ private:
 
     // Two equal buffers; `current_` is the loop, `undo_` the pre-overdub snapshot.
     std::vector<float> bufferA_, bufferB_;
+    double sampleRate_ = 0.0;
     float *current_ = nullptr;
     float *undo_ = nullptr;
     int32_t capacity_ = 0;  // frames

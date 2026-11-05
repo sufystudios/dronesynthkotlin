@@ -198,7 +198,12 @@ void SynthEngine::prepare(double sampleRate) {
     delay_.init(sampleRate);
     looper_.prepare(sampleRate);
     recorder_.prepare(sampleRate);
-    sequencer_.prepare(sampleRate);
+    // Only the first time: after that a new rate mustn't lose the keys the ARP is playing.
+    if (prepared_) {
+        sequencer_.changeSampleRate(sampleRate);
+    } else {
+        sequencer_.prepare(sampleRate);
+    }
 
     reverb_.prepare(sampleRate);
 

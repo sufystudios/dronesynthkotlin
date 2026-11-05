@@ -7,7 +7,10 @@
 namespace synth {
 
 void Recorder::prepare(double sampleRate) {
-    sampleRate_ = int(sampleRate);
+    // A take holds one rate, so one under way ends at a change of rate. The UI sees it
+    // open but no longer recording and finalises it, as it does at the time limit.
+    recording_.store(false, std::memory_order_release);
+    sampleRate_.store(int(sampleRate));
     maxFrames_ = int64_t(kMaxSeconds * sampleRate);
 }
 
@@ -16,6 +19,7 @@ bool Recorder::start(const std::string &path) {
     file_ = std::fopen(path.c_str(), "wb");
     if (!file_) return false;
     dataBytes_ = 0;
+    takeRate_ = sampleRate_.load();
     writeHeader(0);  // placeholder sizes, patched in stop()
     head_.store(0);
     tail_.store(0);
@@ -94,8 +98,8 @@ void Recorder::writeHeader(uint32_t dataBytes) {
     u32(16);
     u16(1);  // PCM
     u16(channels);
-    u32(uint32_t(sampleRate_));
-    u32(uint32_t(sampleRate_) * channels * bits / 8);
+    u32(uint32_t(takeRate_));
+    u32(uint32_t(takeRate_) * channels * bits / 8);
     u16(channels * bits / 8);
     u16(bits);
     std::fwrite("data", 1, 4, file_);

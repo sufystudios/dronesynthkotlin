@@ -15,6 +15,7 @@ import java.nio.ByteOrder
  */
 object AacExporter {
     private const val TIMEOUT_US = 10_000L
+    private const val MAX_ENCODER_RATE = 48_000
 
     fun export(wav: File, out: File, bitRate: Int = 192_000) {
         RandomAccessFile(wav, "r").use { input ->
@@ -23,8 +24,15 @@ object AacExporter {
             val channels = h.getShort(22).toInt()
             val sampleRate = h.getInt(24)
             val bytesPerFrame = channels * 2
+            // Android's own AAC encoder only promises rates up to 48 kHz.
+            val encoderRate = minOf(sampleRate, MAX_ENCODER_RATE)
+            val readPcm: (ByteArray, Int, Int) -> Int = if (sampleRate > encoderRate) {
+                PcmResampler(sampleRate, encoderRate, channels) { b, o, n -> input.read(b, o, n) }::read
+            } else {
+                { b, o, n -> input.read(b, o, n) }
+            }
 
-            val format = MediaFormat.createAudioFormat(MediaFormat.MIMETYPE_AUDIO_AAC, sampleRate, channels).apply {
+            val format = MediaFormat.createAudioFormat(MediaFormat.MIMETYPE_AUDIO_AAC, encoderRate, channels).apply {
                 setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC)
                 setInteger(MediaFormat.KEY_BIT_RATE, bitRate)
                 setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 16_384)
@@ -45,8 +53,8 @@ object AacExporter {
                         val index = codec.dequeueInputBuffer(TIMEOUT_US)
                         if (index >= 0) {
                             val buffer = codec.getInputBuffer(index)!!
-                            val read = input.read(chunk, 0, minOf(chunk.size, buffer.remaining()))
-                            val timeUs = framesQueued * 1_000_000L / sampleRate
+                            val read = readPcm(chunk, 0, minOf(chunk.size, buffer.remaining()))
+                            val timeUs = framesQueued * 1_000_000L / encoderRate
                             if (read <= 0) {
                                 codec.queueInputBuffer(index, 0, 0, timeUs, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
                                 inputDone = true

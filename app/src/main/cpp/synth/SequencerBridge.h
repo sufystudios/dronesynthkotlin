@@ -1,6 +1,6 @@
 //
-// Carries the ARP/SEQ module (StepSequencer, shared unchanged with the iOS app)
-// between threads, as the iOS app's StepSequencerDSP.mm does.
+// Carries the ARP/SEQ module (StepSequencer, shared with the iOS app, which doesn't
+// have changeSampleRate) between threads, as the iOS app's StepSequencerDSP.mm does.
 //
 // The UI thread posts settings, REST/TIE, CLEAR and whole patterns into a
 // lock-free queue; the audio thread drains it at the start of each callback and
@@ -46,6 +46,7 @@ public:
     // --- audio thread
 
     void prepare(double sampleRate) { sequencer_.prepare(sampleRate); }
+    void changeSampleRate(double sampleRate) { sequencer_.changeSampleRate(sampleRate); }
     /// Applies everything posted since the last call, in order.
     void drain();
     /// The events due in the next `frames` frames (see StepSequencer::advance).

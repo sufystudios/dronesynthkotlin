@@ -89,6 +89,8 @@ public:
 
     /// Resets everything except the patterns.
     void prepare(double sampleRate);
+    /// A new rate with everything else kept: the keys, and the time to the next step.
+    void changeSampleRate(double sampleRate);
     void set(const SequencerSettings &settings);
 
     void noteOn(int note, int velocity);

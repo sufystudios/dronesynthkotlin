@@ -34,7 +34,7 @@ public:
     void write(const float *left, const float *right, int frames);
 
     bool isRecording() const { return recording_.load(std::memory_order_relaxed); }
-    /// True while a take is open: recording, or auto-stopped at the limit but not yet finalised.
+    /// True while a take is open: recording, or auto-stopped (at the limit or a change of rate) but not yet finalised.
     bool isOpen() const { return writer_.joinable(); }
     int64_t recordedFrames() const { return frames_.load(std::memory_order_relaxed); }
 
@@ -52,7 +52,8 @@ private:
     std::atomic<bool> writerRunning_{false};
     std::atomic<int64_t> frames_{0};
     int64_t maxFrames_ = 0;
-    int sampleRate_ = 48000;
+    std::atomic<int> sampleRate_{48000};
+    int takeRate_ = 48000;  // the rate of the take in the file
 
     std::thread writer_;
     FILE *file_ = nullptr;

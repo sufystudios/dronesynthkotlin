@@ -42,6 +42,15 @@ void StepSequencer::prepare(double sampleRate) {
     displayRunning_.store(false, std::memory_order_relaxed);
 }
 
+void StepSequencer::changeSampleRate(double sampleRate) {
+    if (sampleRate <= 0) return;
+    const double ratio = sampleRate / sampleRate_;
+    sampleRate_ = sampleRate;
+    position_ = std::llround(double(position_) * ratio);
+    nextStepTime_ *= ratio;
+    if (pendingOff_ >= 0) pendingOff_ = std::llround(double(pendingOff_) * ratio);
+}
+
 void StepSequencer::set(const SequencerSettings &settings) {
     SequencerSettings next = settings;
     next.mode = SequencerMode(std::clamp(int32_t(next.mode), 0, 2));

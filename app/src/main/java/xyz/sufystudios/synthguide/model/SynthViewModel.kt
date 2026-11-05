@@ -56,6 +56,12 @@ class SynthViewModel(application: Application) : AndroidViewModel(application) {
         private set
     val recorder = TakeRecorder(application, viewModelScope)
 
+    val reviews = ReviewPrompter(application)
+
+    /** Capturing audio right now, in the looper or the recorder. */
+    val isCapturing: Boolean
+        get() = looper.recording || looper.overdubbing || recorder.state.recording
+
     private val midi = MidiInput(application)
 
     /** The ARP/SEQ module's settings; its patterns live in the engine (see [sequencerPreset]). */
