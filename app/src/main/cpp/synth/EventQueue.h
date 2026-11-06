@@ -14,7 +14,7 @@
 namespace synth {
 
 struct NoteEvent {
-    enum Type : uint8_t { NoteOn, NoteOff, AllNotesOff };
+    enum Type : uint8_t { NoteOn, NoteOff, AllNotesOff, AllSoundOff };
     Type type;
     uint8_t note;
     uint8_t velocity;

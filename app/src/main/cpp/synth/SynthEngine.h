@@ -13,11 +13,17 @@
 // every key reaches it, and while it's engaged it plays the voice instead of the
 // keys, each step landing within a control block of its exact frame.
 //
+// On Android the engine owns its Oboe stream. Elsewhere (the desktop plugin in
+// desktop-plugin/) there's no stream: the host calls prepareToPlay() and process().
+//
 
 #ifndef DRONESYNTH_SYNTHENGINE_H
 #define DRONESYNTH_SYNTHENGINE_H
 
+#if defined(__ANDROID__)
+#define DRONESYNTH_OBOE 1
 #include <oboe/Oboe.h>
+#endif
 
 #include <array>
 #include <atomic>
@@ -38,21 +44,38 @@
 
 namespace synth {
 
-class SynthEngine : public oboe::AudioStreamDataCallback, public oboe::AudioStreamErrorCallback {
+class SynthEngine
+#if DRONESYNTH_OBOE
+    : public oboe::AudioStreamDataCallback, public oboe::AudioStreamErrorCallback
+#endif
+{
 public:
     SynthEngine();
-    ~SynthEngine() override;
+    ~SynthEngine();
 
+#if DRONESYNTH_OBOE
     /// Opens and starts the output stream. Safe to call repeatedly.
     bool start();
     /// Stops and closes the output stream.
     void stop();
+#else
+    /// Host-driven builds: (re)initialises every DSP block for this rate. Call it
+    /// before the first process() and whenever the rate changes, never while
+    /// process() is running.
+    void prepareToPlay(double sampleRate);
+    /// Renders `frames` of output into two separate channel buffers.
+    void process(float *outLeft, float *outRight, int frames);
+#endif
 
     void setParam(int id, float value);
     float getParam(int id) const;
     void noteOn(int note, int velocity);
     void noteOff(int note);
     void allNotesOff();
+    /// allNotesOff, and silences a held drone too (drone mode stays on for the next
+    /// note), as the iOS app does for MIDI's All Notes Off. The phone's Motion
+    /// Controller sends it when it stops, so the plugin isn't left droning.
+    void allSoundOff();
 
     /// Peak output level since the last call (for the UI's meter/visuals), 0...1+.
     float takePeak();
@@ -62,8 +85,10 @@ public:
     SequencerBridge &sequencer() { return sequencer_; }
     double sampleRate() const { return sampleRate_; }
 
+#if DRONESYNTH_OBOE
     oboe::DataCallbackResult onAudioReady(oboe::AudioStream *stream, void *audioData, int32_t numFrames) override;
     void onErrorAfterClose(oboe::AudioStream *stream, oboe::Result error) override;
+#endif
 
 private:
     static constexpr int kControlBlock = 8;
@@ -75,8 +100,13 @@ private:
     /// A snapshot of every parameter, taken once per render callback.
     struct Snapshot { std::array<float, kNumParams> v; };
 
+#if DRONESYNTH_OBOE
     bool openStream();
+#endif
     void prepare(double sampleRate);
+    /// One callback's work: parameters, events, voice, effects, into `numFrames`
+    /// of output. Left and right samples are `stride` floats apart (2 = interleaved).
+    void renderOutput(float *outLeft, float *outRight, int stride, int numFrames);
     void applyParams(const Snapshot &p);
     void handleEvent(const NoteEvent &e);
     void triggerNote(int note, int velocity, bool retrigger);
@@ -90,10 +120,12 @@ private:
     void render(float *left, float *right, int frames);
 
     // --- stream
+#if DRONESYNTH_OBOE
     std::mutex streamLock_;
     std::shared_ptr<oboe::AudioStream> stream_;
     /// Grows the buffer whenever the stream underruns (Oboe's recommended approach).
     std::unique_ptr<oboe::LatencyTuner> latencyTuner_;
+#endif
     double sampleRate_ = 48000.0;
     bool prepared_ = false;
 

@@ -5,7 +5,7 @@
 #include <cmath>
 #include <cstring>
 #include <thread>
-#if defined(__x86_64__) || defined(__i386__)
+#if defined(__x86_64__) || defined(__i386__) || defined(_M_X64) || defined(_M_IX86)
 #include <xmmintrin.h>
 #endif
 
@@ -39,7 +39,7 @@ inline void enableFlushToZero() {
     uint32_t fpscr;
     asm volatile("vmrs %0, fpscr" : "=r"(fpscr));
     asm volatile("vmsr fpscr, %0" : : "r"(fpscr | (1u << 24)));
-#elif defined(__x86_64__) || defined(__i386__)
+#elif defined(__x86_64__) || defined(__i386__) || defined(_M_X64) || defined(_M_IX86)
     _mm_setcsr(_mm_getcsr() | 0x8040);  // FTZ | DAZ
 #endif
 }
@@ -75,13 +75,16 @@ SynthEngine::SynthEngine() {
 }
 
 SynthEngine::~SynthEngine() {
+#if DRONESYNTH_OBOE
     stop();
+#endif
     sp_moogladder_destroy(&filterLeft_);
     sp_moogladder_destroy(&filterRight_);
 }
 
 // MARK: - Stream
 
+#if DRONESYNTH_OBOE
 bool SynthEngine::start() {
     std::lock_guard<std::mutex> lock(streamLock_);
     if (stream_ && stream_->getState() == oboe::StreamState::Started) return true;
@@ -163,6 +166,22 @@ void SynthEngine::onErrorAfterClose(oboe::AudioStream *, oboe::Result error) {
     }
     start();
 }
+#else
+void SynthEngine::prepareToPlay(double sampleRate) {
+    if (!prepared_ || sampleRate != sampleRate_) prepare(sampleRate);
+    fadeOutRequested_.store(false);
+    fadedOut_.store(false);
+}
+
+void SynthEngine::process(float *outLeft, float *outRight, int frames) {
+    if (!prepared_) {
+        std::fill(outLeft, outLeft + frames, 0.0f);
+        std::fill(outRight, outRight + frames, 0.0f);
+        return;
+    }
+    renderOutput(outLeft, outRight, 1, frames);
+}
+#endif
 
 // MARK: - Preparation (never on the audio thread)
 
@@ -238,6 +257,11 @@ void SynthEngine::allNotesOff() {
     events_.push({NoteEvent::AllNotesOff, 0, 0});
 }
 
+void SynthEngine::allSoundOff() {
+    std::lock_guard<std::mutex> lock(eventProducerLock_);
+    events_.push({NoteEvent::AllSoundOff, 0, 0});
+}
+
 float SynthEngine::takePeak() {
     return peak_.exchange(0.0f, std::memory_order_relaxed);
 }
@@ -293,9 +317,11 @@ void SynthEngine::handleEvent(const NoteEvent &e) {
             break;
         }
         case NoteEvent::AllNotesOff:
+        case NoteEvent::AllSoundOff:
             for (int i = 0; i < heldCount_; ++i) sequencer_.sequencer().noteOff(heldNotes_[i]);
             heldCount_ = 0;
-            if (!seqEngaged_) releaseNote();
+            if (seqEngaged_) break;
+            if (e.type == NoteEvent::AllSoundOff) closeGate(); else releaseNote();
             break;
     }
 }
@@ -575,10 +601,17 @@ void SynthEngine::render(float *left, float *right, int frames) {
     }
 }
 
+#if DRONESYNTH_OBOE
 oboe::DataCallbackResult SynthEngine::onAudioReady(oboe::AudioStream *, void *audioData, int32_t numFrames) {
-    enableFlushToZero();
     if (latencyTuner_) latencyTuner_->tune();
     auto *out = static_cast<float *>(audioData);
+    renderOutput(out, out + 1, 2, numFrames);
+    return oboe::DataCallbackResult::Continue;
+}
+#endif
+
+void SynthEngine::renderOutput(float *outLeft, float *outRight, int stride, int numFrames) {
+    enableFlushToZero();
     for (int i = 0; i < kNumParams; ++i) snapshot_.v[i] = params_[i].load(std::memory_order_relaxed);
     applyParams(snapshot_);
     sequencer_.drain();
@@ -616,8 +649,8 @@ oboe::DataCallbackResult SynthEngine::onAudioReady(oboe::AudioStream *, void *au
             const float l = softLimit(wetLeft_[i]) * gain;
             const float r = softLimit(wetRight_[i]) * gain;
             peak = std::max(peak, std::max(std::fabs(l), std::fabs(r)));
-            out[2 * (done + i)] = l;
-            out[2 * (done + i) + 1] = r;
+            outLeft[stride * (done + i)] = l;
+            outRight[stride * (done + i)] = r;
             left_[i] = l;
             right_[i] = r;
         }
@@ -632,7 +665,6 @@ oboe::DataCallbackResult SynthEngine::onAudioReady(oboe::AudioStream *, void *au
 
     float previous = peak_.load(std::memory_order_relaxed);
     while (peak > previous && !peak_.compare_exchange_weak(previous, peak, std::memory_order_relaxed)) {}
-    return oboe::DataCallbackResult::Continue;
 }
 
 } // namespace synth
